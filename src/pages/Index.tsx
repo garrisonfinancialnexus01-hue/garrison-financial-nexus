@@ -106,35 +106,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* About CEO Section */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center">
-            <div className="md:w-1/3 mb-8 md:mb-0">
-              <div className="rounded-full bg-garrison-green h-64 w-64 mx-auto flex items-center justify-center">
-                <span className="text-white text-6xl font-bold">IK</span>
-              </div>
-            </div>
-            <div className="md:w-2/3 md:pl-12">
-              <h2 className="text-3xl font-bold text-garrison-black mb-4">Meet Our Founder</h2>
-              <h3 className="text-xl font-bold text-garrison-green mb-2">Isiah Kasule</h3>
-              <p className="text-gray-600 mb-6">
-                Founder & CEO, Garrison Financial Nexus
-              </p>
-              <p className="text-gray-800 mb-6">
-                With over 15 years of experience in the financial industry, Isiah Kasule founded Garrison Financial Nexus with 
-                a vision to make financial services accessible to everyone. His commitment to financial inclusion and customer 
-                satisfaction has established Garrison Financial Nexus as a trusted name in Uganda's financial sector.
-              </p>
-              <p className="text-gray-800">
-                "Our mission is to empower individuals and businesses through personalized financial solutions 
-                that address their unique needs and aspirations."
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* CTA Section */}
       <section className="bg-garrison-green py-16 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">

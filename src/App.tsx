@@ -14,6 +14,7 @@ import WealthManagement from "./pages/WealthManagement";
 import LoanApplication from "./pages/LoanApplication";
 import LoanDetails from "./pages/LoanDetails";
 import Contact from "./pages/Contact";
+import About from "./pages/About";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/loan-application" element={<Layout><LoanApplication /></Layout>} />
           <Route path="/loan-details" element={<Layout><LoanDetails /></Layout>} />
           <Route path="/contact" element={<Layout><Contact /></Layout>} />
+          <Route path="/about" element={<Layout><About /></Layout>} />
           <Route path="*" element={<Layout><NotFound /></Layout>} />
         </Routes>
       </BrowserRouter>
