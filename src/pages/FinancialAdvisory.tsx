@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, Users, TrendingUp, Wallet, Bank } from 'lucide-react';
+import { ArrowRight, Users, TrendingUp, Wallet, Building } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const FinancialAdvisory = () => {
@@ -104,7 +104,7 @@ const FinancialAdvisory = () => {
           <Card className="shadow-md hover:shadow-lg transition-shadow">
             <CardContent className="p-6">
               <div className="mb-4">
-                <Bank className="h-12 w-12 text-garrison-green" />
+                <Building className="h-12 w-12 text-garrison-green" />
               </div>
               <h3 className="text-xl font-bold mb-2">Retirement Planning</h3>
               <p className="text-gray-600 mb-4">

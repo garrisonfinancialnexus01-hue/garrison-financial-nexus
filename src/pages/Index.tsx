@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, TrendingUp, Wallet, Bank, Users } from 'lucide-react';
+import { ArrowRight, TrendingUp, Wallet, Building, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Index = () => {
@@ -60,7 +60,7 @@ const Index = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow">
-              <Bank className="h-12 w-12 text-garrison-green mb-4" />
+              <Building className="h-12 w-12 text-garrison-green mb-4" />
               <h3 className="text-xl font-bold mb-2">Money Lending</h3>
               <p className="text-gray-600 mb-4">
                 Access affordable loans ranging from 10,000 UGX to 500,000 UGX with flexible repayment options.

@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, WhatsApp, TrendingUp, Check, Clock } from 'lucide-react';
+import { ArrowRight, MessageCircle, TrendingUp, Check, Clock } from 'lucide-react';
 
 const MoneySaving = () => {
   const handleWhatsAppClick = () => {
@@ -39,7 +39,7 @@ const MoneySaving = () => {
             onClick={handleWhatsAppClick}
             className="bg-[#25D366] hover:bg-[#128C7E] flex items-center"
           >
-            <WhatsApp className="mr-2 h-5 w-5" />
+            <MessageCircle className="mr-2 h-5 w-5" />
             Contact Manager on WhatsApp
           </Button>
         </div>

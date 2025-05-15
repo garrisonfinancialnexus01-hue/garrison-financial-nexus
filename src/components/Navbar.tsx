@@ -77,7 +77,8 @@ const Navbar = () => {
         </div>
       )}
 
-      <style jsx>{`
+      <style>
+        {`
         .animate-marquee {
           animation: marquee 20s linear infinite;
         }
@@ -85,7 +86,8 @@ const Navbar = () => {
           0% { transform: translateX(100%); }
           100% { transform: translateX(-100%); }
         }
-      `}</style>
+        `}
+      </style>
     </nav>
   );
 };
