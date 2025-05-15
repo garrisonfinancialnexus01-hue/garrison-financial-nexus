@@ -3,6 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Building, Target, Award, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 const About = () => {
   return (
@@ -61,9 +62,10 @@ const About = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center">
             <div className="md:w-1/3 mb-8 md:mb-0">
-              <div className="rounded-full bg-garrison-green h-64 w-64 mx-auto flex items-center justify-center">
-                <span className="text-white text-6xl font-bold">IK</span>
-              </div>
+              <Avatar className="h-64 w-64 mx-auto">
+                <AvatarImage src="/lovable-uploads/9af5ef20-55fb-4257-a41b-223fa240c5da.png" alt="Isiah Kasule" className="object-cover" />
+                <AvatarFallback className="text-white text-6xl font-bold bg-garrison-green">IK</AvatarFallback>
+              </Avatar>
             </div>
             <div className="md:w-2/3 md:pl-12">
               <h2 className="text-3xl font-bold text-garrison-black mb-4">Meet Our Founder</h2>

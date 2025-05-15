@@ -20,13 +20,13 @@ const Index = () => {
                 to help you achieve your financial goals and secure your future.
               </p>
               <div className="flex space-x-4">
-                <Button asChild className="bg-white text-garrison-green hover:bg-gray-100">
+                <Button asChild className="bg-white text-garrison-green hover:bg-gray-100 border-2 border-white">
                   <Link to="/money-lending">
                     Get Started
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
-                <Button variant="outline" asChild className="border-white text-white hover:bg-white/10">
+                <Button variant="outline" asChild className="border-2 border-white text-white hover:bg-white/10">
                   <Link to="/contact">Contact Us</Link>
                 </Button>
               </div>
