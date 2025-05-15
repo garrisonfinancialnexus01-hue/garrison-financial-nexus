@@ -24,8 +24,12 @@ const Navbar = () => {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center">
-              <span className="text-2xl font-bold text-garrison-green">Garrison</span>
-              <span className="text-2xl font-bold text-garrison-black">Financial</span>
+              <img 
+                src="/lovable-uploads/8514a459-83a5-4a3a-9728-47047e5e465e.png" 
+                alt="Garrison Financial Nexus Logo" 
+                className="h-10 w-auto mr-2" 
+              />
+              <span className="text-2xl font-bold text-garrison-black">Financial Nexus</span>
             </Link>
           </div>
           
