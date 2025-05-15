@@ -1,12 +1,160 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowRight, TrendingUp, Wallet, Bank, Users } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen">
+      {/* Hero Section */}
+      <section className="bg-gradient-to-r from-garrison-green to-green-700 text-white py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center">
+            <div className="md:w-1/2 mb-10 md:mb-0">
+              <h1 className="text-4xl md:text-5xl font-bold mb-6">
+                Your Gateway To Financial Prosperity
+              </h1>
+              <p className="text-xl mb-8">
+                At Garrison Financial Nexus, we provide comprehensive financial services 
+                to help you achieve your financial goals and secure your future.
+              </p>
+              <div className="flex space-x-4">
+                <Button asChild className="bg-white text-garrison-green hover:bg-gray-100">
+                  <Link to="/money-lending">
+                    Get Started
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild className="border-white text-white hover:bg-white/10">
+                  <Link to="/contact">Contact Us</Link>
+                </Button>
+              </div>
+            </div>
+            <div className="md:w-1/2">
+              <div className="bg-white rounded-lg shadow-xl p-8">
+                <h2 className="text-garrison-green text-2xl font-bold mb-4">Financial Calculator</h2>
+                <p className="text-gray-600 mb-4">Estimate your potential savings or loan payments.</p>
+                <div className="flex justify-center">
+                  <Link to="/loan-application">
+                    <Button className="bg-garrison-green text-white hover:bg-green-700">
+                      Calculate Now
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Services Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-garrison-black">Our Services</h2>
+            <p className="mt-4 text-xl text-gray-600">
+              We offer a range of financial services to meet your needs
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow">
+              <Bank className="h-12 w-12 text-garrison-green mb-4" />
+              <h3 className="text-xl font-bold mb-2">Money Lending</h3>
+              <p className="text-gray-600 mb-4">
+                Access affordable loans ranging from 10,000 UGX to 500,000 UGX with flexible repayment options.
+              </p>
+              <Link to="/money-lending" className="text-garrison-green hover:underline inline-flex items-center">
+                Learn More <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow">
+              <Wallet className="h-12 w-12 text-garrison-green mb-4" />
+              <h3 className="text-xl font-bold mb-2">Money Saving</h3>
+              <p className="text-gray-600 mb-4">
+                Grow your wealth with our savings plans offering attractive 5% returns every 2 months.
+              </p>
+              <Link to="/money-saving" className="text-garrison-green hover:underline inline-flex items-center">
+                Learn More <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow">
+              <Users className="h-12 w-12 text-garrison-green mb-4" />
+              <h3 className="text-xl font-bold mb-2">Financial Advisory</h3>
+              <p className="text-gray-600 mb-4">
+                Get expert guidance on managing your finances, budgeting, and planning for your financial future.
+              </p>
+              <Link to="/financial-advisory" className="text-garrison-green hover:underline inline-flex items-center">
+                Learn More <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow">
+              <TrendingUp className="h-12 w-12 text-garrison-green mb-4" />
+              <h3 className="text-xl font-bold mb-2">Wealth Management</h3>
+              <p className="text-gray-600 mb-4">
+                Comprehensive wealth management services to help you grow and preserve your assets.
+              </p>
+              <Link to="/wealth-management" className="text-garrison-green hover:underline inline-flex items-center">
+                Learn More <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* About CEO Section */}
+      <section className="py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center">
+            <div className="md:w-1/3 mb-8 md:mb-0">
+              <div className="rounded-full bg-garrison-green h-64 w-64 mx-auto flex items-center justify-center">
+                <span className="text-white text-6xl font-bold">IK</span>
+              </div>
+            </div>
+            <div className="md:w-2/3 md:pl-12">
+              <h2 className="text-3xl font-bold text-garrison-black mb-4">Meet Our Founder</h2>
+              <h3 className="text-xl font-bold text-garrison-green mb-2">Isiah Kasule</h3>
+              <p className="text-gray-600 mb-6">
+                Founder & CEO, Garrison Financial Nexus
+              </p>
+              <p className="text-gray-800 mb-6">
+                With over 15 years of experience in the financial industry, Isiah Kasule founded Garrison Financial Nexus with 
+                a vision to make financial services accessible to everyone. His commitment to financial inclusion and customer 
+                satisfaction has established Garrison Financial Nexus as a trusted name in Uganda's financial sector.
+              </p>
+              <p className="text-gray-800">
+                "Our mission is to empower individuals and businesses through personalized financial solutions 
+                that address their unique needs and aspirations."
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="bg-garrison-green py-16 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold mb-6">Ready to Start Your Financial Journey?</h2>
+          <p className="text-xl mb-8 max-w-3xl mx-auto">
+            Join thousands of satisfied clients who have transformed their financial future with Garrison Financial Nexus.
+          </p>
+          <div className="flex justify-center space-x-4 flex-wrap">
+            <Button asChild className="bg-white text-garrison-green hover:bg-gray-100 mb-2 sm:mb-0">
+              <Link to="/money-lending">Apply for a Loan</Link>
+            </Button>
+            <Button asChild className="bg-white text-garrison-green hover:bg-gray-100 mb-2 sm:mb-0">
+              <Link to="/money-saving">Start Saving</Link>
+            </Button>
+            <Button asChild className="bg-white text-garrison-green hover:bg-gray-100">
+              <Link to="/contact">Contact an Advisor</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };

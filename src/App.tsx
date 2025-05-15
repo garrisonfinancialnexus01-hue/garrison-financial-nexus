@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,6 +6,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import Layout from "./components/Layout";
+import MoneyLending from "./pages/MoneyLending";
+import MoneySaving from "./pages/MoneySaving";
+import FinancialAdvisory from "./pages/FinancialAdvisory";
+import WealthManagement from "./pages/WealthManagement";
+import LoanApplication from "./pages/LoanApplication";
+import LoanDetails from "./pages/LoanDetails";
 
 const queryClient = new QueryClient();
 
@@ -15,9 +23,14 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
+          <Route path="/" element={<Layout><Index /></Layout>} />
+          <Route path="/money-lending" element={<Layout><MoneyLending /></Layout>} />
+          <Route path="/money-saving" element={<Layout><MoneySaving /></Layout>} />
+          <Route path="/financial-advisory" element={<Layout><FinancialAdvisory /></Layout>} />
+          <Route path="/wealth-management" element={<Layout><WealthManagement /></Layout>} />
+          <Route path="/loan-application" element={<Layout><LoanApplication /></Layout>} />
+          <Route path="/loan-details" element={<Layout><LoanDetails /></Layout>} />
+          <Route path="*" element={<Layout><NotFound /></Layout>} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
