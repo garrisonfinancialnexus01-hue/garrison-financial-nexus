@@ -29,7 +29,7 @@ const Navbar = () => {
                 alt="Garrison Financial Nexus Logo" 
                 className="h-10 w-auto mr-2" 
               />
-              <span className="text-2xl font-bold text-garrison-black">Financial Nexus</span>
+              <span className="text-2xl font-bold text-garrison-black">Garrison Financial Nexus</span>
             </Link>
           </div>
           
@@ -84,7 +84,7 @@ const Navbar = () => {
       <style>
         {`
         .animate-marquee {
-          animation: marquee 20s linear infinite;
+          animation: marquee 40s linear infinite;
         }
         @keyframes marquee {
           0% { transform: translateX(100%); }
