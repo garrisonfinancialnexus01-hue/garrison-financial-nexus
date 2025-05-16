@@ -9,13 +9,57 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      loan_applications: {
+        Row: {
+          amount: number
+          created_at: string
+          email: string
+          id: string
+          interest: number
+          name: string
+          nin: string
+          phone: string
+          receipt_number: string
+          term: string
+          total_amount: number
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          email: string
+          id?: string
+          interest: number
+          name: string
+          nin: string
+          phone: string
+          receipt_number: string
+          term: string
+          total_amount: number
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          email?: string
+          id?: string
+          interest?: number
+          name?: string
+          nin?: string
+          phone?: string
+          receipt_number?: string
+          term?: string
+          total_amount?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_receipt_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

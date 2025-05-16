@@ -1,16 +1,23 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { isValidUgandanNIN } from '@/utils/ninValidation';
+import Receipt from '@/components/Receipt';
+import { supabase } from '@/integrations/supabase/client';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
+import { Download } from 'lucide-react';
 
 const LoanDetails = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const receiptRef = useRef<HTMLDivElement>(null);
   
   const state = location.state as { 
     amount: number, 
@@ -33,6 +40,10 @@ const LoanDetails = () => {
     nin: ''
   });
 
+  const [isNinValidating, setIsNinValidating] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [receiptNumber, setReceiptNumber] = useState<string | null>(null);
+
   if (!state) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
@@ -49,10 +60,28 @@ const LoanDetails = () => {
 
   const { amount, term, interest, totalAmount } = state;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     setErrors(prev => ({ ...prev, [name]: '' }));
+    
+    // Special handling for NIN validation
+    if (name === 'nin' && value.length >= 10) {
+      setIsNinValidating(true);
+      try {
+        const isValid = await isValidUgandanNIN(value);
+        if (!isValid) {
+          setErrors(prev => ({
+            ...prev,
+            nin: 'Invalid NIN. Please enter a valid Ugandan National ID Number.'
+          }));
+        }
+      } catch (error) {
+        console.error('NIN validation error:', error);
+      } finally {
+        setIsNinValidating(false);
+      }
+    }
   };
 
   const validate = () => {
@@ -83,8 +112,7 @@ const LoanDetails = () => {
     if (!formData.nin.trim()) {
       newErrors.nin = 'NIN is required';
       valid = false;
-    } else if (formData.nin.trim().length < 10) {
-      newErrors.nin = 'NIN should be at least 10 characters';
+    } else if (errors.nin) {
       valid = false;
     }
 
@@ -92,16 +120,91 @@ const LoanDetails = () => {
     return valid;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (validate()) {
-      toast({
-        title: "Application submitted successfully",
-        description: "Our team will review your application and contact you soon.",
+      setIsSubmitting(true);
+      
+      try {
+        // Save to Supabase and get receipt number
+        const { data, error } = await supabase
+          .rpc('generate_receipt_number')
+          .single();
+          
+        if (error) throw error;
+        
+        const receiptNum = data as string;
+        setReceiptNumber(receiptNum);
+        
+        // Insert application with receipt number
+        await supabase.from('loan_applications').insert({
+          name: formData.name,
+          phone: formData.phone,
+          email: formData.email,
+          nin: formData.nin,
+          amount: amount,
+          term: term,
+          interest: interest,
+          total_amount: totalAmount,
+          receipt_number: receiptNum
+        });
+        
+        toast({
+          title: "Application submitted successfully",
+          description: "You can now download your receipt.",
+        });
+      } catch (error) {
+        console.error('Error submitting application:', error);
+        toast({
+          title: "Error submitting application",
+          description: "Please try again.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+  };
+  
+  const downloadReceipt = async () => {
+    if (!receiptRef.current) return;
+    
+    try {
+      const canvas = await html2canvas(receiptRef.current, {
+        scale: 2,
+        logging: false,
+        useCORS: true,
+        backgroundColor: '#ffffff'
       });
       
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Garrison_Financial_Receipt_${receiptNumber}.pdf`);
+      
+      toast({
+        title: "Receipt downloaded",
+        description: "Your receipt has been downloaded successfully.",
+      });
+      
+      // Navigate to homepage after successful download
       setTimeout(() => {
         navigate('/');
       }, 2000);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: "Error downloading receipt",
+        description: "Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -132,6 +235,7 @@ const LoanDetails = () => {
                 onChange={handleChange}
                 placeholder="Enter your full name"
                 className={errors.name ? "border-red-500" : ""}
+                disabled={!!receiptNumber}
               />
               {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
             </div>
@@ -145,6 +249,7 @@ const LoanDetails = () => {
                 onChange={handleChange}
                 placeholder="e.g. +256700000000"
                 className={errors.phone ? "border-red-500" : ""}
+                disabled={!!receiptNumber}
               />
               {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
             </div>
@@ -159,21 +264,33 @@ const LoanDetails = () => {
                 onChange={handleChange}
                 placeholder="your.email@example.com"
                 className={errors.email ? "border-red-500" : ""}
+                disabled={!!receiptNumber}
               />
               {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="nin">National Identification Number (NIN)</Label>
-              <Input
-                id="nin"
-                name="nin"
-                value={formData.nin}
-                onChange={handleChange}
-                placeholder="Enter your NIN"
-                className={errors.nin ? "border-red-500" : ""}
-              />
+              <div className="relative">
+                <Input
+                  id="nin"
+                  name="nin"
+                  value={formData.nin}
+                  onChange={handleChange}
+                  placeholder="e.g. CM1234567ABC8"
+                  className={errors.nin ? "border-red-500" : ""}
+                  disabled={!!receiptNumber || isNinValidating}
+                />
+                {isNinValidating && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="h-4 w-4 border-2 border-garrison-green border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                )}
+              </div>
               {errors.nin && <p className="text-red-500 text-sm mt-1">{errors.nin}</p>}
+              <p className="text-sm text-gray-500">
+                Enter your valid Uganda National ID Number
+              </p>
             </div>
 
             <div className="p-4 bg-gray-50 rounded-lg">
@@ -196,15 +313,51 @@ const LoanDetails = () => {
               </div>
             </div>
 
-            <Button 
-              onClick={handleSubmit} 
-              className="w-full bg-garrison-green hover:bg-green-700"
-            >
-              Submit
-            </Button>
+            {!receiptNumber ? (
+              <Button 
+                onClick={handleSubmit} 
+                className="w-full bg-garrison-green hover:bg-green-700"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Processing...
+                  </>
+                ) : "Submit"}
+              </Button>
+            ) : (
+              <Button 
+                onClick={downloadReceipt} 
+                className="w-full bg-garrison-green hover:bg-green-700"
+                disabled={!receiptRef.current}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Download Receipt
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
+      
+      {/* Hidden receipt for PDF generation */}
+      {receiptNumber && (
+        <div className="hidden">
+          <div ref={receiptRef}>
+            <Receipt 
+              name={formData.name}
+              phone={formData.phone}
+              email={formData.email}
+              nin={formData.nin}
+              amount={amount}
+              term={term}
+              interest={interest}
+              totalAmount={totalAmount}
+              receiptNumber={receiptNumber}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
