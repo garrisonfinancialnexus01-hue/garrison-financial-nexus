@@ -18,7 +18,7 @@ const Receipt = ({ name, phone, email, nin, amount, term, interest, totalAmount,
   return (
     <div className="p-8 bg-white text-black" id="receipt">
       <div className="flex justify-between items-center mb-6">
-        <div className="font-bold text-2xl text-garrison-green">Garrison Financial Nexus</div>
+        <div className="font-bold text-xl text-garrison-green">Garrison Financial Nexus</div>
         <div className="text-right">
           <div>Receipt #{receiptNumber}</div>
           <div>{format(new Date(), 'MMMM dd, yyyy')}</div>
@@ -51,7 +51,7 @@ const Receipt = ({ name, phone, email, nin, amount, term, interest, totalAmount,
           <div>{amount.toLocaleString()} UGX</div>
           
           <div className="text-gray-600">Loan Term:</div>
-          <div>{term === 'short' ? '2 Weeks' : '1 Month'}</div>
+          <div>{term === 'short' ? '14 Days' : '30 Days'}</div>
           
           <div className="text-gray-600">Interest Rate:</div>
           <div>{interest}%</div>

@@ -12,11 +12,11 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center">
             <div className="md:w-1/2 mb-10 md:mb-0">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6">
+              <h1 className="text-3xl md:text-5xl font-bold mb-6">
                 Your Gateway To Financial Prosperity
               </h1>
               <p className="text-xl mb-8">
-                At Garrison Financial Nexus, we provide comprehensive financial services 
+                At <span className="text-sm md:text-base">Garrison Financial Nexus</span>, we provide comprehensive financial services 
                 to help you achieve your financial goals and secure your future.
               </p>
               <div className="flex space-x-4">
@@ -26,8 +26,8 @@ const Index = () => {
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
-                <Button variant="outline" asChild className="border-2 border-white text-white hover:bg-white/10">
-                  <Link to="/contact">Contact Us</Link>
+                <Button variant="outline" asChild className="border-2 border-white hover:bg-white/10">
+                  <Link to="/contact" className="text-garrison-green bg-white">Contact Us</Link>
                 </Button>
               </div>
             </div>
@@ -111,7 +111,7 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold mb-6">Ready to Start Your Financial Journey?</h2>
           <p className="text-xl mb-8 max-w-3xl mx-auto">
-            Join thousands of satisfied clients who have transformed their financial future with Garrison Financial Nexus.
+            Join thousands of satisfied clients who have transformed their financial future with <span className="text-sm md:text-base">Garrison Financial Nexus</span>.
           </p>
           <div className="flex justify-center space-x-4 flex-wrap">
             <Button asChild className="bg-white text-garrison-green hover:bg-gray-100 mb-2 sm:mb-0">

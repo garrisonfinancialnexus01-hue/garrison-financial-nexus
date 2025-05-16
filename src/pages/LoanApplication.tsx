@@ -61,7 +61,7 @@ const LoanApplication = () => {
 
     toast({
       title: "Loan application initiated",
-      description: `${amountNum.toLocaleString()} UGX with ${term === 'short' ? '2 weeks' : '1 month'} term`,
+      description: `${amountNum.toLocaleString()} UGX with ${term === 'short' ? '14 days' : '30 days'} term`,
     });
   };
 
@@ -113,13 +113,13 @@ const LoanApplication = () => {
                 <div className="flex items-center space-x-3">
                   <RadioGroupItem value="short" id="short" />
                   <Label htmlFor="short" className="cursor-pointer">
-                    Pay after 2 weeks (10% interest)
+                    Pay after 14 days (10% interest)
                   </Label>
                 </div>
                 <div className="flex items-center space-x-3">
                   <RadioGroupItem value="medium" id="medium" />
                   <Label htmlFor="medium" className="cursor-pointer">
-                    Pay after 1 month (18% interest)
+                    Pay after 30 days (18% interest)
                   </Label>
                 </div>
               </RadioGroup>
@@ -138,7 +138,7 @@ const LoanApplication = () => {
                 </div>
                 <div className="flex justify-between mt-1 text-sm">
                   <span>Repayment Term:</span>
-                  <span>{term === 'short' ? '2 Weeks' : '1 Month'}</span>
+                  <span>{term === 'short' ? '14 Days' : '30 Days'}</span>
                 </div>
                 <div className="flex justify-between mt-3 font-medium">
                   <span>Total Repayment:</span>

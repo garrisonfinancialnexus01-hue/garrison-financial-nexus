@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, MessageCircle, TrendingUp, Check, Clock } from 'lucide-react';
+import { ArrowRight, MessageCircle, Percentage, Check, Clock } from 'lucide-react';
 
 const MoneySaving = () => {
   const handleWhatsAppClick = () => {
@@ -29,7 +29,7 @@ const MoneySaving = () => {
           </p>
           <div className="bg-garrison-light p-4 rounded-lg border-l-4 border-garrison-green mb-6">
             <p className="font-medium">
-              Note: Any amount saved with us ranging from 10,000 UGX to 1,000,000 UGX, will generate for you 5% profits every 2 months.
+              Note: Any amount saved with us ranging from 10,000 UGX to 1,000,000 UGX, the Bank will be collecting 2% of your saved money as the bank's saving interests.
             </p>
           </div>
           <p className="text-gray-700 mb-6">
@@ -46,16 +46,16 @@ const MoneySaving = () => {
 
         <Card className="shadow-lg">
           <CardHeader className="bg-garrison-green text-white">
-            <CardTitle className="text-2xl">5% Return Every 2 Months</CardTitle>
-            <CardDescription className="text-white/80">Grow your savings faster</CardDescription>
+            <CardTitle className="text-2xl">Bank's Saving Interests</CardTitle>
+            <CardDescription className="text-white/80">Understand our saving policy</CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
             <div className="space-y-6">
               <div className="flex items-start space-x-3">
-                <TrendingUp className="h-6 w-6 text-garrison-green flex-shrink-0 mt-1" />
+                <Percentage className="h-6 w-6 text-garrison-green flex-shrink-0 mt-1" />
                 <div>
-                  <h3 className="font-medium">Competitive Returns</h3>
-                  <p className="text-sm text-gray-600">Earn 5% on your savings every 2 months, significantly higher than traditional banks</p>
+                  <h3 className="font-medium">Monthly Collection</h3>
+                  <p className="text-sm text-gray-600">The bank every month will be collecting 2% of your saved money as the bank's saving interests</p>
                 </div>
               </div>
               <div className="flex items-start space-x-3">
@@ -68,8 +68,8 @@ const MoneySaving = () => {
               <div className="flex items-start space-x-3">
                 <Clock className="h-6 w-6 text-garrison-green flex-shrink-0 mt-1" />
                 <div>
-                  <h3 className="font-medium">Regular Profit Payouts</h3>
-                  <p className="text-sm text-gray-600">Receive your profits reliably every 2 months</p>
+                  <h3 className="font-medium">Regular Interest Collection</h3>
+                  <p className="text-sm text-gray-600">Bank collects interests reliably every month</p>
                 </div>
               </div>
             </div>
@@ -97,8 +97,8 @@ const MoneySaving = () => {
           </div>
           <div className="text-center">
             <div className="bg-garrison-green rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4 text-white font-bold">4</div>
-            <h3 className="text-lg font-medium mb-2">Earn Profits</h3>
-            <p className="text-gray-600">Receive 5% returns on your savings every 2 months.</p>
+            <h3 className="text-lg font-medium mb-2">Bank Interests</h3>
+            <p className="text-gray-600">Bank collects 2% of your savings every month as interests.</p>
           </div>
         </div>
       </div>
@@ -108,7 +108,7 @@ const MoneySaving = () => {
           <div className="mb-6 md:mb-0 md:mr-8">
             <h2 className="text-2xl font-bold mb-4">Ready to Start Saving?</h2>
             <p className="text-white/90">
-              Take the first step towards financial security and growth with our competitive savings plan.
+              Take the first step towards financial security with our savings plan.
             </p>
           </div>
           <Button 

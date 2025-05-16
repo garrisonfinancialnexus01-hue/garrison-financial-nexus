@@ -19,7 +19,7 @@ const MoneyLending = () => {
         <Card>
           <CardHeader className="bg-garrison-green text-white">
             <CardTitle className="text-2xl">Short-Term Loan</CardTitle>
-            <CardDescription className="text-white/80">Pay after 2 weeks with 10% interest</CardDescription>
+            <CardDescription className="text-white/80">Pay after 14 days with 10% interest</CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
             <ul className="space-y-3">
@@ -41,7 +41,7 @@ const MoneyLending = () => {
               </li>
               <li className="flex items-center">
                 <Check className="h-5 w-5 text-garrison-green mr-2" />
-                <span>2 weeks repayment period</span>
+                <span>14 days repayment period</span>
               </li>
             </ul>
             <div className="mt-6">
@@ -55,7 +55,7 @@ const MoneyLending = () => {
         <Card>
           <CardHeader className="bg-garrison-black text-white">
             <CardTitle className="text-2xl">Medium-Term Loan</CardTitle>
-            <CardDescription className="text-white/80">Pay after 1 month with 18% interest</CardDescription>
+            <CardDescription className="text-white/80">Pay after 30 days with 18% interest</CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
             <ul className="space-y-3">
@@ -77,7 +77,7 @@ const MoneyLending = () => {
               </li>
               <li className="flex items-center">
                 <Check className="h-5 w-5 text-garrison-green mr-2" />
-                <span>1 month repayment period</span>
+                <span>30 days repayment period</span>
               </li>
             </ul>
             <div className="mt-6">
