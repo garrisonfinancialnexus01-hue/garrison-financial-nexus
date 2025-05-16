@@ -1,8 +1,8 @@
-
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, MessageCircle, Percentage, Check, Clock } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { ArrowRight, MessageCircle, Percent, Check, Clock } from 'lucide-react';
 
 const MoneySaving = () => {
   const handleWhatsAppClick = () => {
@@ -52,7 +52,7 @@ const MoneySaving = () => {
           <CardContent className="pt-6">
             <div className="space-y-6">
               <div className="flex items-start space-x-3">
-                <Percentage className="h-6 w-6 text-garrison-green flex-shrink-0 mt-1" />
+                <Percent className="h-6 w-6 text-garrison-green flex-shrink-0 mt-1" />
                 <div>
                   <h3 className="font-medium">Monthly Collection</h3>
                   <p className="text-sm text-gray-600">The bank every month will be collecting 2% of your saved money as the bank's saving interests</p>

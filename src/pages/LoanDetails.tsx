@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -43,6 +42,7 @@ const LoanDetails = () => {
   const [isNinValidating, setIsNinValidating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [receiptNumber, setReceiptNumber] = useState<string | null>(null);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   if (!state) {
     return (
@@ -120,6 +120,74 @@ const LoanDetails = () => {
     return valid;
   };
 
+  const sendApplicationEmail = async (receiptNum: string) => {
+    try {
+      setIsSendingEmail(true);
+      
+      // Generate PDF first
+      if (!receiptRef.current) {
+        throw new Error("Receipt reference is not available");
+      }
+      
+      const canvas = await html2canvas(receiptRef.current, {
+        scale: 2,
+        logging: false,
+        useCORS: true,
+        backgroundColor: '#ffffff'
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      
+      // Get base64 representation of the PDF
+      const pdfBase64 = pdf.output('datauristring').split(',')[1];
+      
+      // Call the Supabase edge function to send email with PDF
+      const { data, error } = await supabase.functions.invoke('send-loan-application', {
+        body: {
+          name: formData.name,
+          phone: formData.phone,
+          email: formData.email,
+          nin: formData.nin,
+          amount: amount,
+          term: term,
+          interest: interest,
+          totalAmount: totalAmount,
+          receiptNumber: receiptNum,
+          receiptPdf: pdfBase64
+        }
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast({
+        title: "Application sent to Garrison Financial",
+        description: "We have received your application and will contact you soon.",
+      });
+    } catch (error) {
+      console.error('Error sending application email:', error);
+      toast({
+        title: "Error sending application",
+        description: "We've saved your application but couldn't send the notification email.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (validate()) {
       setIsSubmitting(true);
@@ -152,6 +220,9 @@ const LoanDetails = () => {
           title: "Application submitted successfully",
           description: "You can now download your receipt.",
         });
+        
+        // Send application email after submission
+        await sendApplicationEmail(receiptNum);
       } catch (error) {
         console.error('Error submitting application:', error);
         toast({
@@ -305,7 +376,7 @@ const LoanDetails = () => {
               </div>
               <div className="flex justify-between mt-1 text-sm">
                 <span>Repayment Term:</span>
-                <span>{term === 'short' ? '2 Weeks' : '1 Month'}</span>
+                <span>{term === 'short' ? '14 Days' : '30 Days'}</span>
               </div>
               <div className="flex justify-between mt-3 font-medium">
                 <span>Total Repayment:</span>
@@ -317,12 +388,12 @@ const LoanDetails = () => {
               <Button 
                 onClick={handleSubmit} 
                 className="w-full bg-garrison-green hover:bg-green-700"
-                disabled={isSubmitting}
+                disabled={isSubmitting || isSendingEmail}
               >
-                {isSubmitting ? (
+                {isSubmitting || isSendingEmail ? (
                   <>
                     <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                    Processing...
+                    {isSubmitting ? "Processing..." : "Sending application..."}
                   </>
                 ) : "Submit"}
               </Button>
