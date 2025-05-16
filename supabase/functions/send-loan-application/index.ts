@@ -30,6 +30,7 @@ serve(async (req) => {
   }
   
   try {
+    console.log("Processing loan application request...");
     const data: LoanApplicationData = await req.json();
     
     // Create email content
@@ -57,6 +58,7 @@ serve(async (req) => {
       to: adminEmail,
       subject: `New Loan Application: ${data.name} - ${data.receiptNumber}`,
       html: emailContent,
+      attachments: [],
     };
     
     // Add PDF attachment if available
@@ -68,9 +70,11 @@ serve(async (req) => {
           encoding: 'base64',
         },
       ];
+      console.log("PDF attachment added to email");
     }
     
     // Send email
+    console.log("Sending email to:", adminEmail);
     const emailResponse = await resend.emails.send(emailOptions);
     
     console.log("Email sent successfully:", emailResponse);

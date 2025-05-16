@@ -16,7 +16,7 @@ const Index = () => {
                 Your Gateway To Financial Prosperity
               </h1>
               <p className="text-xl mb-8">
-                At <span className="text-sm md:text-base">Garrison Financial Nexus</span>, we provide comprehensive financial services 
+                At <span className="font-bold">Garrison Financial Nexus</span>, we provide comprehensive financial services 
                 to help you achieve your financial goals and secure your future.
               </p>
               <div className="flex space-x-4">
@@ -27,7 +27,7 @@ const Index = () => {
                   </Link>
                 </Button>
                 <Button variant="outline" asChild className="border-2 border-white hover:bg-white/10">
-                  <Link to="/contact" className="text-garrison-green bg-white">Contact Us</Link>
+                  <Link to="/contact" className="text-white">Contact Us</Link>
                 </Button>
               </div>
             </div>
@@ -74,7 +74,7 @@ const Index = () => {
               <Wallet className="h-12 w-12 text-garrison-green mb-4" />
               <h3 className="text-xl font-bold mb-2">Money Saving</h3>
               <p className="text-gray-600 mb-4">
-                Grow your wealth with our savings plans offering attractive 5% returns every 2 months.
+                Save your money with us at a really low bank interest rate of only 2% every month.
               </p>
               <Link to="/money-saving" className="text-garrison-green hover:underline inline-flex items-center">
                 Learn More <ArrowRight className="ml-1 h-4 w-4" />

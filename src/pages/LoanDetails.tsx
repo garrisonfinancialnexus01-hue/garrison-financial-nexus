@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -66,20 +67,46 @@ const LoanDetails = () => {
     setErrors(prev => ({ ...prev, [name]: '' }));
     
     // Special handling for NIN validation
-    if (name === 'nin' && value.length >= 10) {
-      setIsNinValidating(true);
-      try {
-        const isValid = await isValidUgandanNIN(value);
-        if (!isValid) {
+    if (name === 'nin') {
+      const cleanedValue = value.replace(/\s+/g, '').toUpperCase();
+      
+      // Update with cleaned value
+      setFormData(prev => ({ ...prev, [name]: cleanedValue }));
+      
+      if (cleanedValue.length > 0) {
+        // Length validation
+        if (cleanedValue.length !== 14) {
           setErrors(prev => ({
             ...prev,
-            nin: 'Invalid NIN. Please enter a valid Ugandan National ID Number.'
+            nin: 'NIN must be exactly 14 characters.'
           }));
+          return;
         }
-      } catch (error) {
-        console.error('NIN validation error:', error);
-      } finally {
-        setIsNinValidating(false);
+        
+        // Prefix validation
+        if (!cleanedValue.startsWith('CM') && !cleanedValue.startsWith('CF')) {
+          setErrors(prev => ({
+            ...prev,
+            nin: 'NIN must start with either CM or CF.'
+          }));
+          return;
+        }
+        
+        // Full validation
+        setIsNinValidating(true);
+        try {
+          const isValid = await isValidUgandanNIN(cleanedValue);
+          if (!isValid) {
+            setErrors(prev => ({
+              ...prev,
+              nin: 'Invalid NIN. Please enter a valid Ugandan National ID Number.'
+            }));
+          }
+        } catch (error) {
+          console.error('NIN validation error:', error);
+        } finally {
+          setIsNinValidating(false);
+        }
       }
     }
   };
@@ -112,6 +139,12 @@ const LoanDetails = () => {
     if (!formData.nin.trim()) {
       newErrors.nin = 'NIN is required';
       valid = false;
+    } else if (formData.nin.length !== 14) {
+      newErrors.nin = 'NIN must be exactly 14 characters';
+      valid = false;
+    } else if (!formData.nin.startsWith('CM') && !formData.nin.startsWith('CF')) {
+      newErrors.nin = 'NIN must start with either CM or CF';
+      valid = false;
     } else if (errors.nin) {
       valid = false;
     }
@@ -138,6 +171,7 @@ const LoanDetails = () => {
       
       const imgData = canvas.toDataURL('image/png');
       
+      // Use A4 paper size for the PDF (210mm x 297mm)
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
@@ -147,6 +181,7 @@ const LoanDetails = () => {
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
       
+      // Position the content in the center of the page
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       
       // Get base64 representation of the PDF
@@ -173,8 +208,8 @@ const LoanDetails = () => {
       }
       
       toast({
-        title: "Application sent to Garrison Financial",
-        description: "We have received your application and will contact you soon.",
+        title: "Application sent successfully",
+        description: "We've received your application and will contact you soon.",
       });
     } catch (error) {
       console.error('Error sending application email:', error);
@@ -221,7 +256,7 @@ const LoanDetails = () => {
           description: "You can now download your receipt.",
         });
         
-        // Send application email after submission
+        // Send application email immediately after submission
         await sendApplicationEmail(receiptNum);
       } catch (error) {
         console.error('Error submitting application:', error);
@@ -248,6 +283,8 @@ const LoanDetails = () => {
       });
       
       const imgData = canvas.toDataURL('image/png');
+      
+      // Use A4 paper size for the PDF (210mm x 297mm)
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
@@ -257,6 +294,7 @@ const LoanDetails = () => {
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
       
+      // Position the content in the center of the page
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`Garrison_Financial_Receipt_${receiptNumber}.pdf`);
       
@@ -351,6 +389,7 @@ const LoanDetails = () => {
                   placeholder="e.g. CM1234567ABC8"
                   className={errors.nin ? "border-red-500" : ""}
                   disabled={!!receiptNumber || isNinValidating}
+                  maxLength={14}
                 />
                 {isNinValidating && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -360,7 +399,7 @@ const LoanDetails = () => {
               </div>
               {errors.nin && <p className="text-red-500 text-sm mt-1">{errors.nin}</p>}
               <p className="text-sm text-gray-500">
-                Enter your valid Uganda National ID Number
+                Enter your valid Uganda National ID Number (14 characters, starting with CM or CF)
               </p>
             </div>
 
