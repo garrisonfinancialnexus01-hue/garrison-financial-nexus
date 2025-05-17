@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -145,35 +146,45 @@ const LoanDetails = () => {
     } else if (!formData.nin.startsWith('CM') && !formData.nin.startsWith('CF')) {
       newErrors.nin = 'NIN must start with either CM or CF';
       valid = false;
-    } else if (errors.nin) {
-      valid = false;
+    } else {
+      // Check for exactly 8 digits and 6 letters (including CM/CF)
+      const digits = (formData.nin.match(/\d/g) || []).length;
+      const letters = (formData.nin.match(/[A-Z]/g) || []).length;
+      
+      if (digits !== 8) {
+        newErrors.nin = 'NIN must contain exactly 8 numbers';
+        valid = false;
+      } else if (letters !== 6) {
+        newErrors.nin = 'NIN must contain exactly 6 letters (including CM/CF prefix)';
+        valid = false;
+      }
     }
 
     setErrors(newErrors);
     return valid;
   };
 
-  const generatePDF = async () => {
+  const generatePDF = async (): Promise<{pdf: jsPDF, pdfBase64: string}> => {
     if (!receiptRef.current) {
       throw new Error("Receipt reference is not available");
     }
     
     try {
+      console.log("Starting PDF generation process");
+      
+      // Force any pending renders to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       // Create canvas with higher quality settings
       const canvas = await html2canvas(receiptRef.current, {
-        scale: 3, // Higher scale for better quality
+        scale: 2, // Good balance between quality and performance
         logging: false,
         useCORS: true,
         backgroundColor: '#ffffff',
-        allowTaint: true,
-        onclone: (document) => {
-          const element = document.getElementById('receipt');
-          if (element) {
-            element.style.width = '210mm'; // A4 width
-            element.style.padding = '15mm'; // Add padding inside A4
-          }
-        }
+        allowTaint: true
       });
+      
+      console.log("Canvas generated with dimensions:", canvas.width, "x", canvas.height);
       
       const imgData = canvas.toDataURL('image/png', 1.0);
       
@@ -185,17 +196,76 @@ const LoanDetails = () => {
       });
       
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = Math.min((canvas.height * pdfWidth) / canvas.width, 297);
+      const pdfHeight = pdf.internal.pageSize.getHeight();
       
-      // Add image to PDF
+      // Add image to PDF, fitting it to the page
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      
+      console.log("PDF generated successfully");
       
       return {
         pdf,
         pdfBase64: pdf.output('datauristring').split(',')[1]
       };
     } catch (error) {
-      console.error("Error generating PDF:", error);
+      console.error("Error in generatePDF:", error);
+      throw error;
+    }
+  };
+
+  const generateSimplePDF = async (): Promise<{pdf: jsPDF, pdfBase64: string}> => {
+    if (!receiptRef.current) {
+      throw new Error("Receipt reference is not available");
+    }
+    
+    try {
+      console.log("Starting simple PDF generation as fallback");
+      
+      // Create a new PDF directly
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      // Add text directly to PDF
+      pdf.setFontSize(16);
+      pdf.text("Garrison Financial Nexus", 20, 20);
+      
+      pdf.setFontSize(12);
+      pdf.text(`Receipt #${receiptNumber}`, 20, 30);
+      pdf.text(`Date: ${new Date().toLocaleDateString()}`, 20, 40);
+      
+      pdf.setFontSize(14);
+      pdf.text("Loan Application Details", 20, 60);
+      
+      pdf.setFontSize(12);
+      pdf.text(`Name: ${formData.name}`, 20, 70);
+      pdf.text(`Phone: ${formData.phone}`, 20, 80);
+      pdf.text(`Email: ${formData.email}`, 20, 90);
+      pdf.text(`NIN: ${formData.nin}`, 20, 100);
+      
+      pdf.setFontSize(14);
+      pdf.text("Loan Summary", 20, 120);
+      
+      pdf.setFontSize(12);
+      pdf.text(`Loan Amount: ${amount.toLocaleString()} UGX`, 20, 130);
+      pdf.text(`Term: ${term === 'short' ? '14 Days' : '30 Days'}`, 20, 140);
+      pdf.text(`Interest Rate: ${interest}%`, 20, 150);
+      pdf.text(`Total Repayment: ${totalAmount.toLocaleString()} UGX`, 20, 160);
+      
+      pdf.setFontSize(10);
+      pdf.text("Thank you for choosing Garrison Financial Nexus for your financial needs.", 20, 180);
+      pdf.text("For inquiries: garrisonfinancialnexus01@gmail.com", 20, 190);
+      
+      console.log("Simple PDF generated successfully");
+      
+      return {
+        pdf,
+        pdfBase64: pdf.output('datauristring').split(',')[1]
+      };
+    } catch (error) {
+      console.error("Error in generateSimplePDF:", error);
       throw error;
     }
   };
@@ -203,9 +273,24 @@ const LoanDetails = () => {
   const sendApplicationEmail = async (receiptNum: string) => {
     try {
       setIsSendingEmail(true);
+      console.log("Starting email sending process");
       
-      // Generate PDF first
-      const { pdfBase64 } = await generatePDF();
+      // Try primary PDF generation first, fallback to simple one if it fails
+      let pdfBase64 = "";
+      try {
+        const { pdfBase64: generatedPdfBase64 } = await generatePDF();
+        pdfBase64 = generatedPdfBase64;
+      } catch (pdfError) {
+        console.error("Primary PDF generation failed, using fallback:", pdfError);
+        const { pdfBase64: fallbackPdfBase64 } = await generateSimplePDF();
+        pdfBase64 = fallbackPdfBase64;
+      }
+      
+      if (!pdfBase64) {
+        throw new Error("Failed to generate PDF");
+      }
+      
+      console.log("PDF generated, sending email");
       
       // Multiple attempts for sending email
       let attempts = 0;
@@ -215,6 +300,8 @@ const LoanDetails = () => {
       while (attempts < maxAttempts && !success) {
         try {
           attempts++;
+          console.log(`Email sending attempt ${attempts}`);
+          
           // Call the Supabase edge function to send email with PDF
           const { data, error } = await supabase.functions.invoke('send-loan-application', {
             body: {
@@ -232,10 +319,11 @@ const LoanDetails = () => {
           });
           
           if (error) {
-            console.error(`Attempt ${attempts} failed:`, error);
+            console.error(`Email function attempt ${attempts} failed:`, error);
             if (attempts === maxAttempts) throw error;
           } else {
             success = true;
+            console.log("Email function call succeeded:", data);
           }
         } catch (attemptError) {
           console.error(`Email sending attempt ${attempts} failed:`, attemptError);
@@ -246,10 +334,13 @@ const LoanDetails = () => {
       }
       
       if (success) {
+        console.log("Email sent successfully");
         toast({
           title: "Application sent successfully",
           description: "We've received your application and will contact you soon.",
         });
+      } else {
+        throw new Error("Failed to send email after multiple attempts");
       }
     } catch (error) {
       console.error('Error sending application email:', error);
@@ -267,18 +358,33 @@ const LoanDetails = () => {
       setIsSubmitting(true);
       
       try {
+        console.log("Submitting application");
+        // Check Supabase connection
+        const { data: connectionTest, error: connectionError } = await supabase.from('loan_applications').select('count').limit(1);
+        
+        if (connectionError) {
+          console.error("Supabase connection test failed:", connectionError);
+          throw new Error("Database connection failed. Please try again later.");
+        }
+        
+        console.log("Database connection successful");
+        
         // Save to Supabase and get receipt number
         const { data, error } = await supabase
           .rpc('generate_receipt_number')
           .single();
           
-        if (error) throw error;
+        if (error) {
+          console.error("Error generating receipt number:", error);
+          throw error;
+        }
         
         const receiptNum = data as string;
+        console.log("Generated receipt number:", receiptNum);
         setReceiptNumber(receiptNum);
         
         // Insert application with receipt number
-        await supabase.from('loan_applications').insert({
+        const { error: insertError } = await supabase.from('loan_applications').insert({
           name: formData.name,
           phone: formData.phone,
           email: formData.email,
@@ -290,18 +396,29 @@ const LoanDetails = () => {
           receipt_number: receiptNum
         });
         
+        if (insertError) {
+          console.error("Error inserting application:", insertError);
+          throw insertError;
+        }
+        
+        console.log("Application data saved successfully");
+        
         toast({
           title: "Application submitted successfully",
           description: "You can now download your receipt.",
         });
         
-        // Send application email after submission
-        await sendApplicationEmail(receiptNum);
+        // Send application email after submission with a slight delay to ensure receipt rendering
+        setTimeout(() => {
+          sendApplicationEmail(receiptNum).catch(emailError => {
+            console.error("Failed to send email in background:", emailError);
+          });
+        }, 500);
       } catch (error) {
         console.error('Error submitting application:', error);
         toast({
           title: "Error submitting application",
-          description: "Please try again.",
+          description: error instanceof Error ? error.message : "Please try again.",
           variant: "destructive"
         });
       } finally {
@@ -315,60 +432,94 @@ const LoanDetails = () => {
     
     try {
       setIsDownloading(true);
+      console.log("Starting receipt download");
       
-      // Use the optimized PDF generation function
-      const { pdf } = await generatePDF();
-      
-      // Save the PDF file with a unique name
-      pdf.save(`Garrison_Financial_Receipt_${receiptNumber}.pdf`);
-      
-      toast({
-        title: "Receipt downloaded",
-        description: "Your receipt has been downloaded successfully.",
-      });
-      
-      // Navigate to homepage after successful download with a delay
-      setTimeout(() => {
-        navigate('/');
-      }, 2000);
-    } catch (error) {
-      console.error('Error downloading receipt:', error);
-      
-      // More user-friendly error handling
-      toast({
-        title: "Download failed",
-        description: "Trying alternative download method...",
-        variant: "destructive"
-      });
-      
-      // Try an alternative method - this is a fallback
+      // Method 1: Direct PDF generation
       try {
-        // Fallback to a simpler way to create PDF
-        if (!receiptRef.current) throw new Error("Receipt not available");
+        const { pdf } = await generatePDF();
         
-        const canvas = await html2canvas(receiptRef.current, { scale: 2 });
-        const imgData = canvas.toDataURL('image/png');
-        
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const imgProps = pdf.getImageProperties(imgData);
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        // Save the PDF file with a unique name
         pdf.save(`Garrison_Financial_Receipt_${receiptNumber}.pdf`);
+        
+        console.log("Receipt downloaded successfully using method 1");
+        
+        toast({
+          title: "Receipt downloaded",
+          description: "Your receipt has been downloaded successfully.",
+        });
+        
+        // Navigate to homepage after successful download with a delay
+        setTimeout(() => {
+          navigate('/');
+        }, 2000);
+        
+        return;
+      } catch (method1Error) {
+        console.error("Method 1 download failed, trying method 2:", method1Error);
+      }
+      
+      // Method 2: Use a different approach
+      try {
+        const { pdf } = await generateSimplePDF();
+        pdf.save(`Garrison_Financial_Receipt_${receiptNumber}.pdf`);
+        
+        console.log("Receipt downloaded successfully using method 2");
+        
+        toast({
+          title: "Receipt downloaded",
+          description: "Your receipt has been downloaded successfully.",
+        });
+        
+        // Navigate to homepage after successful download with a delay
+        setTimeout(() => {
+          navigate('/');
+        }, 2000);
+        
+        return;
+      } catch (method2Error) {
+        console.error("Method 2 download failed, trying method 3:", method2Error);
+      }
+      
+      // Method 3: Direct data URL download as final fallback
+      try {
+        // Create a simple PDF
+        const pdf = new jsPDF();
+        pdf.text(`Garrison Financial Receipt #${receiptNumber}`, 20, 20);
+        pdf.text(`Name: ${formData.name}`, 20, 30);
+        pdf.text(`Amount: ${amount.toLocaleString()} UGX`, 20, 40);
+        
+        // Create a download link
+        const blob = pdf.output('blob');
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Garrison_Financial_Receipt_${receiptNumber}.pdf`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+        
+        console.log("Receipt downloaded successfully using method 3");
         
         toast({
           title: "Receipt downloaded",
           description: "Your receipt has been downloaded using alternative method.",
         });
-      } catch (fallbackError) {
-        console.error('Fallback download failed:', fallbackError);
-        toast({
-          title: "Error downloading receipt",
-          description: "Please try again or contact support.",
-          variant: "destructive"
-        });
+        
+        // Navigate to homepage after successful download with a delay
+        setTimeout(() => {
+          navigate('/');
+        }, 2000);
+      } catch (method3Error) {
+        console.error("All methods failed:", method3Error);
+        throw new Error("Download failed. Please try again.");
       }
+      
+    } catch (error) {
+      console.error('Error downloading receipt:', error);
+      toast({
+        title: "Error downloading receipt",
+        description: "Please try again or contact support.",
+        variant: "destructive"
+      });
     } finally {
       setIsDownloading(false);
     }
@@ -516,9 +667,9 @@ const LoanDetails = () => {
         </CardContent>
       </Card>
       
-      {/* Hidden receipt for PDF generation - improved for reliable PDF rendering */}
+      {/* Receipt for PDF generation with improved rendering */}
       {receiptNumber && (
-        <div className="hidden">
+        <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', width: '210mm', height: '297mm' }}>
           <div ref={receiptRef}>
             <Receipt 
               name={formData.name}

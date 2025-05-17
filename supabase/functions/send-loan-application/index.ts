@@ -32,6 +32,12 @@ serve(async (req) => {
   try {
     console.log("Processing loan application request...");
     const data: LoanApplicationData = await req.json();
+    console.log("Received data for receipt number:", data.receiptNumber);
+    
+    if (!data.receiptPdf) {
+      console.error("No PDF attachment provided");
+      throw new Error("PDF receipt is required");
+    }
     
     // Create email content
     const loanTermText = data.term === 'short' ? '14 days' : '30 days';
@@ -66,28 +72,39 @@ serve(async (req) => {
       tags: [{ name: "category", value: "loan_application" }, { name: "priority", value: "high" }]
     };
     
-    // Add PDF attachment if available
-    if (data.receiptPdf) {
-      emailOptions.attachments = [
-        {
-          filename: `Garrison_Financial_Receipt_${data.receiptNumber}.pdf`,
-          content: data.receiptPdf,
-          encoding: 'base64',
-        },
-      ];
-      console.log("PDF attachment added to email");
-    } else {
-      console.log("Warning: No PDF attachment provided");
+    // Add PDF attachment
+    emailOptions.attachments = [
+      {
+        filename: `Garrison_Financial_Receipt_${data.receiptNumber}.pdf`,
+        content: data.receiptPdf,
+        encoding: 'base64',
+      },
+    ];
+    console.log("PDF attachment added to email");
+    
+    // Send email with retry mechanism
+    let emailResponse = null;
+    let attempts = 0;
+    const maxAttempts = 3;
+    
+    while (attempts < maxAttempts && !emailResponse) {
+      try {
+        attempts++;
+        console.log(`Attempt ${attempts} to send admin email to: ${adminEmail}`);
+        
+        emailResponse = await resend.emails.send(emailOptions);
+        console.log("Admin email sent successfully:", JSON.stringify(emailResponse));
+      } catch (emailError) {
+        console.error(`Email attempt ${attempts} failed:`, emailError);
+        if (attempts === maxAttempts) throw emailError;
+        // Add a small delay before retry
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
     }
-    
-    // Send email with priority
-    console.log("Sending admin email to:", adminEmail);
-    const emailResponse = await resend.emails.send(emailOptions);
-    
-    console.log("Admin email sent successfully:", emailResponse);
     
     // Also send a confirmation email to the applicant with receipt
     try {
+      console.log(`Sending confirmation email to applicant: ${data.email}`);
       await resend.emails.send({
         from: "Garrison Financial Nexus <onboarding@resend.dev>",
         to: [data.email],
@@ -104,13 +121,13 @@ serve(async (req) => {
           <p>Our team will review your application and contact you shortly.</p>
           <p>Best regards,<br>Garrison Financial Nexus Team</p>
         `,
-        attachments: data.receiptPdf ? [
+        attachments: [
           {
             filename: `Your_Receipt_${data.receiptNumber}.pdf`,
             content: data.receiptPdf,
             encoding: 'base64',
           }
-        ] : [],
+        ],
         tags: [{ name: "category", value: "client_confirmation" }]
       });
       console.log("Client confirmation email sent successfully");
