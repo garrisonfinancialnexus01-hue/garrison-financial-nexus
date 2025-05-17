@@ -50,15 +50,20 @@ serve(async (req) => {
       <p><strong>Interest Rate:</strong> ${data.interest}%</p>
       <p><strong>Total Repayment:</strong> ${data.totalAmount.toLocaleString()} UGX</p>
       <p><strong>Receipt Number:</strong> ${data.receiptNumber}</p>
+      
+      <p style="background-color: #f8f9fa; padding: 10px; border-left: 4px solid #399B53; margin-top: 20px;">
+        <strong>Note:</strong> The receipt is attached as a PDF file to this email.
+      </p>
     `;
     
-    // Create email options
+    // Prepare email options with higher priority
     const emailOptions = {
       from: "Garrison Financial Nexus <onboarding@resend.dev>",
       to: adminEmail,
       subject: `New Loan Application: ${data.name} - ${data.receiptNumber}`,
       html: emailContent,
       attachments: [],
+      tags: [{ name: "priority", value: "high" }]
     };
     
     // Add PDF attachment if available
@@ -71,13 +76,41 @@ serve(async (req) => {
         },
       ];
       console.log("PDF attachment added to email");
+    } else {
+      console.log("Warning: No PDF attachment provided");
     }
     
-    // Send email
+    // Send email with priority
     console.log("Sending email to:", adminEmail);
     const emailResponse = await resend.emails.send(emailOptions);
     
     console.log("Email sent successfully:", emailResponse);
+    
+    // Also send a confirmation email to the applicant
+    await resend.emails.send({
+      from: "Garrison Financial Nexus <onboarding@resend.dev>",
+      to: data.email,
+      subject: `Your Loan Application - ${data.receiptNumber}`,
+      html: `
+        <h1>Thank you for your application!</h1>
+        <p>Dear ${data.name},</p>
+        <p>We have received your loan application with the following details:</p>
+        <ul>
+          <li><strong>Loan Amount:</strong> ${data.amount.toLocaleString()} UGX</li>
+          <li><strong>Term:</strong> ${loanTermText}</li>
+          <li><strong>Receipt Number:</strong> ${data.receiptNumber}</li>
+        </ul>
+        <p>Our team will review your application and contact you shortly.</p>
+        <p>Best regards,<br>Garrison Financial Nexus Team</p>
+      `,
+      attachments: data.receiptPdf ? [
+        {
+          filename: `Your_Receipt_${data.receiptNumber}.pdf`,
+          content: data.receiptPdf,
+          encoding: 'base64',
+        }
+      ] : [],
+    });
     
     return new Response(
       JSON.stringify({ success: true, message: "Application email sent successfully" }),

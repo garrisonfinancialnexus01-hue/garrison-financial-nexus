@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -44,6 +43,7 @@ const LoanDetails = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [receiptNumber, setReceiptNumber] = useState<string | null>(null);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   if (!state) {
     return (
@@ -163,10 +163,18 @@ const LoanDetails = () => {
       }
       
       const canvas = await html2canvas(receiptRef.current, {
-        scale: 2,
+        scale: 3, // Higher scale for better quality
         logging: false,
         useCORS: true,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        allowTaint: true,
+        onclone: (document) => {
+          const element = document.getElementById('receipt');
+          if (element) {
+            element.style.width = '210mm'; // A4 width
+            element.style.padding = '15mm'; // Add padding inside A4
+          }
+        }
       });
       
       const imgData = canvas.toDataURL('image/png');
@@ -181,8 +189,8 @@ const LoanDetails = () => {
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
       
-      // Position the content in the center of the page
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      // Add image to PDF
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, Math.min(pdfHeight, 297));
       
       // Get base64 representation of the PDF
       const pdfBase64 = pdf.output('datauristring').split(',')[1];
@@ -275,14 +283,28 @@ const LoanDetails = () => {
     if (!receiptRef.current) return;
     
     try {
-      const canvas = await html2canvas(receiptRef.current, {
-        scale: 2,
+      setIsDownloading(true);
+      
+      // Create a clone of the receipt element for rendering
+      const receiptElement = receiptRef.current;
+      
+      // Create a canvas at a higher resolution
+      const canvas = await html2canvas(receiptElement, {
+        scale: 3, // Higher scale for better quality
         logging: false,
         useCORS: true,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        allowTaint: true,
+        onclone: (document) => {
+          const element = document.getElementById('receipt');
+          if (element) {
+            element.style.width = '210mm'; // A4 width
+            element.style.padding = '15mm'; // Add padding inside A4
+          }
+        }
       });
       
-      const imgData = canvas.toDataURL('image/png');
+      const imgData = canvas.toDataURL('image/png', 1.0);
       
       // Use A4 paper size for the PDF (210mm x 297mm)
       const pdf = new jsPDF({
@@ -292,10 +314,12 @@ const LoanDetails = () => {
       });
       
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const pdfHeight = Math.min((canvas.height * pdfWidth) / canvas.width, 297);
       
-      // Position the content in the center of the page
+      // Position the content properly on the A4 page
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      
+      // Save the PDF file with a unique name
       pdf.save(`Garrison_Financial_Receipt_${receiptNumber}.pdf`);
       
       toast({
@@ -303,7 +327,7 @@ const LoanDetails = () => {
         description: "Your receipt has been downloaded successfully.",
       });
       
-      // Navigate to homepage after successful download
+      // Navigate to homepage after successful download with a delay
       setTimeout(() => {
         navigate('/');
       }, 2000);
@@ -314,6 +338,8 @@ const LoanDetails = () => {
         description: "Please try again.",
         variant: "destructive"
       });
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -440,17 +466,26 @@ const LoanDetails = () => {
               <Button 
                 onClick={downloadReceipt} 
                 className="w-full bg-garrison-green hover:bg-green-700"
-                disabled={!receiptRef.current}
+                disabled={isDownloading}
               >
-                <Download className="mr-2 h-4 w-4" />
-                Download Receipt
+                {isDownloading ? (
+                  <>
+                    <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Preparing download...
+                  </>
+                ) : (
+                  <>
+                    <Download className="mr-2 h-4 w-4" />
+                    Download Receipt
+                  </>
+                )}
               </Button>
             )}
           </div>
         </CardContent>
       </Card>
       
-      {/* Hidden receipt for PDF generation */}
+      {/* Hidden receipt for PDF generation - improved visibility for PDF generation */}
       {receiptNumber && (
         <div className="hidden">
           <div ref={receiptRef}>

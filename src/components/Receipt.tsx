@@ -16,7 +16,7 @@ interface ReceiptProps {
 
 const Receipt = ({ name, phone, email, nin, amount, term, interest, totalAmount, receiptNumber }: ReceiptProps) => {
   return (
-    <div className="p-8 bg-white text-black" id="receipt">
+    <div className="p-8 bg-white text-black" id="receipt" style={{width: '210mm', minHeight: '297mm'}}>
       <div className="flex justify-between items-center mb-6">
         <div className="font-bold text-xl text-garrison-green">Garrison Financial Nexus</div>
         <div className="text-right">
