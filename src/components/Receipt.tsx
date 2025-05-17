@@ -15,13 +15,16 @@ interface ReceiptProps {
 }
 
 const Receipt = ({ name, phone, email, nin, amount, term, interest, totalAmount, receiptNumber }: ReceiptProps) => {
+  // Format the current date
+  const currentDate = format(new Date(), 'MMMM dd, yyyy');
+  
   return (
     <div className="p-8 bg-white text-black" id="receipt" style={{width: '210mm', height: '297mm', margin: '0 auto'}}>
       <div className="flex justify-between items-center mb-6">
         <div className="font-bold text-xl text-garrison-green">Garrison Financial Nexus</div>
         <div className="text-right">
           <div>Receipt #{receiptNumber}</div>
-          <div>{format(new Date(), 'MMMM dd, yyyy')}</div>
+          <div>{currentDate}</div>
         </div>
       </div>
       
@@ -64,6 +67,7 @@ const Receipt = ({ name, phone, email, nin, amount, term, interest, totalAmount,
       <div className="mt-8 pt-4 border-t border-gray-300 text-center text-sm text-gray-500">
         <p>Thank you for choosing Garrison Financial Nexus for your financial needs.</p>
         <p>For any inquiries, please contact our customer service at garrisonfinancialnexus01@gmail.com</p>
+        <p>Date of Issue: {currentDate}</p>
       </div>
     </div>
   );
