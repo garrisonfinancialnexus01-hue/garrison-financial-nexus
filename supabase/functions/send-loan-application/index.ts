@@ -56,14 +56,14 @@ serve(async (req) => {
       </p>
     `;
     
-    // Prepare email options with higher priority
-    const emailOptions = {
+    // Prepare email options with higher priority and proper attachments
+    let emailOptions = {
       from: "Garrison Financial Nexus <onboarding@resend.dev>",
-      to: adminEmail,
+      to: [adminEmail],
       subject: `New Loan Application: ${data.name} - ${data.receiptNumber}`,
       html: emailContent,
-      attachments: [],
-      tags: [{ name: "priority", value: "high" }]
+      attachments: [] as any[],
+      tags: [{ name: "category", value: "loan_application" }, { name: "priority", value: "high" }]
     };
     
     // Add PDF attachment if available
@@ -81,36 +81,43 @@ serve(async (req) => {
     }
     
     // Send email with priority
-    console.log("Sending email to:", adminEmail);
+    console.log("Sending admin email to:", adminEmail);
     const emailResponse = await resend.emails.send(emailOptions);
     
-    console.log("Email sent successfully:", emailResponse);
+    console.log("Admin email sent successfully:", emailResponse);
     
-    // Also send a confirmation email to the applicant
-    await resend.emails.send({
-      from: "Garrison Financial Nexus <onboarding@resend.dev>",
-      to: data.email,
-      subject: `Your Loan Application - ${data.receiptNumber}`,
-      html: `
-        <h1>Thank you for your application!</h1>
-        <p>Dear ${data.name},</p>
-        <p>We have received your loan application with the following details:</p>
-        <ul>
-          <li><strong>Loan Amount:</strong> ${data.amount.toLocaleString()} UGX</li>
-          <li><strong>Term:</strong> ${loanTermText}</li>
-          <li><strong>Receipt Number:</strong> ${data.receiptNumber}</li>
-        </ul>
-        <p>Our team will review your application and contact you shortly.</p>
-        <p>Best regards,<br>Garrison Financial Nexus Team</p>
-      `,
-      attachments: data.receiptPdf ? [
-        {
-          filename: `Your_Receipt_${data.receiptNumber}.pdf`,
-          content: data.receiptPdf,
-          encoding: 'base64',
-        }
-      ] : [],
-    });
+    // Also send a confirmation email to the applicant with receipt
+    try {
+      await resend.emails.send({
+        from: "Garrison Financial Nexus <onboarding@resend.dev>",
+        to: [data.email],
+        subject: `Your Loan Application - ${data.receiptNumber}`,
+        html: `
+          <h1>Thank you for your application!</h1>
+          <p>Dear ${data.name},</p>
+          <p>We have received your loan application with the following details:</p>
+          <ul>
+            <li><strong>Loan Amount:</strong> ${data.amount.toLocaleString()} UGX</li>
+            <li><strong>Term:</strong> ${loanTermText}</li>
+            <li><strong>Receipt Number:</strong> ${data.receiptNumber}</li>
+          </ul>
+          <p>Our team will review your application and contact you shortly.</p>
+          <p>Best regards,<br>Garrison Financial Nexus Team</p>
+        `,
+        attachments: data.receiptPdf ? [
+          {
+            filename: `Your_Receipt_${data.receiptNumber}.pdf`,
+            content: data.receiptPdf,
+            encoding: 'base64',
+          }
+        ] : [],
+        tags: [{ name: "category", value: "client_confirmation" }]
+      });
+      console.log("Client confirmation email sent successfully");
+    } catch (clientEmailError) {
+      console.error("Error sending client email:", clientEmailError);
+      // Continue execution even if client email fails
+    }
     
     return new Response(
       JSON.stringify({ success: true, message: "Application email sent successfully" }),

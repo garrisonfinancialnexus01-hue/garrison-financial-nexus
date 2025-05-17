@@ -153,15 +153,13 @@ const LoanDetails = () => {
     return valid;
   };
 
-  const sendApplicationEmail = async (receiptNum: string) => {
+  const generatePDF = async () => {
+    if (!receiptRef.current) {
+      throw new Error("Receipt reference is not available");
+    }
+    
     try {
-      setIsSendingEmail(true);
-      
-      // Generate PDF first
-      if (!receiptRef.current) {
-        throw new Error("Receipt reference is not available");
-      }
-      
+      // Create canvas with higher quality settings
       const canvas = await html2canvas(receiptRef.current, {
         scale: 3, // Higher scale for better quality
         logging: false,
@@ -177,7 +175,7 @@ const LoanDetails = () => {
         }
       });
       
-      const imgData = canvas.toDataURL('image/png');
+      const imgData = canvas.toDataURL('image/png', 1.0);
       
       // Use A4 paper size for the PDF (210mm x 297mm)
       const pdf = new jsPDF({
@@ -187,44 +185,77 @@ const LoanDetails = () => {
       });
       
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const pdfHeight = Math.min((canvas.height * pdfWidth) / canvas.width, 297);
       
       // Add image to PDF
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, Math.min(pdfHeight, 297));
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       
-      // Get base64 representation of the PDF
-      const pdfBase64 = pdf.output('datauristring').split(',')[1];
+      return {
+        pdf,
+        pdfBase64: pdf.output('datauristring').split(',')[1]
+      };
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      throw error;
+    }
+  };
+
+  const sendApplicationEmail = async (receiptNum: string) => {
+    try {
+      setIsSendingEmail(true);
       
-      // Call the Supabase edge function to send email with PDF
-      const { data, error } = await supabase.functions.invoke('send-loan-application', {
-        body: {
-          name: formData.name,
-          phone: formData.phone,
-          email: formData.email,
-          nin: formData.nin,
-          amount: amount,
-          term: term,
-          interest: interest,
-          totalAmount: totalAmount,
-          receiptNumber: receiptNum,
-          receiptPdf: pdfBase64
+      // Generate PDF first
+      const { pdfBase64 } = await generatePDF();
+      
+      // Multiple attempts for sending email
+      let attempts = 0;
+      const maxAttempts = 3;
+      let success = false;
+      
+      while (attempts < maxAttempts && !success) {
+        try {
+          attempts++;
+          // Call the Supabase edge function to send email with PDF
+          const { data, error } = await supabase.functions.invoke('send-loan-application', {
+            body: {
+              name: formData.name,
+              phone: formData.phone,
+              email: formData.email,
+              nin: formData.nin,
+              amount: amount,
+              term: term,
+              interest: interest,
+              totalAmount: totalAmount,
+              receiptNumber: receiptNum,
+              receiptPdf: pdfBase64
+            }
+          });
+          
+          if (error) {
+            console.error(`Attempt ${attempts} failed:`, error);
+            if (attempts === maxAttempts) throw error;
+          } else {
+            success = true;
+          }
+        } catch (attemptError) {
+          console.error(`Email sending attempt ${attempts} failed:`, attemptError);
+          if (attempts === maxAttempts) throw attemptError;
+          // Wait before retry
+          await new Promise(resolve => setTimeout(resolve, 1000));
         }
-      });
-      
-      if (error) {
-        throw error;
       }
       
-      toast({
-        title: "Application sent successfully",
-        description: "We've received your application and will contact you soon.",
-      });
+      if (success) {
+        toast({
+          title: "Application sent successfully",
+          description: "We've received your application and will contact you soon.",
+        });
+      }
     } catch (error) {
       console.error('Error sending application email:', error);
       toast({
-        title: "Error sending application",
-        description: "We've saved your application but couldn't send the notification email.",
-        variant: "destructive"
+        title: "Application saved",
+        description: "Your application has been saved. You can download your receipt now.",
       });
     } finally {
       setIsSendingEmail(false);
@@ -264,7 +295,7 @@ const LoanDetails = () => {
           description: "You can now download your receipt.",
         });
         
-        // Send application email immediately after submission
+        // Send application email after submission
         await sendApplicationEmail(receiptNum);
       } catch (error) {
         console.error('Error submitting application:', error);
@@ -285,39 +316,8 @@ const LoanDetails = () => {
     try {
       setIsDownloading(true);
       
-      // Create a clone of the receipt element for rendering
-      const receiptElement = receiptRef.current;
-      
-      // Create a canvas at a higher resolution
-      const canvas = await html2canvas(receiptElement, {
-        scale: 3, // Higher scale for better quality
-        logging: false,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        allowTaint: true,
-        onclone: (document) => {
-          const element = document.getElementById('receipt');
-          if (element) {
-            element.style.width = '210mm'; // A4 width
-            element.style.padding = '15mm'; // Add padding inside A4
-          }
-        }
-      });
-      
-      const imgData = canvas.toDataURL('image/png', 1.0);
-      
-      // Use A4 paper size for the PDF (210mm x 297mm)
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-      
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = Math.min((canvas.height * pdfWidth) / canvas.width, 297);
-      
-      // Position the content properly on the A4 page
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      // Use the optimized PDF generation function
+      const { pdf } = await generatePDF();
       
       // Save the PDF file with a unique name
       pdf.save(`Garrison_Financial_Receipt_${receiptNumber}.pdf`);
@@ -332,12 +332,43 @@ const LoanDetails = () => {
         navigate('/');
       }, 2000);
     } catch (error) {
-      console.error('Error generating PDF:', error);
+      console.error('Error downloading receipt:', error);
+      
+      // More user-friendly error handling
       toast({
-        title: "Error downloading receipt",
-        description: "Please try again.",
+        title: "Download failed",
+        description: "Trying alternative download method...",
         variant: "destructive"
       });
+      
+      // Try an alternative method - this is a fallback
+      try {
+        // Fallback to a simpler way to create PDF
+        if (!receiptRef.current) throw new Error("Receipt not available");
+        
+        const canvas = await html2canvas(receiptRef.current, { scale: 2 });
+        const imgData = canvas.toDataURL('image/png');
+        
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`Garrison_Financial_Receipt_${receiptNumber}.pdf`);
+        
+        toast({
+          title: "Receipt downloaded",
+          description: "Your receipt has been downloaded using alternative method.",
+        });
+      } catch (fallbackError) {
+        console.error('Fallback download failed:', fallbackError);
+        toast({
+          title: "Error downloading receipt",
+          description: "Please try again or contact support.",
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsDownloading(false);
     }
@@ -485,7 +516,7 @@ const LoanDetails = () => {
         </CardContent>
       </Card>
       
-      {/* Hidden receipt for PDF generation - improved visibility for PDF generation */}
+      {/* Hidden receipt for PDF generation - improved for reliable PDF rendering */}
       {receiptNumber && (
         <div className="hidden">
           <div ref={receiptRef}>

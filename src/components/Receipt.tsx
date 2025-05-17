@@ -16,7 +16,7 @@ interface ReceiptProps {
 
 const Receipt = ({ name, phone, email, nin, amount, term, interest, totalAmount, receiptNumber }: ReceiptProps) => {
   return (
-    <div className="p-8 bg-white text-black" id="receipt" style={{width: '210mm', minHeight: '297mm'}}>
+    <div className="p-8 bg-white text-black" id="receipt" style={{width: '210mm', minHeight: '297mm', maxWidth: '100%'}}>
       <div className="flex justify-between items-center mb-6">
         <div className="font-bold text-xl text-garrison-green">Garrison Financial Nexus</div>
         <div className="text-right">
@@ -63,7 +63,7 @@ const Receipt = ({ name, phone, email, nin, amount, term, interest, totalAmount,
       
       <div className="mt-8 pt-4 border-t border-gray-300 text-center text-sm text-gray-500">
         <p>Thank you for choosing Garrison Financial Nexus for your financial needs.</p>
-        <p>For any inquiries, please contact our customer service.</p>
+        <p>For any inquiries, please contact our customer service at garrisonfinancialnexus01@gmail.com</p>
       </div>
     </div>
   );
