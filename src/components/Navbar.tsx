@@ -29,7 +29,7 @@ const Navbar = () => {
                 alt="Garrison Financial Nexus Logo" 
                 className="h-10 w-auto mr-2" 
               />
-              <span className="text-2xl font-bold text-garrison-black">Garrison Financial Nexus</span>
+              <span className="text-xl font-bold text-garrison-black">Garrison Financial Nexus</span>
             </Link>
           </div>
           
