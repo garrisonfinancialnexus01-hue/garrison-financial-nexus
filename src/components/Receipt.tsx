@@ -21,7 +21,14 @@ const Receipt = ({ name, phone, email, nin, amount, term, interest, totalAmount,
   return (
     <div className="p-8 bg-white text-black" id="receipt" style={{width: '210mm', height: '297mm', margin: '0 auto'}}>
       <div className="flex justify-between items-center mb-6">
-        <div className="font-bold text-xl text-garrison-green">Garrison Financial Nexus</div>
+        <div className="flex items-center">
+          <img 
+            src="/lovable-uploads/fd715cbb-c401-4f16-989c-400d699b5baf.png" 
+            alt="Garrison Financial Nexus Logo" 
+            className="h-16 w-16 mr-3" 
+          />
+          <div className="font-bold text-xl text-garrison-green">Garrison Financial Nexus</div>
+        </div>
         <div className="text-right">
           <div>Receipt #{receiptNumber}</div>
           <div>{currentDateTime}</div>
