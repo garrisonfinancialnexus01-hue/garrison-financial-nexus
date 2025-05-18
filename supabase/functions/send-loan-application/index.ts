@@ -2,7 +2,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 
-// Make sure to add your Resend API key in the Supabase Dashboard under Edge Functions secrets
+// Make sure to use the API key properly
 const resendApiKey = Deno.env.get("RESEND_API_KEY");
 const resend = new Resend(resendApiKey);
 const adminEmail = "garrisonfinancialnexus01@gmail.com";
@@ -125,7 +125,6 @@ serve(async (req) => {
           encoding: 'base64',
         },
       ],
-      tags: [{ name: "category", value: "loan_application" }, { name: "priority", value: "high" }]
     };
     
     // Send email with enhanced retry mechanism
@@ -216,7 +215,6 @@ serve(async (req) => {
             encoding: 'base64',
           }
         ],
-        tags: [{ name: "category", value: "client_confirmation" }]
       });
       console.log("Client confirmation email sent successfully");
     } catch (clientEmailError) {
