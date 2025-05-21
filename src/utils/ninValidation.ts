@@ -15,22 +15,31 @@ export const isValidUgandanNIN = async (nin: string): Promise<boolean> => {
     return false;
   }
   
-  // Check that the NIN contains exactly 8 numbers
-  const numberCount = (formattedNIN.match(/[0-9]/g) || []).length;
-  if (numberCount !== 8) {
+  // Count numbers and letters in the NIN
+  const numbers = (formattedNIN.match(/[0-9]/g) || []).length;
+  const letters = (formattedNIN.match(/[A-Z]/g) || []).length;
+  
+  // Check for valid character compositions:
+  // Case 1: 8 numbers, 6 letters (including CM/CF)
+  // Case 2: 9 numbers, 5 letters (including CM/CF)
+  const isValidCase1 = numbers === 8 && letters === 6;
+  const isValidCase2 = numbers === 9 && letters === 5;
+  
+  if (!isValidCase1 && !isValidCase2) {
     return false;
   }
   
-  // Check that the NIN contains at least 4 letters (excluding the CM/CF prefix)
-  // We already know it starts with CM or CF (2 letters), so we need 4 more letters
-  const letterCount = (formattedNIN.match(/[A-Z]/g) || []).length;
-  if (letterCount !== 6) {  // 2 from prefix + 4 more letters
+  // Verify that there are exactly 2 letters in the "CM" or "CF" prefix
+  // and 4 more capital letters for case 1, or 3 more capital letters for case 2
+  const prefixLetters = 2; // CM or CF
+  const requiredExtraLetters = isValidCase1 ? 4 : 3;
+  
+  // The total letters should match our requirements
+  if (letters !== (prefixLetters + requiredExtraLetters)) {
     return false;
   }
   
-  // Enhanced format validation for Ugandan NINs
-  // The first two characters must be CM or CF
-  // Overall must have 8 digits and 6 letters (including CM/CF)
+  // Enhanced format validation
   const ninRegex = /^(CM|CF)[A-Z0-9]{12}$/;
   
   if (!ninRegex.test(formattedNIN)) {

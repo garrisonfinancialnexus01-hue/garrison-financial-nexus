@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -93,6 +92,22 @@ const LoanDetails = () => {
           return;
         }
         
+        // Count letters and numbers
+        const numbers = (cleanedValue.match(/[0-9]/g) || []).length;
+        const letters = (cleanedValue.match(/[A-Z]/g) || []).length;
+        
+        // Check for valid character compositions
+        const isValidCase1 = numbers === 8 && letters === 6;
+        const isValidCase2 = numbers === 9 && letters === 5;
+        
+        if (!isValidCase1 && !isValidCase2) {
+          setErrors(prev => ({
+            ...prev,
+            nin: 'NIN must contain either 8 numbers and 6 letters, or 9 numbers and 5 letters.'
+          }));
+          return;
+        }
+        
         // Full validation
         setIsNinValidating(true);
         try {
@@ -147,15 +162,16 @@ const LoanDetails = () => {
       newErrors.nin = 'NIN must start with either CM or CF';
       valid = false;
     } else {
-      // Check for exactly 8 digits and 6 letters (including CM/CF)
-      const digits = (formData.nin.match(/\d/g) || []).length;
+      // Count numbers and letters
+      const numbers = (formData.nin.match(/\d/g) || []).length;
       const letters = (formData.nin.match(/[A-Z]/g) || []).length;
       
-      if (digits !== 8) {
-        newErrors.nin = 'NIN must contain exactly 8 numbers';
-        valid = false;
-      } else if (letters !== 6) {
-        newErrors.nin = 'NIN must contain exactly 6 letters (including CM/CF prefix)';
+      // Check for valid character compositions
+      const isValidCase1 = numbers === 8 && letters === 6;
+      const isValidCase2 = numbers === 9 && letters === 5;
+      
+      if (!isValidCase1 && !isValidCase2) {
+        newErrors.nin = 'NIN must contain either 8 numbers and 6 letters, or 9 numbers and 5 letters';
         valid = false;
       }
     }
