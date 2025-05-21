@@ -16,6 +16,7 @@ import LoanApplication from "./pages/LoanApplication";
 import LoanDetails from "./pages/LoanDetails";
 import Contact from "./pages/Contact";
 import About from "./pages/About";
+import RepayLoan from "./pages/RepayLoan";
 
 // Create a client
 const queryClient = new QueryClient({
@@ -43,6 +44,7 @@ const App = () => {
               <Route path="/wealth-management" element={<Layout><WealthManagement /></Layout>} />
               <Route path="/loan-application" element={<Layout><LoanApplication /></Layout>} />
               <Route path="/loan-details" element={<Layout><LoanDetails /></Layout>} />
+              <Route path="/repay-loan" element={<Layout><RepayLoan /></Layout>} />
               <Route path="/contact" element={<Layout><Contact /></Layout>} />
               <Route path="/about" element={<Layout><About /></Layout>} />
               <Route path="*" element={<Layout><NotFound /></Layout>} />
