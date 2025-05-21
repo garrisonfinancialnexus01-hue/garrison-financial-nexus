@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, AlertCircle } from 'lucide-react';
 
 const LoanApplication = () => {
   const [amount, setAmount] = useState('');
@@ -151,6 +151,19 @@ const LoanApplication = () => {
                 </div>
               </div>
             )}
+
+            <div className="bg-blue-50 p-4 rounded-md border border-blue-100">
+              <div className="flex items-start space-x-3">
+                <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                <div>
+                  <h4 className="font-medium text-blue-800">Important Verification Info</h4>
+                  <p className="text-sm text-blue-700 mt-1">
+                    After submitting your application, you'll need to contact our manager on WhatsApp 
+                    to receive a verification code before downloading your receipt.
+                  </p>
+                </div>
+              </div>
+            </div>
 
             <Button 
               onClick={handleConfirm} 

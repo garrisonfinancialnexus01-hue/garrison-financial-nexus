@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -6,11 +7,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { isValidUgandanNIN } from '@/utils/ninValidation';
+import { verifyCode } from '@/utils/verificationCodes';
 import Receipt from '@/components/Receipt';
 import { supabase } from '@/integrations/supabase/client';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { Download, MessageSquare, CheckCircle2 } from 'lucide-react';
+import { Download, MessageSquare, CheckCircle2, ShieldCheck } from 'lucide-react';
 
 const LoanDetails = () => {
   const location = useLocation();
@@ -44,14 +46,17 @@ const LoanDetails = () => {
   const [receiptNumber, setReceiptNumber] = useState<string | null>(null);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [whatsAppVerified, setWhatsAppVerified] = useState(false);
+  const [showVerificationForm, setShowVerificationForm] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [verificationError, setVerificationError] = useState('');
+  const [isVerified, setIsVerified] = useState(false);
 
-  // Check for WhatsApp verification from localStorage
+  // Check for verification from localStorage
   useEffect(() => {
     const checkVerificationStatus = () => {
-      const verificationStatus = localStorage.getItem('whatsAppVerified');
+      const verificationStatus = localStorage.getItem('receiptVerified');
       if (verificationStatus === 'true') {
-        setWhatsAppVerified(true);
+        setIsVerified(true);
       }
     };
 
@@ -463,16 +468,45 @@ const LoanDetails = () => {
   };
   
   const openWhatsApp = () => {
-    // Set verified status in localStorage
-    localStorage.setItem('whatsAppVerified', 'true');
-    setWhatsAppVerified(true);
+    // Track that user has clicked the WhatsApp button
+    localStorage.setItem('whatsAppOpened', 'true');
+    setShowVerificationForm(true);
+    
     // Open WhatsApp
     window.open(`https://wa.me/256761281222`, '_blank');
     
     toast({
       title: "WhatsApp verification initiated",
-      description: "After contacting the manager, you can download your receipt.",
+      description: "After contacting the manager, you'll need to enter the verification code they provide.",
     });
+  };
+
+  const handleVerifyCode = () => {
+    if (!verificationCode) {
+      setVerificationError('Please enter the verification code');
+      return;
+    }
+
+    if (verificationCode.length !== 6) {
+      setVerificationError('Verification code must be 6 digits');
+      return;
+    }
+
+    // Check if the code is valid
+    if (verifyCode(verificationCode)) {
+      // Success - mark as verified
+      setIsVerified(true);
+      localStorage.setItem('receiptVerified', 'true');
+      
+      toast({
+        title: "Verification successful",
+        description: "You can now download your receipt.",
+      });
+      
+      setVerificationError('');
+    } else {
+      setVerificationError('Invalid verification code. Please check and try again.');
+    }
   };
   
   const downloadReceipt = async () => {
@@ -694,14 +728,62 @@ const LoanDetails = () => {
               </Button>
             ) : (
               <div className="space-y-4">
-                {whatsAppVerified ? (
+                {isVerified ? (
                   <div className="bg-green-50 p-4 rounded-md border border-green-200 flex items-center space-x-3 mb-4">
                     <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    <p className="text-green-700">WhatsApp verification complete. You can now download your receipt.</p>
+                    <p className="text-green-700">Verification complete. You can now download your receipt.</p>
+                  </div>
+                ) : showVerificationForm ? (
+                  <div className="space-y-4">
+                    <div className="bg-blue-50 p-4 rounded-md border border-blue-200 mb-4">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <ShieldCheck className="h-5 w-5 text-blue-500" />
+                        <h3 className="font-medium text-blue-800">Verification Required</h3>
+                      </div>
+                      <p className="text-blue-800 mb-4">Please contact the manager on WhatsApp and ask for a verification code. Enter the 6-digit code below:</p>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="verificationCode">Verification Code</Label>
+                        <div className="flex space-x-2">
+                          <Input
+                            id="verificationCode"
+                            value={verificationCode}
+                            onChange={(e) => {
+                              setVerificationCode(e.target.value);
+                              if (verificationError) setVerificationError('');
+                            }}
+                            placeholder="Enter 6-digit code"
+                            className={verificationError ? "border-red-500" : ""}
+                            maxLength={6}
+                          />
+                          <Button 
+                            onClick={handleVerifyCode}
+                            className="bg-blue-600 hover:bg-blue-700"
+                          >
+                            Verify
+                          </Button>
+                        </div>
+                        {verificationError && (
+                          <p className="text-red-500 text-sm mt-1">{verificationError}</p>
+                        )}
+                      </div>
+                      
+                      <div className="mt-4 text-sm text-blue-700">
+                        <p>Need to contact the manager?</p>
+                        <Button 
+                          onClick={openWhatsApp}
+                          variant="outline" 
+                          className="mt-2 border-blue-300 text-blue-700 hover:bg-blue-50"
+                        >
+                          <MessageSquare className="mr-2 h-4 w-4" />
+                          Contact Manager on WhatsApp
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div className="bg-amber-50 p-4 rounded-md border border-amber-200 mb-4">
-                    <p className="text-amber-800 mb-2">Please contact the manager on WhatsApp for verification before downloading your receipt.</p>
+                    <p className="text-amber-800 mb-2">Please contact the manager on WhatsApp to receive your verification code.</p>
                     <Button 
                       onClick={openWhatsApp}
                       className="w-full bg-amber-500 hover:bg-amber-600 text-white"
@@ -715,7 +797,7 @@ const LoanDetails = () => {
                 <Button 
                   onClick={downloadReceipt} 
                   className="w-full bg-garrison-green hover:bg-green-700"
-                  disabled={isDownloading || !whatsAppVerified}
+                  disabled={isDownloading || !isVerified}
                 >
                   {isDownloading ? (
                     <>

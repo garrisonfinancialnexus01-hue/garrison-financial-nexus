@@ -40,6 +40,23 @@ const RepayLoan = () => {
             <li>Receive your updated loan statement</li>
           </ol>
         </div>
+        
+        <div className="mt-8 border-t pt-6">
+          <h2 className="text-2xl font-semibold mb-4">Verification Process for Receipt Download</h2>
+          <p className="mb-4">
+            To download your loan receipt, you will need to complete the following verification steps:
+          </p>
+          <ol className="list-decimal pl-6 space-y-3">
+            <li>After submitting your loan application, contact our manager on WhatsApp</li>
+            <li>The manager will verify your application details</li>
+            <li>Upon verification, the manager will provide you with a 6-digit verification code</li>
+            <li>Enter this verification code in the application to unlock your receipt download</li>
+            <li>Download and save your receipt for future reference</li>
+          </ol>
+          <p className="mt-4 text-sm text-gray-600">
+            This verification process helps ensure the security of your loan information and prevents unauthorized access to your financial documents.
+          </p>
+        </div>
       </div>
     </div>
   );
