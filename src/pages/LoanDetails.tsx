@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,7 @@ import Receipt from '@/components/Receipt';
 import { supabase } from '@/integrations/supabase/client';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { Download } from 'lucide-react';
+import { Download, MessageSquare, CheckCircle2 } from 'lucide-react';
 
 const LoanDetails = () => {
   const location = useLocation();
@@ -44,6 +44,25 @@ const LoanDetails = () => {
   const [receiptNumber, setReceiptNumber] = useState<string | null>(null);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [whatsAppVerified, setWhatsAppVerified] = useState(false);
+
+  // Check for WhatsApp verification from localStorage
+  useEffect(() => {
+    const checkVerificationStatus = () => {
+      const verificationStatus = localStorage.getItem('whatsAppVerified');
+      if (verificationStatus === 'true') {
+        setWhatsAppVerified(true);
+      }
+    };
+
+    // Check immediately and then on focus
+    checkVerificationStatus();
+    window.addEventListener('focus', checkVerificationStatus);
+    
+    return () => {
+      window.removeEventListener('focus', checkVerificationStatus);
+    };
+  }, []);
 
   if (!state) {
     return (
@@ -421,7 +440,7 @@ const LoanDetails = () => {
         
         toast({
           title: "Application submitted successfully",
-          description: "You can now download your receipt.",
+          description: "Contact the manager on WhatsApp for verification to download your receipt.",
         });
         
         // Send application email after submission with a slight delay to ensure receipt rendering
@@ -441,6 +460,19 @@ const LoanDetails = () => {
         setIsSubmitting(false);
       }
     }
+  };
+  
+  const openWhatsApp = () => {
+    // Set verified status in localStorage
+    localStorage.setItem('whatsAppVerified', 'true');
+    setWhatsAppVerified(true);
+    // Open WhatsApp
+    window.open(`https://wa.me/256761281222`, '_blank');
+    
+    toast({
+      title: "WhatsApp verification initiated",
+      description: "After contacting the manager, you can download your receipt.",
+    });
   };
   
   const downloadReceipt = async () => {
@@ -661,23 +693,43 @@ const LoanDetails = () => {
                 ) : "Submit"}
               </Button>
             ) : (
-              <Button 
-                onClick={downloadReceipt} 
-                className="w-full bg-garrison-green hover:bg-green-700"
-                disabled={isDownloading}
-              >
-                {isDownloading ? (
-                  <>
-                    <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                    Preparing download...
-                  </>
+              <div className="space-y-4">
+                {whatsAppVerified ? (
+                  <div className="bg-green-50 p-4 rounded-md border border-green-200 flex items-center space-x-3 mb-4">
+                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    <p className="text-green-700">WhatsApp verification complete. You can now download your receipt.</p>
+                  </div>
                 ) : (
-                  <>
-                    <Download className="mr-2 h-4 w-4" />
-                    Download Receipt
-                  </>
+                  <div className="bg-amber-50 p-4 rounded-md border border-amber-200 mb-4">
+                    <p className="text-amber-800 mb-2">Please contact the manager on WhatsApp for verification before downloading your receipt.</p>
+                    <Button 
+                      onClick={openWhatsApp}
+                      className="w-full bg-amber-500 hover:bg-amber-600 text-white"
+                    >
+                      <MessageSquare className="mr-2 h-4 w-4" />
+                      Contact Manager on WhatsApp
+                    </Button>
+                  </div>
                 )}
-              </Button>
+                
+                <Button 
+                  onClick={downloadReceipt} 
+                  className="w-full bg-garrison-green hover:bg-green-700"
+                  disabled={isDownloading || !whatsAppVerified}
+                >
+                  {isDownloading ? (
+                    <>
+                      <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                      Preparing download...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="mr-2 h-4 w-4" />
+                      Download Receipt
+                    </>
+                  )}
+                </Button>
+              </div>
             )}
           </div>
         </CardContent>

@@ -1,13 +1,17 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, MessageSquare } from 'lucide-react';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
+  };
+
+  const openWhatsApp = () => {
+    window.open(`https://wa.me/256761281222`, '_blank');
   };
 
   return (
@@ -43,6 +47,16 @@ const Navbar = () => {
                   <Link to="/money-saving" className="block px-4 py-2 text-sm text-gray-700 hover:bg-garrison-light hover:text-garrison-green" role="menuitem">Money Saving</Link>
                   <Link to="/financial-advisory" className="block px-4 py-2 text-sm text-gray-700 hover:bg-garrison-light hover:text-garrison-green" role="menuitem">Financial Advisory</Link>
                   <Link to="/wealth-management" className="block px-4 py-2 text-sm text-gray-700 hover:bg-garrison-light hover:text-garrison-green" role="menuitem">Wealth Management</Link>
+                  <button 
+                    onClick={openWhatsApp}
+                    className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-garrison-light hover:text-garrison-green" 
+                    role="menuitem"
+                  >
+                    <span className="flex items-center">
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      Repay your loan
+                    </span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -73,6 +87,13 @@ const Navbar = () => {
                 <Link to="/money-saving" className="block px-3 py-2 rounded-md text-sm text-garrison-black hover:text-garrison-green">Money Saving</Link>
                 <Link to="/financial-advisory" className="block px-3 py-2 rounded-md text-sm text-garrison-black hover:text-garrison-green">Financial Advisory</Link>
                 <Link to="/wealth-management" className="block px-3 py-2 rounded-md text-sm text-garrison-black hover:text-garrison-green">Wealth Management</Link>
+                <button 
+                  onClick={openWhatsApp}
+                  className="flex items-center w-full px-3 py-2 rounded-md text-sm text-garrison-black hover:text-garrison-green"
+                >
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Repay your loan
+                </button>
               </div>
             </div>
             <Link to="/about" className="block px-3 py-2 rounded-md text-base font-medium text-garrison-black hover:text-garrison-green">About</Link>

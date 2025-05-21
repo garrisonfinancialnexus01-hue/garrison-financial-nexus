@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
+import { MessageSquare } from 'lucide-react';
 
 const LoanApplication = () => {
   const [amount, setAmount] = useState('');
@@ -33,6 +34,10 @@ const LoanApplication = () => {
     } else {
       setError('');
     }
+  };
+
+  const openWhatsApp = () => {
+    window.open(`https://wa.me/256761281222`, '_blank');
   };
 
   const handleConfirm = () => {
@@ -154,6 +159,18 @@ const LoanApplication = () => {
             >
               Confirm
             </Button>
+
+            <div className="text-center mt-4">
+              <p className="text-sm text-gray-600 mb-2">Need help with your loan?</p>
+              <Button
+                variant="outline"
+                onClick={openWhatsApp}
+                className="text-garrison-green border-garrison-green hover:bg-garrison-green hover:text-white"
+              >
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Contact Manager on WhatsApp
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

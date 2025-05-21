@@ -1,10 +1,14 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, TrendingUp, Wallet, Building, Users } from 'lucide-react';
+import { ArrowRight, TrendingUp, Wallet, Building, Users, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Index = () => {
+  const openWhatsApp = () => {
+    window.open(`https://wa.me/256761281222`, '_blank');
+  };
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -78,9 +82,17 @@ const Index = () => {
               <p className="text-gray-600 mb-4">
                 Save your money with us at a really low bank interest rate of only 2% every month.
               </p>
-              <Link to="/money-saving" className="text-garrison-green hover:underline inline-flex items-center">
-                Learn More <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
+              <div className="flex flex-col space-y-2">
+                <Link to="/money-saving" className="text-garrison-green hover:underline inline-flex items-center">
+                  Learn More <ArrowRight className="ml-1 h-4 w-4" />
+                </Link>
+                <button 
+                  onClick={openWhatsApp}
+                  className="text-garrison-green hover:underline inline-flex items-center mt-2"
+                >
+                  <MessageSquare className="mr-1 h-4 w-4" /> Contact Manager
+                </button>
+              </div>
             </div>
 
             <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow">
@@ -122,8 +134,12 @@ const Index = () => {
             <Button asChild className="bg-white text-garrison-green hover:bg-gray-100 mb-2 sm:mb-0">
               <Link to="/money-saving">Start Saving</Link>
             </Button>
-            <Button asChild className="bg-white text-garrison-green hover:bg-gray-100">
-              <Link to="/contact">Contact an Advisor</Link>
+            <Button 
+              className="bg-white text-garrison-green hover:bg-gray-100 flex items-center"
+              onClick={openWhatsApp}
+            >
+              <MessageSquare className="mr-2 h-4 w-4" />
+              Contact Manager on WhatsApp
             </Button>
           </div>
         </div>
