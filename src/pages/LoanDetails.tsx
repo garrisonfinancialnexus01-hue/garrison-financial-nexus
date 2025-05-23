@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import IDCardScanner from '@/components/IDCardScanner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { supabase } from '@/integrations/supabase/client';
 
 const VERIFICATION_CODES = [
   '123456', '234567', '345678', '456789', '567890', '678901', '789012', '890123', '901234', '012345',
@@ -30,6 +32,7 @@ const LoanDetails = () => {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [receiptNumber, setReceiptNumber] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
   const [idCardFront, setIdCardFront] = useState<Blob | null>(null);
@@ -69,6 +72,49 @@ const LoanDetails = () => {
     }
   };
 
+  const generateReceiptPDF = async (): Promise<string> => {
+    if (!receiptRef.current) throw new Error('Receipt reference not found');
+
+    // Hide ID card images for client download
+    const idSections = receiptRef.current.querySelectorAll('.internal-only');
+    idSections.forEach(section => {
+      (section as HTMLElement).style.display = 'none';
+    });
+
+    const canvas = await html2canvas(receiptRef.current, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff'
+    });
+
+    // Show ID card images again for internal use
+    idSections.forEach(section => {
+      (section as HTMLElement).style.display = 'block';
+    });
+
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const imgWidth = 210;
+    const pageHeight = 295;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    let heightLeft = imgHeight;
+
+    let position = 0;
+
+    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+
+    while (heightLeft >= 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
+
+    // Return base64 encoded PDF
+    return pdf.output('datauristring').split(',')[1];
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -90,14 +136,74 @@ const LoanDetails = () => {
       return;
     }
 
-    const newReceiptNumber = `GFN-${Date.now()}`;
-    setReceiptNumber(newReceiptNumber);
-    setIsSubmitted(true);
+    setIsSubmitting(true);
 
-    toast({
-      title: "Application Submitted!",
-      description: "Your loan application has been submitted successfully. Contact the manager on WhatsApp for verification.",
-    });
+    try {
+      const newReceiptNumber = `GFN-${Date.now()}`;
+      setReceiptNumber(newReceiptNumber);
+
+      // First store the application in the database
+      const { error: dbError } = await supabase
+        .from('loan_applications')
+        .insert({
+          name,
+          phone,
+          email,
+          nin: '', // Empty since we're using ID card scanning instead
+          amount,
+          term,
+          interest,
+          total_amount: totalAmount,
+          receipt_number: newReceiptNumber
+        });
+
+      if (dbError) {
+        console.error('Database error:', dbError);
+        throw new Error('Failed to save application to database');
+      }
+
+      // Generate PDF receipt for email
+      const receiptPdf = await generateReceiptPDF();
+
+      // Send email with receipt
+      const { data, error } = await supabase.functions.invoke('send-loan-application', {
+        body: {
+          name,
+          phone,
+          email,
+          nin: '', // Empty since we're using ID card scanning
+          amount,
+          term,
+          interest,
+          totalAmount,
+          receiptNumber: newReceiptNumber,
+          receiptPdf
+        }
+      });
+
+      if (error) {
+        console.error('Email sending error:', error);
+        throw new Error('Failed to send application email');
+      }
+
+      console.log('Application submitted successfully:', data);
+      setIsSubmitted(true);
+
+      toast({
+        title: "Application Submitted!",
+        description: "Your loan application has been submitted successfully. Contact the manager on WhatsApp for verification.",
+      });
+
+    } catch (error) {
+      console.error('Submission error:', error);
+      toast({
+        title: "Submission Error",
+        description: error instanceof Error ? error.message : "Failed to submit application. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleVerificationCodeSubmit = () => {
@@ -124,43 +230,25 @@ const LoanDetails = () => {
     setIsDownloading(true);
 
     try {
-      // Hide ID card images for client download
-      const idSections = receiptRef.current.querySelectorAll('.internal-only');
-      idSections.forEach(section => {
-        (section as HTMLElement).style.display = 'none';
-      });
-
-      const canvas = await html2canvas(receiptRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff'
-      });
-
-      // Show ID card images again for internal use
-      idSections.forEach(section => {
-        (section as HTMLElement).style.display = 'block';
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 210;
-      const pageHeight = 295;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-
-      let position = 0;
-
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+      const receiptPdf = await generateReceiptPDF();
+      
+      // Convert base64 to blob and download
+      const byteCharacters = atob(receiptPdf);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
       }
-
-      pdf.save(`Loan-Receipt-${receiptNumber}.pdf`);
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'application/pdf' });
+      
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Loan-Receipt-${receiptNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
 
       toast({
         title: "Receipt Downloaded",
@@ -320,9 +408,9 @@ const LoanDetails = () => {
                 <Button 
                   type="submit" 
                   className="w-full bg-garrison-green hover:bg-green-700"
-                  disabled={scanningStep !== 'completed'}
+                  disabled={scanningStep !== 'completed' || isSubmitting}
                 >
-                  Submit Application
+                  {isSubmitting ? 'Submitting...' : 'Submit Application'}
                 </Button>
               </form>
             </CardContent>

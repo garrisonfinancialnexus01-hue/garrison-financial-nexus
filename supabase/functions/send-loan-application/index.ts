@@ -71,10 +71,6 @@ serve(async (req) => {
               <td style="padding: 8px; font-weight: bold;">Email:</td>
               <td style="padding: 8px;">${data.email}</td>
             </tr>
-            <tr style="background-color: #f9f9f9;">
-              <td style="padding: 8px; font-weight: bold;">NIN:</td>
-              <td style="padding: 8px;">${data.nin}</td>
-            </tr>
           </table>
           
           <h2 style="color: #399B53; border-bottom: 1px solid #e0e0e0; padding-bottom: 10px; margin-top: 20px;">Loan Details</h2>
@@ -102,7 +98,7 @@ serve(async (req) => {
           </table>
           
           <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #399B53; margin-top: 20px;">
-            <strong>Note:</strong> The receipt is attached as a PDF file to this email.
+            <strong>Note:</strong> The receipt is attached as a PDF file to this email. ID verification was completed using Uganda National ID card scanning.
           </div>
         </div>
         
@@ -192,6 +188,7 @@ serve(async (req) => {
               </tr>
             </table>
             
+            <p>Your identity has been verified using your Uganda National ID card.</p>
             <p>Our team will review your application and contact you shortly.</p>
             
             <p>Best regards,<br>Garrison Financial Nexus Team</p>

@@ -1,3 +1,4 @@
+
 import React, { forwardRef } from 'react';
 import { format } from 'date-fns';
 
@@ -121,16 +122,6 @@ const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({
         <p>For any inquiries, please contact our customer service at garrisonfinancialnexus01@gmail.com</p>
         <p>Date and Time of Issue: {currentDateTime}</p>
       </div>
-      
-      <style dangerouslySetInnerHTML={{
-        __html: `
-          @media print {
-            .internal-only {
-              display: none !important;
-            }
-          }
-        `
-      }} />
     </div>
   );
 });
