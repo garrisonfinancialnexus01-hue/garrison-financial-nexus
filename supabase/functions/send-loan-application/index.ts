@@ -25,12 +25,13 @@ interface LoanApplicationData {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
   
   try {
-    console.log("Processing loan application request immediately...");
+    console.log("Processing loan application request...");
     
     if (!resendApiKey) {
       console.error("ERROR: Missing Resend API key");
@@ -38,6 +39,13 @@ serve(async (req) => {
     }
     
     const data: LoanApplicationData = await req.json();
+    
+    // Validate the data received
+    if (!data.name || !data.phone || !data.email || !data.receiptNumber) {
+      console.error("ERROR: Missing required fields in loan application");
+      throw new Error("Missing required fields in loan application");
+    }
+    
     console.log("Received application for:", data.name, "Receipt:", data.receiptNumber);
     
     const loanTermText = data.term === 'short' ? '14 days' : '30 days';
@@ -83,7 +91,7 @@ serve(async (req) => {
       </div>
     `;
     
-    // Send email immediately with high priority
+    // Prepare email options with highest priority
     const emailOptions = {
       from: "Garrison Financial Nexus <onboarding@resend.dev>",
       to: [adminEmail],

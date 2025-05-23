@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -75,44 +74,53 @@ const LoanDetails = () => {
   const generateReceiptPDF = async (): Promise<string> => {
     if (!receiptRef.current) throw new Error('Receipt reference not found');
 
-    // Hide ID card images for client download
-    const idSections = receiptRef.current.querySelectorAll('.internal-only');
-    idSections.forEach(section => {
-      (section as HTMLElement).style.display = 'none';
-    });
+    try {
+      // Hide ID card images for client download
+      const idSections = receiptRef.current.querySelectorAll('.internal-only');
+      idSections.forEach(section => {
+        (section as HTMLElement).style.display = 'none';
+      });
 
-    const canvas = await html2canvas(receiptRef.current, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#ffffff'
-    });
+      const canvas = await html2canvas(receiptRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: true,
+        onclone: (document, element) => {
+          console.log('Cloning document for PDF generation');
+        }
+      });
 
-    // Show ID card images again for internal use
-    idSections.forEach(section => {
-      (section as HTMLElement).style.display = 'block';
-    });
+      // Show ID card images again for internal use
+      idSections.forEach(section => {
+        (section as HTMLElement).style.display = 'block';
+      });
 
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const imgWidth = 210;
-    const pageHeight = 295;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    let heightLeft = imgHeight;
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
 
-    let position = 0;
+      let position = 0;
 
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
-
-    while (heightLeft >= 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
-    }
 
-    // Return base64 encoded PDF
-    return pdf.output('datauristring').split(',')[1];
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      // Return base64 encoded PDF
+      return pdf.output('datauristring').split(',')[1];
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      throw new Error('Failed to generate receipt PDF');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -139,8 +147,12 @@ const LoanDetails = () => {
     setIsSubmitting(true);
 
     try {
-      const newReceiptNumber = `GFN-${Date.now()}`;
+      // Generate unique receipt number with timestamp to avoid conflicts
+      const timestamp = new Date().getTime();
+      const newReceiptNumber = `GFN-${timestamp}`;
       setReceiptNumber(newReceiptNumber);
+      
+      console.log("Generating receipt number:", newReceiptNumber);
 
       // First store the application in the database
       const { error: dbError } = await supabase
@@ -162,8 +174,11 @@ const LoanDetails = () => {
         throw new Error('Failed to save application to database');
       }
 
+      console.log("Database entry created successfully");
+
       // Generate PDF receipt for email
       const receiptPdf = await generateReceiptPDF();
+      console.log("PDF receipt generated successfully");
 
       // Send email with receipt
       const { data, error } = await supabase.functions.invoke('send-loan-application', {
@@ -301,7 +316,7 @@ const LoanDetails = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex justify-between">
                   <span>Loan Amount:</span>
-                  <span className="font-medium">{amount.toLocaleString()} UGX</span>
+                  <span className="font-medium">{amount?.toLocaleString()} UGX</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Interest Rate:</span>
@@ -313,7 +328,7 @@ const LoanDetails = () => {
                 </div>
                 <div className="flex justify-between font-bold">
                   <span>Total Repayment:</span>
-                  <span>{totalAmount.toLocaleString()} UGX</span>
+                  <span>{totalAmount?.toLocaleString()} UGX</span>
                 </div>
               </div>
             </CardContent>
@@ -492,7 +507,23 @@ const LoanDetails = () => {
                       )}
                     </div>
                     <Button 
-                      onClick={handleVerificationCodeSubmit}
+                      onClick={() => {
+                        if (VERIFICATION_CODES.includes(verificationCode)) {
+                          setIsVerified(true);
+                          setVerificationError('');
+                          toast({
+                            title: "Verification Successful",
+                            description: "You can now download your receipt",
+                          });
+                        } else {
+                          setVerificationError('Invalid verification code. Please check the code provided by the manager.');
+                          toast({
+                            title: "Verification Failed",
+                            description: "Invalid verification code",
+                            variant: "destructive",
+                          });
+                        }
+                      }}
                       disabled={verificationCode.length !== 6}
                       className="w-full"
                     >
@@ -511,7 +542,47 @@ const LoanDetails = () => {
                         <span className="font-medium">Verification Successful!</span>
                       </div>
                       <Button 
-                        onClick={downloadReceipt}
+                        onClick={async () => {
+                          if (!receiptRef.current) return;
+                          
+                          setIsDownloading(true);
+                          
+                          try {
+                            const receiptPdf = await generateReceiptPDF();
+                            
+                            // Convert base64 to blob and download
+                            const byteCharacters = atob(receiptPdf);
+                            const byteNumbers = new Array(byteCharacters.length);
+                            for (let i = 0; i < byteCharacters.length; i++) {
+                              byteNumbers[i] = byteCharacters.charCodeAt(i);
+                            }
+                            const byteArray = new Uint8Array(byteNumbers);
+                            const blob = new Blob([byteArray], { type: 'application/pdf' });
+                            
+                            const url = URL.createObjectURL(blob);
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.download = `Loan-Receipt-${receiptNumber}.pdf`;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            URL.revokeObjectURL(url);
+                          
+                            toast({
+                              title: "Receipt Downloaded",
+                              description: "Your loan receipt has been downloaded successfully",
+                            });
+                          } catch (error) {
+                            console.error('Error generating PDF:', error);
+                            toast({
+                              title: "Download Error",
+                              description: "Failed to download receipt. Please try again.",
+                              variant: "destructive",
+                            });
+                          } finally {
+                            setIsDownloading(false);
+                          }
+                        }}
                         disabled={isDownloading}
                         className="bg-garrison-green hover:bg-green-700"
                       >
