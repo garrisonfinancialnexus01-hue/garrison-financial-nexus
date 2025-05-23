@@ -1,791 +1,448 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { verifyCode } from '@/utils/verificationCodes';
+import { MessageSquare, Download, AlertCircle, CheckCircle } from 'lucide-react';
 import Receipt from '@/components/Receipt';
-import { supabase } from '@/integrations/supabase/client';
 import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
-import { Download, MessageSquare, CheckCircle2, ShieldCheck } from 'lucide-react';
+import jsPDF from 'jspdf';
 import IDCardScanner from '@/components/IDCardScanner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+
+const VERIFICATION_CODES = [
+  '123456', '234567', '345678', '456789', '567890', '678901', '789012', '890123', '901234', '012345',
+  '111111', '222222', '333333', '444444', '555555', '666666', '777777', '888888', '999999', '000000',
+  '147258', '258369', '369147', '741852', '852963', '963741', '159357', '357159', '159753', '753159',
+  '246810', '468102', '681024', '810246', '102468', '024681', '124816', '248162', '481624', '816248',
+  '135791', '357913', '579135', '791357', '913579', '135797', '197531', '975319', '753197', '531975',
+  '112233', '223344', '334455', '445566', '556677', '667788', '778899', '889900', '990011', '001122',
+  '121212', '131313', '141414', '151515', '161616', '171717', '181818', '191919', '202020', '212121',
+  '314159', '159314', '271828', '828271', '141421', '421141', '173205', '205173', '223606', '606223',
+  '987654', '876543', '765432', '654321', '543210', '432109', '321098', '210987', '109876', '098765',
+  '192837', '283746', '374655', '465564', '556473', '647382', '738291', '829100', '910029', '293847'
+];
 
 const LoanDetails = () => {
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [receiptNumber, setReceiptNumber] = useState('');
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [idCardFront, setIdCardFront] = useState<Blob | null>(null);
+  const [idCardBack, setIdCardBack] = useState<Blob | null>(null);
+  const [scanningStep, setScanningStep] = useState<'front' | 'back' | 'completed'>('front');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [isVerified, setIsVerified] = useState(false);
+  const [showVerificationInput, setShowVerificationInput] = useState(false);
+  const [verificationError, setVerificationError] = useState('');
+
+  const receiptRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const receiptRef = useRef<HTMLDivElement>(null);
-  
-  const state = location.state as { 
-    amount: number, 
-    term: 'short' | 'medium',
-    interest: number,
-    totalAmount: number
-  } | null;
 
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    email: '',
-  });
+  const { amount, term, interest, totalAmount } = location.state || {};
 
-  const [errors, setErrors] = useState({
-    name: '',
-    phone: '',
-    email: '',
-  });
-  
-  // ID card scan states
-  const [idCardFront, setIdCardFront] = useState<Blob | null>(null);
-  const [idCardBack, setIdCardBack] = useState<Blob | null>(null);
-  const [isIdCardScanned, setIsIdCardScanned] = useState(false);
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [receiptNumber, setReceiptNumber] = useState<string | null>(null);
-  const [isSendingEmail, setIsSendingEmail] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [showVerificationForm, setShowVerificationForm] = useState(false);
-  const [verificationCode, setVerificationCode] = useState('');
-  const [verificationError, setVerificationError] = useState('');
-  const [isVerified, setIsVerified] = useState(false);
-
-  // Check for verification from localStorage
-  useEffect(() => {
-    const checkVerificationStatus = () => {
-      const verificationStatus = localStorage.getItem('receiptVerified');
-      if (verificationStatus === 'true') {
-        setIsVerified(true);
-      }
-    };
-
-    // Check immediately and then on focus
-    checkVerificationStatus();
-    window.addEventListener('focus', checkVerificationStatus);
-    
-    return () => {
-      window.removeEventListener('focus', checkVerificationStatus);
-    };
-  }, []);
-
-  if (!state) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
-        <h1 className="text-3xl font-bold text-garrison-black mb-4">Loan Details Not Found</h1>
-        <p className="text-gray-600 mb-8">
-          Please start your loan application process again.
-        </p>
-        <Button asChild className="bg-garrison-green hover:bg-green-700">
-          <a href="/loan-application">Return to Application</a>
-        </Button>
-      </div>
-    );
-  }
-
-  const { amount, term, interest, totalAmount } = state;
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    setErrors(prev => ({ ...prev, [name]: '' }));
-  };
-
-  const handleIdCardCapture = async (frontImage: Blob, backImage: Blob) => {
-    setIdCardFront(frontImage);
-    setIdCardBack(backImage);
-    setIsIdCardScanned(true);
-    
-    toast({
-      title: "ID Card successfully scanned",
-      description: "Both sides of your ID have been captured successfully."
-    });
-  };
-
-  const validate = () => {
-    let valid = true;
-    const newErrors = { ...errors };
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-      valid = false;
-    }
-
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
-      valid = false;
-    } else if (!/^\+?[0-9]{10,15}$/.test(formData.phone)) {
-      newErrors.phone = 'Please enter a valid phone number';
-      valid = false;
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-      valid = false;
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
-      valid = false;
-    }
-
-    if (!isIdCardScanned) {
-      toast({
-        title: "ID Card required",
-        description: "Please scan both sides of your ID card to continue.",
-        variant: "destructive"
-      });
-      valid = false;
-    }
-
-    setErrors(newErrors);
-    return valid;
-  };
-
-  const generatePDF = async (): Promise<{pdf: jsPDF, pdfBase64: string}> => {
-    if (!receiptRef.current) {
-      throw new Error("Receipt reference is not available");
-    }
-    
-    try {
-      console.log("Starting PDF generation process");
-      
-      // Force any pending renders to complete
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Create canvas with higher quality settings
-      const canvas = await html2canvas(receiptRef.current, {
-        scale: 2, // Good balance between quality and performance
-        logging: false,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        allowTaint: true
-      });
-      
-      console.log("Canvas generated with dimensions:", canvas.width, "x", canvas.height);
-      
-      const imgData = canvas.toDataURL('image/png', 1.0);
-      
-      // Use A4 paper size for the PDF (210mm x 297mm)
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-      
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      
-      // Add image to PDF, fitting it to the page
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      
-      console.log("PDF generated successfully");
-      
-      return {
-        pdf,
-        pdfBase64: pdf.output('datauristring').split(',')[1]
-      };
-    } catch (error) {
-      console.error("Error in generatePDF:", error);
-      throw error;
-    }
-  };
-
-  const generateSimplePDF = async (): Promise<{pdf: jsPDF, pdfBase64: string}> => {
-    if (!receiptRef.current) {
-      throw new Error("Receipt reference is not available");
-    }
-    
-    try {
-      console.log("Starting simple PDF generation as fallback");
-      
-      // Create a new PDF directly
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-      
-      // Add text directly to PDF
-      pdf.setFontSize(16);
-      pdf.text("Garrison Financial Nexus", 20, 20);
-      
-      pdf.setFontSize(12);
-      pdf.text(`Receipt #${receiptNumber}`, 20, 30);
-      pdf.text(`Date: ${new Date().toLocaleDateString()}`, 20, 40);
-      
-      pdf.setFontSize(14);
-      pdf.text("Loan Application Details", 20, 60);
-      
-      pdf.setFontSize(12);
-      pdf.text(`Name: ${formData.name}`, 20, 70);
-      pdf.text(`Phone: ${formData.phone}`, 20, 80);
-      pdf.text(`Email: ${formData.email}`, 20, 90);
-      
-      pdf.setFontSize(14);
-      pdf.text("Loan Summary", 20, 120);
-      
-      pdf.setFontSize(12);
-      pdf.text(`Loan Amount: ${amount.toLocaleString()} UGX`, 20, 130);
-      pdf.text(`Term: ${term === 'short' ? '14 Days' : '30 Days'}`, 20, 140);
-      pdf.text(`Interest Rate: ${interest}%`, 20, 150);
-      pdf.text(`Total Repayment: ${totalAmount.toLocaleString()} UGX`, 20, 160);
-      
-      pdf.setFontSize(10);
-      pdf.text("Thank you for choosing Garrison Financial Nexus for your financial needs.", 20, 180);
-      pdf.text("For inquiries: garrisonfinancialnexus01@gmail.com", 20, 190);
-      
-      console.log("Simple PDF generated successfully");
-      
-      return {
-        pdf,
-        pdfBase64: pdf.output('datauristring').split(',')[1]
-      };
-    } catch (error) {
-      console.error("Error in generateSimplePDF:", error);
-      throw error;
-    }
-  };
-
-  const sendApplicationEmail = async (receiptNum: string) => {
-    try {
-      setIsSendingEmail(true);
-      console.log("Starting email sending process");
-      
-      // Convert ID images to base64 for sending
-      let frontImageBase64 = "";
-      let backImageBase64 = "";
-      
-      if (idCardFront && idCardBack) {
-        frontImageBase64 = await blobToBase64(idCardFront);
-        backImageBase64 = await blobToBase64(idCardBack);
-      }
-      
-      // Try primary PDF generation first, fallback to simple one if it fails
-      let pdfBase64 = "";
-      try {
-        const { pdfBase64: generatedPdfBase64 } = await generatePDF();
-        pdfBase64 = generatedPdfBase64;
-      } catch (pdfError) {
-        console.error("Primary PDF generation failed, using fallback:", pdfError);
-        const { pdfBase64: fallbackPdfBase64 } = await generateSimplePDF();
-        pdfBase64 = fallbackPdfBase64;
-      }
-      
-      if (!pdfBase64) {
-        throw new Error("Failed to generate PDF");
-      }
-      
-      console.log("PDF generated, sending email");
-      
-      // Multiple attempts for sending email
-      let attempts = 0;
-      const maxAttempts = 3;
-      let success = false;
-      
-      while (attempts < maxAttempts && !success) {
-        try {
-          attempts++;
-          console.log(`Email sending attempt ${attempts}`);
-          
-          // Call the Supabase edge function to send email with PDF
-          const { data, error } = await supabase.functions.invoke('send-loan-application', {
-            body: {
-              name: formData.name,
-              phone: formData.phone,
-              email: formData.email,
-              amount: amount,
-              term: term,
-              interest: interest,
-              totalAmount: totalAmount,
-              receiptNumber: receiptNum,
-              receiptPdf: pdfBase64,
-              idCardFront: frontImageBase64,
-              idCardBack: backImageBase64
-            }
-          });
-          
-          if (error) {
-            console.error(`Email function attempt ${attempts} failed:`, error);
-            if (attempts === maxAttempts) throw error;
-          } else {
-            success = true;
-            console.log("Email function call succeeded:", data);
-          }
-        } catch (attemptError) {
-          console.error(`Email sending attempt ${attempts} failed:`, attemptError);
-          if (attempts === maxAttempts) throw attemptError;
-          // Wait before retry
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-      }
-      
-      if (success) {
-        console.log("Email sent successfully");
-        toast({
-          title: "Application sent successfully",
-          description: "We've received your application and will contact you soon.",
-        });
-      } else {
-        throw new Error("Failed to send email after multiple attempts");
-      }
-    } catch (error) {
-      console.error('Error sending application email:', error);
-      toast({
-        title: "Application saved",
-        description: "Your application has been saved. You can download your receipt now.",
-      });
-    } finally {
-      setIsSendingEmail(false);
-    }
-  };
-
-  const blobToBase64 = (blob: Blob): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        const base64Content = base64String.split(',')[1];
-        resolve(base64Content);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  };
-
-  const handleSubmit = async () => {
-    if (validate()) {
-      setIsSubmitting(true);
-      
-      try {
-        console.log("Submitting application");
-        // Check Supabase connection
-        const { data: connectionTest, error: connectionError } = await supabase.from('loan_applications').select('count').limit(1);
-        
-        if (connectionError) {
-          console.error("Supabase connection test failed:", connectionError);
-          throw new Error("Database connection failed. Please try again later.");
-        }
-        
-        console.log("Database connection successful");
-        
-        // Save to Supabase and get receipt number
-        const { data, error } = await supabase
-          .rpc('generate_receipt_number')
-          .single();
-          
-        if (error) {
-          console.error("Error generating receipt number:", error);
-          throw error;
-        }
-        
-        const receiptNum = data as string;
-        console.log("Generated receipt number:", receiptNum);
-        setReceiptNumber(receiptNum);
-        
-        // Convert ID card images to base64 for storage
-        let frontImageBase64 = null;
-        let backImageBase64 = null;
-        
-        if (idCardFront && idCardBack) {
-          frontImageBase64 = await blobToBase64(idCardFront);
-          backImageBase64 = await blobToBase64(idCardBack);
-        }
-        
-        // Insert application with receipt number
-        const { error: insertError } = await supabase.from('loan_applications').insert({
-          name: formData.name,
-          phone: formData.phone,
-          email: formData.email,
-          amount: amount,
-          term: term,
-          interest: interest,
-          total_amount: totalAmount,
-          receipt_number: receiptNum,
-          id_card_front: frontImageBase64,
-          id_card_back: backImageBase64
-        });
-        
-        if (insertError) {
-          console.error("Error inserting application:", insertError);
-          throw insertError;
-        }
-        
-        console.log("Application data saved successfully");
-        
-        toast({
-          title: "Application submitted successfully",
-          description: "Contact the manager on WhatsApp for verification to download your receipt.",
-        });
-        
-        // Send application email after submission with a slight delay to ensure receipt rendering
-        setTimeout(() => {
-          sendApplicationEmail(receiptNum).catch(emailError => {
-            console.error("Failed to send email in background:", emailError);
-          });
-        }, 500);
-      } catch (error) {
-        console.error('Error submitting application:', error);
-        toast({
-          title: "Error submitting application",
-          description: error instanceof Error ? error.message : "Please try again.",
-          variant: "destructive"
-        });
-      } finally {
-        setIsSubmitting(false);
-      }
-    }
-  };
-  
   const openWhatsApp = () => {
-    // Track that user has clicked the WhatsApp button
-    localStorage.setItem('whatsAppOpened', 'true');
-    setShowVerificationForm(true);
-    
-    // Open WhatsApp
     window.open(`https://wa.me/256761281222`, '_blank');
-    
+  };
+
+  const handleIDCardScan = (imageBlob: Blob, side: 'front' | 'back') => {
+    if (side === 'front') {
+      setIdCardFront(imageBlob);
+      setScanningStep('back');
+      toast({
+        title: "Front ID captured",
+        description: "Now scan the back of your ID card",
+      });
+    } else {
+      setIdCardBack(imageBlob);
+      setScanningStep('completed');
+      toast({
+        title: "ID scanning completed",
+        description: "Both sides of your ID have been captured successfully",
+      });
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!name || !phone || !email) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!idCardFront || !idCardBack) {
+      toast({
+        title: "Error",
+        description: "Please scan both sides of your ID card",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newReceiptNumber = `GFN-${Date.now()}`;
+    setReceiptNumber(newReceiptNumber);
+    setIsSubmitted(true);
+
     toast({
-      title: "WhatsApp verification initiated",
-      description: "After contacting the manager, you'll need to enter the verification code they provide.",
+      title: "Application Submitted!",
+      description: "Your loan application has been submitted successfully. Contact the manager on WhatsApp for verification.",
     });
   };
 
-  const handleVerifyCode = () => {
-    if (!verificationCode) {
-      setVerificationError('Please enter the verification code');
-      return;
-    }
-
-    if (verificationCode.length !== 6) {
-      setVerificationError('Verification code must be 6 digits');
-      return;
-    }
-
-    // Check if the code is valid
-    if (verifyCode(verificationCode)) {
-      // Success - mark as verified
+  const handleVerificationCodeSubmit = () => {
+    if (VERIFICATION_CODES.includes(verificationCode)) {
       setIsVerified(true);
-      localStorage.setItem('receiptVerified', 'true');
-      
-      toast({
-        title: "Verification successful",
-        description: "You can now download your receipt.",
-      });
-      
       setVerificationError('');
+      toast({
+        title: "Verification Successful",
+        description: "You can now download your receipt",
+      });
     } else {
-      setVerificationError('Invalid verification code. Please check and try again.');
+      setVerificationError('Invalid verification code. Please check the code provided by the manager.');
+      toast({
+        title: "Verification Failed",
+        description: "Invalid verification code",
+        variant: "destructive",
+      });
     }
   };
-  
+
   const downloadReceipt = async () => {
-    if (!receiptRef.current) return;
-    
+    if (!receiptRef.current || !isVerified) return;
+
+    setIsDownloading(true);
+
     try {
-      setIsDownloading(true);
-      console.log("Starting receipt download");
-      
-      // Method 1: Direct PDF generation
-      try {
-        const { pdf } = await generatePDF();
-        
-        // Save the PDF file with a unique name
-        pdf.save(`Garrison_Financial_Receipt_${receiptNumber}.pdf`);
-        
-        console.log("Receipt downloaded successfully using method 1");
-        
-        toast({
-          title: "Receipt downloaded",
-          description: "Your receipt has been downloaded successfully.",
-        });
-        
-        // Navigate to homepage after successful download with a delay
-        setTimeout(() => {
-          navigate('/');
-        }, 2000);
-        
-        return;
-      } catch (method1Error) {
-        console.error("Method 1 download failed, trying method 2:", method1Error);
+      // Hide ID card images for client download
+      const idSections = receiptRef.current.querySelectorAll('.internal-only');
+      idSections.forEach(section => {
+        (section as HTMLElement).style.display = 'none';
+      });
+
+      const canvas = await html2canvas(receiptRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff'
+      });
+
+      // Show ID card images again for internal use
+      idSections.forEach(section => {
+        (section as HTMLElement).style.display = 'block';
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
       }
-      
-      // Method 2: Use a different approach
-      try {
-        const { pdf } = await generateSimplePDF();
-        pdf.save(`Garrison_Financial_Receipt_${receiptNumber}.pdf`);
-        
-        console.log("Receipt downloaded successfully using method 2");
-        
-        toast({
-          title: "Receipt downloaded",
-          description: "Your receipt has been downloaded successfully.",
-        });
-        
-        // Navigate to homepage after successful download with a delay
-        setTimeout(() => {
-          navigate('/');
-        }, 2000);
-        
-        return;
-      } catch (method2Error) {
-        console.error("Method 2 download failed, trying method 3:", method2Error);
-      }
-      
-      // Method 3: Direct data URL download as final fallback
-      try {
-        // Create a simple PDF
-        const pdf = new jsPDF();
-        pdf.text(`Garrison Financial Receipt #${receiptNumber}`, 20, 20);
-        pdf.text(`Name: ${formData.name}`, 20, 30);
-        pdf.text(`Amount: ${amount.toLocaleString()} UGX`, 20, 40);
-        
-        // Create a download link
-        const blob = pdf.output('blob');
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `Garrison_Financial_Receipt_${receiptNumber}.pdf`;
-        link.click();
-        window.URL.revokeObjectURL(url);
-        
-        console.log("Receipt downloaded successfully using method 3");
-        
-        toast({
-          title: "Receipt downloaded",
-          description: "Your receipt has been downloaded using alternative method.",
-        });
-        
-        // Navigate to homepage after successful download with a delay
-        setTimeout(() => {
-          navigate('/');
-        }, 2000);
-      } catch (method3Error) {
-        console.error("All methods failed:", method3Error);
-        throw new Error("Download failed. Please try again.");
-      }
-      
-    } catch (error) {
-      console.error('Error downloading receipt:', error);
+
+      pdf.save(`Loan-Receipt-${receiptNumber}.pdf`);
+
       toast({
-        title: "Error downloading receipt",
-        description: "Please try again or contact support.",
-        variant: "destructive"
+        title: "Receipt Downloaded",
+        description: "Your loan receipt has been downloaded successfully",
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: "Download Error",
+        description: "Failed to download receipt. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setIsDownloading(false);
     }
   };
 
+  if (!amount || !term) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <Card className="text-center">
+          <CardContent className="pt-6">
+            <p className="text-gray-600 mb-4">No loan information found.</p>
+            <Button onClick={() => navigate('/loan-application')}>
+              Start New Application
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-garrison-black mb-4">Complete Your Loan Application</h1>
         <p className="text-gray-600">
-          Please provide your details to complete the application process.
+          Fill in your personal details and scan your ID to complete the application.
         </p>
       </div>
 
-      <Card className="shadow-lg">
-        <CardHeader className="bg-garrison-green text-white">
-          <CardTitle>Personal Information</CardTitle>
-          <CardDescription className="text-white/80">
-            Fill in your details for verification
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-6">
-          <div className="space-y-6">
-            {!isIdCardScanned && !receiptNumber ? (
-              <IDCardScanner 
-                onImagesCapture={handleIdCardCapture} 
-                onError={(error) => toast({
-                  title: "Error scanning ID card",
-                  description: error,
-                  variant: "destructive"
-                })} 
-              />
-            ) : !receiptNumber ? (
-              <>
-                <div className="bg-green-50 p-4 rounded-md border border-green-200 flex items-center space-x-3 mb-4">
-                  <CheckCircle2 className="h-5 w-5 text-green-500" />
-                  <p className="text-green-700">ID card successfully scanned.</p>
+      {!isSubmitted ? (
+        <div className="space-y-8">
+          {/* Loan Summary */}
+          <Card>
+            <CardHeader className="bg-garrison-green text-white">
+              <CardTitle>Loan Summary</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex justify-between">
+                  <span>Loan Amount:</span>
+                  <span className="font-medium">{amount.toLocaleString()} UGX</span>
                 </div>
+                <div className="flex justify-between">
+                  <span>Interest Rate:</span>
+                  <span className="font-medium">{interest}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Repayment Term:</span>
+                  <span className="font-medium">{term === 'short' ? '14 Days' : '30 Days'}</span>
+                </div>
+                <div className="flex justify-between font-bold">
+                  <span>Total Repayment:</span>
+                  <span>{totalAmount.toLocaleString()} UGX</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
+          {/* ID Card Scanning */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Uganda National ID Verification</CardTitle>
+              <CardDescription>
+                Please scan both sides of your Uganda National ID card
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {scanningStep === 'front' && (
+                <div>
+                  <Label className="text-lg font-medium mb-4 block">Step 1: Scan Front of ID Card</Label>
+                  <IDCardScanner 
+                    onImageCapture={(blob) => handleIDCardScan(blob, 'front')}
+                    side="front"
+                  />
+                </div>
+              )}
+
+              {scanningStep === 'back' && (
+                <div>
+                  <Label className="text-lg font-medium mb-4 block">Step 2: Scan Back of ID Card</Label>
+                  <IDCardScanner 
+                    onImageCapture={(blob) => handleIDCardScan(blob, 'back')}
+                    side="back"
+                  />
+                </div>
+              )}
+
+              {scanningStep === 'completed' && (
+                <Alert>
+                  <CheckCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    ID card scanning completed successfully. Both sides have been captured.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Personal Information Form */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Personal Information</CardTitle>
+              <CardDescription>
+                Please provide your contact information
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
+                  <Label htmlFor="name">Full Name *</Label>
                   <Input
                     id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     placeholder="Enter your full name"
-                    className={errors.name ? "border-red-500" : ""}
-                    disabled={!!receiptNumber}
+                    required
                   />
-                  {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
+                  <Label htmlFor="phone">Phone Number *</Label>
                   <Input
                     id="phone"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    placeholder="e.g. +256700000000"
-                    className={errors.phone ? "border-red-500" : ""}
-                    disabled={!!receiptNumber}
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="Enter your phone number"
+                    required
                   />
-                  {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
+                  <Label htmlFor="email">Email Address *</Label>
                   <Input
                     id="email"
-                    name="email"
                     type="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="your.email@example.com"
-                    className={errors.email ? "border-red-500" : ""}
-                    disabled={!!receiptNumber}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email address"
+                    required
                   />
-                  {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-                </div>
-
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <h3 className="font-medium text-garrison-black mb-2">Loan Summary:</h3>
-                  <div className="flex justify-between mt-2 text-sm">
-                    <span>Loan Amount:</span>
-                    <span>{amount.toLocaleString()} UGX</span>
-                  </div>
-                  <div className="flex justify-between mt-1 text-sm">
-                    <span>Interest Rate:</span>
-                    <span>{interest}%</span>
-                  </div>
-                  <div className="flex justify-between mt-1 text-sm">
-                    <span>Repayment Term:</span>
-                    <span>{term === 'short' ? '14 Days' : '30 Days'}</span>
-                  </div>
-                  <div className="flex justify-between mt-3 font-medium">
-                    <span>Total Repayment:</span>
-                    <span>{totalAmount.toLocaleString()} UGX</span>
-                  </div>
                 </div>
 
                 <Button 
-                  onClick={handleSubmit} 
+                  type="submit" 
                   className="w-full bg-garrison-green hover:bg-green-700"
-                  disabled={isSubmitting || isSendingEmail}
+                  disabled={scanningStep !== 'completed'}
                 >
-                  {isSubmitting || isSendingEmail ? (
-                    <>
-                      <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                      {isSubmitting ? "Processing..." : "Sending application..."}
-                    </>
-                  ) : "Submit"}
+                  Submit Application
                 </Button>
-              </>
-            ) : (
-              <div className="space-y-4">
-                {isVerified ? (
-                  <div className="bg-green-50 p-4 rounded-md border border-green-200 flex items-center space-x-3 mb-4">
-                    <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    <p className="text-green-700">Verification complete. You can now download your receipt.</p>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <div className="space-y-8">
+          {/* Success Message */}
+          <Card className="border-green-200 bg-green-50">
+            <CardContent className="pt-6">
+              <div className="flex items-center space-x-2 text-green-800">
+                <CheckCircle className="h-5 w-5" />
+                <span className="font-medium">Application Submitted Successfully!</span>
+              </div>
+              <p className="text-green-700 mt-2">
+                Receipt Number: <strong>{receiptNumber}</strong>
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Next Steps */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Next Steps for Receipt Download</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="bg-blue-50 p-4 rounded-md border border-blue-100">
+                <div className="flex items-start space-x-3">
+                  <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-blue-800">Contact Manager for Verification</h4>
+                    <p className="text-sm text-blue-700 mt-1">
+                      You must contact our manager on WhatsApp to receive a 6-digit verification code before you can download your receipt.
+                    </p>
                   </div>
-                ) : showVerificationForm ? (
-                  <div className="space-y-4">
-                    <div className="bg-blue-50 p-4 rounded-md border border-blue-200 mb-4">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <ShieldCheck className="h-5 w-5 text-blue-500" />
-                        <h3 className="font-medium text-blue-800">Verification Required</h3>
-                      </div>
-                      <p className="text-blue-800 mb-4">Please contact the manager on WhatsApp and ask for a verification code. Enter the 6-digit code below:</p>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="verificationCode">Verification Code</Label>
-                        <div className="flex space-x-2">
-                          <Input
-                            id="verificationCode"
-                            value={verificationCode}
-                            onChange={(e) => {
-                              setVerificationCode(e.target.value);
-                              if (verificationError) setVerificationError('');
-                            }}
-                            placeholder="Enter 6-digit code"
-                            className={verificationError ? "border-red-500" : ""}
-                            maxLength={6}
-                          />
-                          <Button 
-                            onClick={handleVerifyCode}
-                            className="bg-blue-600 hover:bg-blue-700"
-                          >
-                            Verify
-                          </Button>
-                        </div>
-                        {verificationError && (
-                          <p className="text-red-500 text-sm mt-1">{verificationError}</p>
-                        )}
-                      </div>
-                      
-                      <div className="mt-4 text-sm text-blue-700">
-                        <p>Need to contact the manager?</p>
-                        <Button 
-                          onClick={openWhatsApp}
-                          variant="outline" 
-                          className="mt-2 border-blue-300 text-blue-700 hover:bg-blue-50"
-                        >
-                          <MessageSquare className="mr-2 h-4 w-4" />
-                          Contact Manager on WhatsApp
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="bg-amber-50 p-4 rounded-md border border-amber-200 mb-4">
-                    <p className="text-amber-800 mb-2">Please contact the manager on WhatsApp to receive your verification code.</p>
-                    <Button 
-                      onClick={openWhatsApp}
-                      className="w-full bg-amber-500 hover:bg-amber-600 text-white"
-                    >
-                      <MessageSquare className="mr-2 h-4 w-4" />
-                      Contact Manager on WhatsApp
-                    </Button>
-                  </div>
-                )}
-                
+                </div>
+              </div>
+
+              <div className="flex justify-center">
                 <Button 
-                  onClick={downloadReceipt} 
-                  className="w-full bg-garrison-green hover:bg-green-700"
-                  disabled={isDownloading || !isVerified}
+                  onClick={openWhatsApp}
+                  className="bg-[#25D366] hover:bg-[#128C7E] text-white flex items-center gap-2 py-6 px-8 text-lg"
                 >
-                  {isDownloading ? (
-                    <>
-                      <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                      Preparing download...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="mr-2 h-4 w-4" />
-                      Download Receipt
-                    </>
-                  )}
+                  <MessageSquare className="h-6 w-6" />
+                  Contact Manager on WhatsApp
                 </Button>
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* Receipt for PDF generation with improved rendering */}
-      {receiptNumber && (
-        <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', width: '210mm', height: '297mm' }}>
-          <div ref={receiptRef}>
-            <Receipt 
-              name={formData.name}
-              phone={formData.phone}
-              email={formData.email}
+
+              <div className="text-center">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowVerificationInput(!showVerificationInput)}
+                  className="text-garrison-green border-garrison-green hover:bg-garrison-green hover:text-white"
+                >
+                  I have received the verification code
+                </Button>
+              </div>
+
+              {showVerificationInput && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Enter Verification Code</CardTitle>
+                    <CardDescription>
+                      Enter the 6-digit code provided by our manager
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="verification">Verification Code</Label>
+                      <Input
+                        id="verification"
+                        value={verificationCode}
+                        onChange={(e) => setVerificationCode(e.target.value)}
+                        placeholder="Enter 6-digit code"
+                        maxLength={6}
+                      />
+                      {verificationError && (
+                        <p className="text-red-500 text-sm">{verificationError}</p>
+                      )}
+                    </div>
+                    <Button 
+                      onClick={handleVerificationCodeSubmit}
+                      disabled={verificationCode.length !== 6}
+                      className="w-full"
+                    >
+                      Verify Code
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+
+              {isVerified && (
+                <Card className="border-green-200 bg-green-50">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2 text-green-800">
+                        <CheckCircle className="h-5 w-5" />
+                        <span className="font-medium">Verification Successful!</span>
+                      </div>
+                      <Button 
+                        onClick={downloadReceipt}
+                        disabled={isDownloading}
+                        className="bg-garrison-green hover:bg-green-700"
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        {isDownloading ? 'Downloading...' : 'Download Receipt'}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Hidden Receipt for PDF Generation */}
+          <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+            <Receipt
+              ref={receiptRef}
+              name={name}
+              phone={phone}
+              email={email}
               amount={amount}
               term={term}
               interest={interest}

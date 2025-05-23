@@ -123,13 +123,15 @@ const Receipt = ({
         <p>Date and Time of Issue: {currentDateTime}</p>
       </div>
       
-      <style jsx>{`
-        @media print {
-          .internal-only {
-            display: none !important;
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @media print {
+            .internal-only {
+              display: none !important;
+            }
           }
-        }
-      `}</style>
+        `
+      }} />
     </div>
   );
 };

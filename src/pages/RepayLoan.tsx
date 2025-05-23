@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { MessageSquare, Scanner, ShieldCheck } from 'lucide-react';
+import { MessageSquare, Scan, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const RepayLoan = () => {
@@ -49,7 +49,7 @@ const RepayLoan = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="bg-blue-50 p-4 rounded-md border border-blue-100 flex flex-col items-center text-center">
-              <Scanner className="h-8 w-8 text-blue-600 mb-2" />
+              <Scan className="h-8 w-8 text-blue-600 mb-2" />
               <h3 className="font-medium text-blue-800 mb-1">1. ID Verification</h3>
               <p className="text-sm text-blue-700">
                 Scan both sides of your National ID card for verification
