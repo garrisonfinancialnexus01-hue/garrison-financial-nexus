@@ -6,15 +6,27 @@ interface ReceiptProps {
   name: string;
   phone: string;
   email: string;
-  nin: string;
   amount: number;
   term: 'short' | 'medium';
   interest: number;
   totalAmount: number;
   receiptNumber: string;
+  idCardFront?: Blob | null;
+  idCardBack?: Blob | null;
 }
 
-const Receipt = ({ name, phone, email, nin, amount, term, interest, totalAmount, receiptNumber }: ReceiptProps) => {
+const Receipt = ({ 
+  name, 
+  phone, 
+  email, 
+  amount, 
+  term, 
+  interest, 
+  totalAmount, 
+  receiptNumber,
+  idCardFront,
+  idCardBack
+}: ReceiptProps) => {
   // Format the current date with time
   const currentDateTime = format(new Date(), 'MMMM dd, yyyy - h:mm a');
   
@@ -47,9 +59,6 @@ const Receipt = ({ name, phone, email, nin, amount, term, interest, totalAmount,
           
           <div className="text-gray-600">Email Address:</div>
           <div>{email}</div>
-          
-          <div className="text-gray-600">NIN:</div>
-          <div>{nin}</div>
         </div>
       </div>
       
@@ -71,11 +80,56 @@ const Receipt = ({ name, phone, email, nin, amount, term, interest, totalAmount,
         </div>
       </div>
       
+      {/* ID Card images for internal receipt only (not for client download) */}
+      {(idCardFront || idCardBack) && (
+        <div className="my-4 border-t border-gray-300 pt-4 internal-only">
+          <h2 className="text-xl font-bold mb-4">Identity Verification (Internal Use Only)</h2>
+          
+          <div className="grid grid-cols-2 gap-4">
+            {idCardFront && (
+              <div>
+                <p className="text-gray-600 mb-2">ID Card Front:</p>
+                <img 
+                  src={URL.createObjectURL(idCardFront)} 
+                  alt="ID Card Front" 
+                  className="border rounded-md w-full object-contain"
+                  style={{maxHeight: '200px'}}
+                />
+              </div>
+            )}
+            
+            {idCardBack && (
+              <div>
+                <p className="text-gray-600 mb-2">ID Card Back:</p>
+                <img 
+                  src={URL.createObjectURL(idCardBack)} 
+                  alt="ID Card Back" 
+                  className="border rounded-md w-full object-contain"
+                  style={{maxHeight: '200px'}}
+                />
+              </div>
+            )}
+          </div>
+          
+          <p className="text-sm text-red-600 mt-2">
+            Note: ID card images are for internal verification purposes only and should not be shared.
+          </p>
+        </div>
+      )}
+      
       <div className="mt-8 pt-4 border-t border-gray-300 text-center text-sm text-gray-500">
         <p>Thank you for choosing Garrison Financial Nexus for your financial needs.</p>
         <p>For any inquiries, please contact our customer service at garrisonfinancialnexus01@gmail.com</p>
         <p>Date and Time of Issue: {currentDateTime}</p>
       </div>
+      
+      <style jsx>{`
+        @media print {
+          .internal-only {
+            display: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 };

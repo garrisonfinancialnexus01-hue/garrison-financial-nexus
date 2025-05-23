@@ -158,8 +158,8 @@ const LoanApplication = () => {
                 <div>
                   <h4 className="font-medium text-blue-800">Important Verification Info</h4>
                   <p className="text-sm text-blue-700 mt-1">
-                    After submitting your application, you'll need to contact our manager on WhatsApp 
-                    to receive a verification code before downloading your receipt.
+                    After submitting your application, you'll need to scan your National ID card and 
+                    contact our manager on WhatsApp to receive a verification code before downloading your receipt.
                   </p>
                 </div>
               </div>
@@ -170,7 +170,7 @@ const LoanApplication = () => {
               disabled={!!error || !amount}
               className="w-full bg-garrison-green hover:bg-green-700"
             >
-              Confirm
+              Continue
             </Button>
 
             <div className="text-center mt-4">

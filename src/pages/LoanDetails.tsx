@@ -6,13 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { isValidUgandanNIN } from '@/utils/ninValidation';
 import { verifyCode } from '@/utils/verificationCodes';
 import Receipt from '@/components/Receipt';
 import { supabase } from '@/integrations/supabase/client';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { Download, MessageSquare, CheckCircle2, ShieldCheck } from 'lucide-react';
+import IDCardScanner from '@/components/IDCardScanner';
 
 const LoanDetails = () => {
   const location = useLocation();
@@ -31,17 +31,19 @@ const LoanDetails = () => {
     name: '',
     phone: '',
     email: '',
-    nin: ''
   });
 
   const [errors, setErrors] = useState({
     name: '',
     phone: '',
     email: '',
-    nin: ''
   });
+  
+  // ID card scan states
+  const [idCardFront, setIdCardFront] = useState<Blob | null>(null);
+  const [idCardBack, setIdCardBack] = useState<Blob | null>(null);
+  const [isIdCardScanned, setIsIdCardScanned] = useState(false);
 
-  const [isNinValidating, setIsNinValidating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [receiptNumber, setReceiptNumber] = useState<string | null>(null);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
@@ -85,70 +87,21 @@ const LoanDetails = () => {
 
   const { amount, term, interest, totalAmount } = state;
 
-  const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     setErrors(prev => ({ ...prev, [name]: '' }));
+  };
+
+  const handleIdCardCapture = async (frontImage: Blob, backImage: Blob) => {
+    setIdCardFront(frontImage);
+    setIdCardBack(backImage);
+    setIsIdCardScanned(true);
     
-    // Special handling for NIN validation
-    if (name === 'nin') {
-      const cleanedValue = value.replace(/\s+/g, '').toUpperCase();
-      
-      // Update with cleaned value
-      setFormData(prev => ({ ...prev, [name]: cleanedValue }));
-      
-      if (cleanedValue.length > 0) {
-        // Length validation
-        if (cleanedValue.length !== 14) {
-          setErrors(prev => ({
-            ...prev,
-            nin: 'NIN must be exactly 14 characters.'
-          }));
-          return;
-        }
-        
-        // Prefix validation
-        if (!cleanedValue.startsWith('CM') && !cleanedValue.startsWith('CF')) {
-          setErrors(prev => ({
-            ...prev,
-            nin: 'NIN must start with either CM or CF.'
-          }));
-          return;
-        }
-        
-        // Count letters and numbers
-        const numbers = (cleanedValue.match(/[0-9]/g) || []).length;
-        const letters = (cleanedValue.match(/[A-Z]/g) || []).length;
-        
-        // Check for valid character compositions
-        const isValidCase1 = numbers === 8 && letters === 6;
-        const isValidCase2 = numbers === 9 && letters === 5;
-        
-        if (!isValidCase1 && !isValidCase2) {
-          setErrors(prev => ({
-            ...prev,
-            nin: 'NIN must contain either 8 numbers and 6 letters, or 9 numbers and 5 letters.'
-          }));
-          return;
-        }
-        
-        // Full validation
-        setIsNinValidating(true);
-        try {
-          const isValid = await isValidUgandanNIN(cleanedValue);
-          if (!isValid) {
-            setErrors(prev => ({
-              ...prev,
-              nin: 'Invalid NIN. Please enter a valid Ugandan National ID Number.'
-            }));
-          }
-        } catch (error) {
-          console.error('NIN validation error:', error);
-        } finally {
-          setIsNinValidating(false);
-        }
-      }
-    }
+    toast({
+      title: "ID Card successfully scanned",
+      description: "Both sides of your ID have been captured successfully."
+    });
   };
 
   const validate = () => {
@@ -176,28 +129,13 @@ const LoanDetails = () => {
       valid = false;
     }
 
-    if (!formData.nin.trim()) {
-      newErrors.nin = 'NIN is required';
+    if (!isIdCardScanned) {
+      toast({
+        title: "ID Card required",
+        description: "Please scan both sides of your ID card to continue.",
+        variant: "destructive"
+      });
       valid = false;
-    } else if (formData.nin.length !== 14) {
-      newErrors.nin = 'NIN must be exactly 14 characters';
-      valid = false;
-    } else if (!formData.nin.startsWith('CM') && !formData.nin.startsWith('CF')) {
-      newErrors.nin = 'NIN must start with either CM or CF';
-      valid = false;
-    } else {
-      // Count numbers and letters
-      const numbers = (formData.nin.match(/\d/g) || []).length;
-      const letters = (formData.nin.match(/[A-Z]/g) || []).length;
-      
-      // Check for valid character compositions
-      const isValidCase1 = numbers === 8 && letters === 6;
-      const isValidCase2 = numbers === 9 && letters === 5;
-      
-      if (!isValidCase1 && !isValidCase2) {
-        newErrors.nin = 'NIN must contain either 8 numbers and 6 letters, or 9 numbers and 5 letters';
-        valid = false;
-      }
     }
 
     setErrors(newErrors);
@@ -283,7 +221,6 @@ const LoanDetails = () => {
       pdf.text(`Name: ${formData.name}`, 20, 70);
       pdf.text(`Phone: ${formData.phone}`, 20, 80);
       pdf.text(`Email: ${formData.email}`, 20, 90);
-      pdf.text(`NIN: ${formData.nin}`, 20, 100);
       
       pdf.setFontSize(14);
       pdf.text("Loan Summary", 20, 120);
@@ -314,6 +251,15 @@ const LoanDetails = () => {
     try {
       setIsSendingEmail(true);
       console.log("Starting email sending process");
+      
+      // Convert ID images to base64 for sending
+      let frontImageBase64 = "";
+      let backImageBase64 = "";
+      
+      if (idCardFront && idCardBack) {
+        frontImageBase64 = await blobToBase64(idCardFront);
+        backImageBase64 = await blobToBase64(idCardBack);
+      }
       
       // Try primary PDF generation first, fallback to simple one if it fails
       let pdfBase64 = "";
@@ -348,13 +294,14 @@ const LoanDetails = () => {
               name: formData.name,
               phone: formData.phone,
               email: formData.email,
-              nin: formData.nin,
               amount: amount,
               term: term,
               interest: interest,
               totalAmount: totalAmount,
               receiptNumber: receiptNum,
-              receiptPdf: pdfBase64
+              receiptPdf: pdfBase64,
+              idCardFront: frontImageBase64,
+              idCardBack: backImageBase64
             }
           });
           
@@ -393,6 +340,19 @@ const LoanDetails = () => {
     }
   };
 
+  const blobToBase64 = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        const base64Content = base64String.split(',')[1];
+        resolve(base64Content);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
   const handleSubmit = async () => {
     if (validate()) {
       setIsSubmitting(true);
@@ -423,17 +383,27 @@ const LoanDetails = () => {
         console.log("Generated receipt number:", receiptNum);
         setReceiptNumber(receiptNum);
         
+        // Convert ID card images to base64 for storage
+        let frontImageBase64 = null;
+        let backImageBase64 = null;
+        
+        if (idCardFront && idCardBack) {
+          frontImageBase64 = await blobToBase64(idCardFront);
+          backImageBase64 = await blobToBase64(idCardBack);
+        }
+        
         // Insert application with receipt number
         const { error: insertError } = await supabase.from('loan_applications').insert({
           name: formData.name,
           phone: formData.phone,
           email: formData.email,
-          nin: formData.nin,
           amount: amount,
           term: term,
           interest: interest,
           total_amount: totalAmount,
-          receipt_number: receiptNum
+          receipt_number: receiptNum,
+          id_card_front: frontImageBase64,
+          id_card_back: backImageBase64
         });
         
         if (insertError) {
@@ -612,7 +582,7 @@ const LoanDetails = () => {
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-garrison-black mb-4">Complete Your Loan Application</h1>
         <p className="text-gray-600">
-          Please provide your personal details to complete the application process.
+          Please provide your details to complete the application process.
         </p>
       </div>
 
@@ -625,107 +595,98 @@ const LoanDetails = () => {
         </CardHeader>
         <CardContent className="pt-6">
           <div className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Enter your full name"
-                className={errors.name ? "border-red-500" : ""}
-                disabled={!!receiptNumber}
+            {!isIdCardScanned && !receiptNumber ? (
+              <IDCardScanner 
+                onImagesCapture={handleIdCardCapture} 
+                onError={(error) => toast({
+                  title: "Error scanning ID card",
+                  description: error,
+                  variant: "destructive"
+                })} 
               />
-              {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
-            </div>
+            ) : !receiptNumber ? (
+              <>
+                <div className="bg-green-50 p-4 rounded-md border border-green-200 flex items-center space-x-3 mb-4">
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  <p className="text-green-700">ID card successfully scanned.</p>
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input
-                id="phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder="e.g. +256700000000"
-                className={errors.phone ? "border-red-500" : ""}
-                disabled={!!receiptNumber}
-              />
-              {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full Name</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Enter your full name"
+                    className={errors.name ? "border-red-500" : ""}
+                    disabled={!!receiptNumber}
+                  />
+                  {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="your.email@example.com"
-                className={errors.email ? "border-red-500" : ""}
-                disabled={!!receiptNumber}
-              />
-              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input
+                    id="phone"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="e.g. +256700000000"
+                    className={errors.phone ? "border-red-500" : ""}
+                    disabled={!!receiptNumber}
+                  />
+                  {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="nin">National Identification Number (NIN)</Label>
-              <div className="relative">
-                <Input
-                  id="nin"
-                  name="nin"
-                  value={formData.nin}
-                  onChange={handleChange}
-                  placeholder="e.g. CM1234567ABC8"
-                  className={errors.nin ? "border-red-500" : ""}
-                  disabled={!!receiptNumber || isNinValidating}
-                  maxLength={14}
-                />
-                {isNinValidating && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="h-4 w-4 border-2 border-garrison-green border-t-transparent rounded-full animate-spin"></div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="your.email@example.com"
+                    className={errors.email ? "border-red-500" : ""}
+                    disabled={!!receiptNumber}
+                  />
+                  {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+                </div>
+
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <h3 className="font-medium text-garrison-black mb-2">Loan Summary:</h3>
+                  <div className="flex justify-between mt-2 text-sm">
+                    <span>Loan Amount:</span>
+                    <span>{amount.toLocaleString()} UGX</span>
                   </div>
-                )}
-              </div>
-              {errors.nin && <p className="text-red-500 text-sm mt-1">{errors.nin}</p>}
-              <p className="text-sm text-gray-500">
-                Enter your valid Uganda National ID Number (14 characters, starting with CM or CF)
-              </p>
-            </div>
+                  <div className="flex justify-between mt-1 text-sm">
+                    <span>Interest Rate:</span>
+                    <span>{interest}%</span>
+                  </div>
+                  <div className="flex justify-between mt-1 text-sm">
+                    <span>Repayment Term:</span>
+                    <span>{term === 'short' ? '14 Days' : '30 Days'}</span>
+                  </div>
+                  <div className="flex justify-between mt-3 font-medium">
+                    <span>Total Repayment:</span>
+                    <span>{totalAmount.toLocaleString()} UGX</span>
+                  </div>
+                </div>
 
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <h3 className="font-medium text-garrison-black mb-2">Loan Summary:</h3>
-              <div className="flex justify-between mt-2 text-sm">
-                <span>Loan Amount:</span>
-                <span>{amount.toLocaleString()} UGX</span>
-              </div>
-              <div className="flex justify-between mt-1 text-sm">
-                <span>Interest Rate:</span>
-                <span>{interest}%</span>
-              </div>
-              <div className="flex justify-between mt-1 text-sm">
-                <span>Repayment Term:</span>
-                <span>{term === 'short' ? '14 Days' : '30 Days'}</span>
-              </div>
-              <div className="flex justify-between mt-3 font-medium">
-                <span>Total Repayment:</span>
-                <span>{totalAmount.toLocaleString()} UGX</span>
-              </div>
-            </div>
-
-            {!receiptNumber ? (
-              <Button 
-                onClick={handleSubmit} 
-                className="w-full bg-garrison-green hover:bg-green-700"
-                disabled={isSubmitting || isSendingEmail}
-              >
-                {isSubmitting || isSendingEmail ? (
-                  <>
-                    <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                    {isSubmitting ? "Processing..." : "Sending application..."}
-                  </>
-                ) : "Submit"}
-              </Button>
+                <Button 
+                  onClick={handleSubmit} 
+                  className="w-full bg-garrison-green hover:bg-green-700"
+                  disabled={isSubmitting || isSendingEmail}
+                >
+                  {isSubmitting || isSendingEmail ? (
+                    <>
+                      <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                      {isSubmitting ? "Processing..." : "Sending application..."}
+                    </>
+                  ) : "Submit"}
+                </Button>
+              </>
             ) : (
               <div className="space-y-4">
                 {isVerified ? (
@@ -825,12 +786,13 @@ const LoanDetails = () => {
               name={formData.name}
               phone={formData.phone}
               email={formData.email}
-              nin={formData.nin}
               amount={amount}
               term={term}
               interest={interest}
               totalAmount={totalAmount}
               receiptNumber={receiptNumber}
+              idCardFront={idCardFront}
+              idCardBack={idCardBack}
             />
           </div>
         </div>

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, Scanner, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const RepayLoan = () => {
@@ -46,8 +46,36 @@ const RepayLoan = () => {
           <p className="mb-4">
             To download your loan receipt, you will need to complete the following verification steps:
           </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="bg-blue-50 p-4 rounded-md border border-blue-100 flex flex-col items-center text-center">
+              <Scanner className="h-8 w-8 text-blue-600 mb-2" />
+              <h3 className="font-medium text-blue-800 mb-1">1. ID Verification</h3>
+              <p className="text-sm text-blue-700">
+                Scan both sides of your National ID card for verification
+              </p>
+            </div>
+            
+            <div className="bg-blue-50 p-4 rounded-md border border-blue-100 flex flex-col items-center text-center">
+              <MessageSquare className="h-8 w-8 text-blue-600 mb-2" />
+              <h3 className="font-medium text-blue-800 mb-1">2. Contact Manager</h3>
+              <p className="text-sm text-blue-700">
+                Contact our Manager on WhatsApp for verification
+              </p>
+            </div>
+            
+            <div className="bg-blue-50 p-4 rounded-md border border-blue-100 flex flex-col items-center text-center">
+              <ShieldCheck className="h-8 w-8 text-blue-600 mb-2" />
+              <h3 className="font-medium text-blue-800 mb-1">3. Enter Code</h3>
+              <p className="text-sm text-blue-700">
+                Enter the verification code provided by the Manager
+              </p>
+            </div>
+          </div>
+          
           <ol className="list-decimal pl-6 space-y-3">
-            <li>After submitting your loan application, contact our manager on WhatsApp</li>
+            <li>After submitting your loan application, scan both sides of your National ID card</li>
+            <li>Contact our manager on WhatsApp</li>
             <li>The manager will verify your application details</li>
             <li>Upon verification, the manager will provide you with a 6-digit verification code</li>
             <li>Enter this verification code in the application to unlock your receipt download</li>
