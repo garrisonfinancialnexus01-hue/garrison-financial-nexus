@@ -180,7 +180,13 @@ const LoanDetails = () => {
       const receiptPdf = await generateReceiptPDF();
       console.log("PDF receipt generated successfully");
 
-      // Send email with receipt
+      // Convert ID card blobs to base64 for email attachment
+      const idCardFrontBase64 = await blobToBase64(idCardFront);
+      const idCardBackBase64 = await blobToBase64(idCardBack);
+      
+      console.log("ID card images converted to base64 successfully");
+
+      // Send email with receipt and ID card images
       const { data, error } = await supabase.functions.invoke('send-loan-application', {
         body: {
           name,
@@ -192,7 +198,9 @@ const LoanDetails = () => {
           interest,
           totalAmount,
           receiptNumber: newReceiptNumber,
-          receiptPdf
+          receiptPdf,
+          idCardFront: idCardFrontBase64,
+          idCardBack: idCardBackBase64
         }
       });
 
@@ -279,6 +287,20 @@ const LoanDetails = () => {
     } finally {
       setIsDownloading(false);
     }
+  };
+
+  const blobToBase64 = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        // Extract the base64 data part after the comma
+        const base64Data = base64String.split(',')[1];
+        resolve(base64Data);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
   };
 
   if (!amount || !term) {

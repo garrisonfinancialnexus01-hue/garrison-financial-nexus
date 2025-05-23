@@ -22,6 +22,8 @@ interface LoanApplicationData {
   totalAmount: number;
   receiptNumber: string;
   receiptPdf?: string;
+  idCardFront?: string;
+  idCardBack?: string;
 }
 
 serve(async (req) => {
@@ -39,6 +41,7 @@ serve(async (req) => {
     }
     
     const data: LoanApplicationData = await req.json();
+    console.log("Received data with fields:", Object.keys(data).join(", "));
     
     // Validate the data received
     if (!data.name || !data.phone || !data.email || !data.receiptNumber) {
@@ -82,7 +85,7 @@ serve(async (req) => {
           
           <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; margin: 15px 0; border-radius: 5px;">
             <strong>⏰ NEXT STEPS:</strong>
-            <br>1. Review attached receipt and ID documents
+            <br>1. Review attached ID card images
             <br>2. Contact applicant at ${data.phone}
             <br>3. Process loan approval/rejection
             <br>4. Send verification code if approved
@@ -91,24 +94,49 @@ serve(async (req) => {
       </div>
     `;
     
+    // Prepare email attachments
+    const attachments = [];
+    
+    // Add receipt PDF if available
+    if (data.receiptPdf) {
+      attachments.push({
+        filename: `Loan_Application_${data.receiptNumber}.pdf`,
+        content: data.receiptPdf,
+        encoding: 'base64',
+      });
+      console.log("Receipt PDF attachment added");
+    }
+    
+    // Add ID card front image if available
+    if (data.idCardFront) {
+      attachments.push({
+        filename: `ID_Front_${data.receiptNumber}.jpg`,
+        content: data.idCardFront,
+        encoding: 'base64',
+      });
+      console.log("ID Card Front attachment added");
+    }
+    
+    // Add ID card back image if available
+    if (data.idCardBack) {
+      attachments.push({
+        filename: `ID_Back_${data.receiptNumber}.jpg`,
+        content: data.idCardBack,
+        encoding: 'base64',
+      });
+      console.log("ID Card Back attachment added");
+    }
+    
     // Prepare email options with highest priority
     const emailOptions = {
       from: "Garrison Financial Nexus <onboarding@resend.dev>",
       to: [adminEmail],
       subject: `🚨 URGENT: New Loan Application - ${data.name} - ${data.receiptNumber}`,
       html: emailContent,
-      ...(data.receiptPdf && {
-        attachments: [
-          {
-            filename: `Loan_Application_${data.receiptNumber}.pdf`,
-            content: data.receiptPdf,
-            encoding: 'base64',
-          },
-        ],
-      }),
+      attachments: attachments.length > 0 ? attachments : undefined,
     };
     
-    console.log("Sending urgent email notification to:", adminEmail);
+    console.log("Sending urgent email notification to:", adminEmail, "with", attachments.length, "attachments");
     const emailResponse = await resend.emails.send(emailOptions);
     
     if (emailResponse.error) {
