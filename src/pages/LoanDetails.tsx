@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -52,15 +51,15 @@ const LoanDetails = () => {
     window.open(`https://wa.me/256761281222`, '_blank');
   };
 
-  const handleIDCardScan = (imageBlob: Blob, side: 'front' | 'back') => {
-    if (side === 'front') {
+  const handleIDCardScan = (imageBlob: Blob) => {
+    if (scanningStep === 'front') {
       setIdCardFront(imageBlob);
       setScanningStep('back');
       toast({
         title: "Front ID captured",
         description: "Now scan the back of your ID card",
       });
-    } else {
+    } else if (scanningStep === 'back') {
       setIdCardBack(imageBlob);
       setScanningStep('completed');
       toast({
@@ -245,7 +244,8 @@ const LoanDetails = () => {
                 <div>
                   <Label className="text-lg font-medium mb-4 block">Step 1: Scan Front of ID Card</Label>
                   <IDCardScanner 
-                    onImageCapture={(blob) => handleIDCardScan(blob, 'front')}
+                    onImageCapture={handleIDCardScan}
+                    onError={(error) => toast({ title: "Error", description: error, variant: "destructive" })}
                     side="front"
                   />
                 </div>
@@ -255,7 +255,8 @@ const LoanDetails = () => {
                 <div>
                   <Label className="text-lg font-medium mb-4 block">Step 2: Scan Back of ID Card</Label>
                   <IDCardScanner 
-                    onImageCapture={(blob) => handleIDCardScan(blob, 'back')}
+                    onImageCapture={handleIDCardScan}
+                    onError={(error) => toast({ title: "Error", description: error, variant: "destructive" })}
                     side="back"
                   />
                 </div>

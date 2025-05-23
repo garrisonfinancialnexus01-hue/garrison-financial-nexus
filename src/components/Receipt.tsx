@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { format } from 'date-fns';
 
 interface ReceiptProps {
@@ -15,7 +14,7 @@ interface ReceiptProps {
   idCardBack?: Blob | null;
 }
 
-const Receipt = ({ 
+const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({ 
   name, 
   phone, 
   email, 
@@ -26,12 +25,12 @@ const Receipt = ({
   receiptNumber,
   idCardFront,
   idCardBack
-}: ReceiptProps) => {
+}, ref) => {
   // Format the current date with time
   const currentDateTime = format(new Date(), 'MMMM dd, yyyy - h:mm a');
   
   return (
-    <div className="p-8 bg-white text-black" id="receipt" style={{width: '210mm', height: '297mm', margin: '0 auto'}}>
+    <div ref={ref} className="p-8 bg-white text-black" id="receipt" style={{width: '210mm', height: '297mm', margin: '0 auto'}}>
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center">
           <img 
@@ -134,6 +133,8 @@ const Receipt = ({
       }} />
     </div>
   );
-};
+});
+
+Receipt.displayName = 'Receipt';
 
 export default Receipt;
