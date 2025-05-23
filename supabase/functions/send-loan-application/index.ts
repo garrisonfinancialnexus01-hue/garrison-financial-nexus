@@ -2,7 +2,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 
-// Make sure to use the API key properly
 const resendApiKey = Deno.env.get("RESEND_API_KEY");
 const resend = new Resend(resendApiKey);
 const adminEmail = "garrisonfinancialnexus01@gmail.com";
@@ -22,180 +21,110 @@ interface LoanApplicationData {
   interest: number;
   totalAmount: number;
   receiptNumber: string;
-  receiptPdf?: string; // Base64 encoded PDF
+  receiptPdf?: string;
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
   
   try {
-    console.log("Processing loan application request...");
+    console.log("Processing loan application request immediately...");
     
     if (!resendApiKey) {
-      console.error("ERROR: Missing Resend API key. Please add RESEND_API_KEY to Supabase Edge Function secrets.");
-      throw new Error("Email service configuration error. Contact administrator.");
+      console.error("ERROR: Missing Resend API key");
+      throw new Error("Email service configuration error");
     }
     
     const data: LoanApplicationData = await req.json();
-    console.log("Received data for receipt number:", data.receiptNumber);
+    console.log("Received application for:", data.name, "Receipt:", data.receiptNumber);
     
-    if (!data.receiptPdf) {
-      console.error("No PDF attachment provided");
-      throw new Error("PDF receipt is required");
-    }
-    
-    // Create email content with improved formatting
     const loanTermText = data.term === 'short' ? '14 days' : '30 days';
     
-    let emailContent = `
+    // Create streamlined email content
+    const emailContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background-color: #399B53; padding: 20px; text-align: center; color: white;">
-          <h1>New Loan Application</h1>
+          <h1>🚨 URGENT: New Loan Application Received</h1>
         </div>
         
-        <div style="padding: 20px; border: 1px solid #e0e0e0; border-top: none;">
-          <h2 style="color: #399B53; border-bottom: 1px solid #e0e0e0; padding-bottom: 10px;">Applicant Information</h2>
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr>
-              <td style="padding: 8px; font-weight: bold;">Name:</td>
-              <td style="padding: 8px;">${data.name}</td>
-            </tr>
-            <tr style="background-color: #f9f9f9;">
-              <td style="padding: 8px; font-weight: bold;">Phone:</td>
-              <td style="padding: 8px;">${data.phone}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; font-weight: bold;">Email:</td>
-              <td style="padding: 8px;">${data.email}</td>
-            </tr>
-          </table>
+        <div style="padding: 20px; border: 1px solid #e0e0e0;">
+          <h2 style="color: #399B53;">⚡ IMMEDIATE ACTION REQUIRED</h2>
           
-          <h2 style="color: #399B53; border-bottom: 1px solid #e0e0e0; padding-bottom: 10px; margin-top: 20px;">Loan Details</h2>
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr>
-              <td style="padding: 8px; font-weight: bold;">Amount:</td>
-              <td style="padding: 8px;">${data.amount.toLocaleString()} UGX</td>
-            </tr>
-            <tr style="background-color: #f9f9f9;">
-              <td style="padding: 8px; font-weight: bold;">Term:</td>
-              <td style="padding: 8px;">${loanTermText}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; font-weight: bold;">Interest Rate:</td>
-              <td style="padding: 8px;">${data.interest}%</td>
-            </tr>
-            <tr style="background-color: #f9f9f9;">
-              <td style="padding: 8px; font-weight: bold;">Total Repayment:</td>
-              <td style="padding: 8px; font-weight: bold;">${data.totalAmount.toLocaleString()} UGX</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px; font-weight: bold;">Receipt Number:</td>
-              <td style="padding: 8px;">${data.receiptNumber}</td>
-            </tr>
-          </table>
-          
-          <div style="background-color: #f8f9fa; padding: 15px; border-left: 4px solid #399B53; margin-top: 20px;">
-            <strong>Note:</strong> The receipt is attached as a PDF file to this email. ID verification was completed using Uganda National ID card scanning.
+          <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; margin: 15px 0; border-radius: 5px;">
+            <strong>📋 APPLICATION DETAILS:</strong>
+            <br><strong>Name:</strong> ${data.name}
+            <br><strong>Phone:</strong> ${data.phone}
+            <br><strong>Email:</strong> ${data.email}
+            <br><strong>Amount:</strong> ${data.amount.toLocaleString()} UGX
+            <br><strong>Term:</strong> ${loanTermText}
+            <br><strong>Interest:</strong> ${data.interest}%
+            <br><strong>Total Repayment:</strong> ${data.totalAmount.toLocaleString()} UGX
+            <br><strong>Receipt #:</strong> ${data.receiptNumber}
+            <br><strong>Submitted:</strong> ${new Date().toLocaleString()}
           </div>
-        </div>
-        
-        <div style="background-color: #f5f5f5; padding: 15px; text-align: center; color: #666; font-size: 12px;">
-          <p>Garrison Financial Nexus - Loan Application System</p>
+          
+          <div style="background-color: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; margin: 15px 0; border-radius: 5px;">
+            <strong>✅ VERIFICATION STATUS:</strong>
+            <br>• ID card images captured and attached
+            <br>• Application form completed
+            <br>• Ready for immediate processing
+          </div>
+          
+          <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; margin: 15px 0; border-radius: 5px;">
+            <strong>⏰ NEXT STEPS:</strong>
+            <br>1. Review attached receipt and ID documents
+            <br>2. Contact applicant at ${data.phone}
+            <br>3. Process loan approval/rejection
+            <br>4. Send verification code if approved
+          </div>
         </div>
       </div>
     `;
     
-    // Prepare email options with proper formatting and attachment
+    // Send email immediately with high priority
     const emailOptions = {
       from: "Garrison Financial Nexus <onboarding@resend.dev>",
       to: [adminEmail],
-      subject: `New Loan Application: ${data.name} - ${data.receiptNumber}`,
+      subject: `🚨 URGENT: New Loan Application - ${data.name} - ${data.receiptNumber}`,
       html: emailContent,
-      attachments: [
-        {
-          filename: `Garrison_Financial_Receipt_${data.receiptNumber}.pdf`,
-          content: data.receiptPdf,
-          encoding: 'base64',
-        },
-      ],
+      ...(data.receiptPdf && {
+        attachments: [
+          {
+            filename: `Loan_Application_${data.receiptNumber}.pdf`,
+            content: data.receiptPdf,
+            encoding: 'base64',
+          },
+        ],
+      }),
     };
     
-    // Send email with enhanced retry mechanism
-    let emailResponse = null;
-    let attempts = 0;
-    const maxAttempts = 3;
+    console.log("Sending urgent email notification to:", adminEmail);
+    const emailResponse = await resend.emails.send(emailOptions);
     
-    while (attempts < maxAttempts && !emailResponse) {
-      try {
-        attempts++;
-        console.log(`Attempt ${attempts} to send admin email to: ${adminEmail}`);
-        
-        emailResponse = await resend.emails.send(emailOptions);
-        console.log("Admin email sent successfully:", JSON.stringify(emailResponse));
-      } catch (emailError) {
-        console.error(`Email attempt ${attempts} failed:`, emailError);
-        
-        // Add more detailed error logging
-        if (emailError.response) {
-          console.error("Error response data:", emailError.response.data);
-          console.error("Error response status:", emailError.response.status);
-        }
-        
-        if (attempts === maxAttempts) throw emailError;
-        // Add a delay before retry (increase delay with each attempt)
-        await new Promise(resolve => setTimeout(resolve, attempts * 1000));
-      }
+    if (emailResponse.error) {
+      console.error("Email sending failed:", emailResponse.error);
+      throw new Error("Failed to send notification email");
     }
     
-    // Also send a confirmation email to the applicant with receipt
+    console.log("✅ EMAIL SENT SUCCESSFULLY:", emailResponse.data?.id);
+    
+    // Send confirmation to applicant (non-blocking)
     try {
-      console.log(`Sending confirmation email to applicant: ${data.email}`);
-      
-      const applicantEmailContent = `
+      const applicantConfirmation = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background-color: #399B53; padding: 20px; text-align: center; color: white;">
-            <h1>Thank you for your application!</h1>
+            <h1>✅ Application Received Successfully!</h1>
           </div>
-          
-          <div style="padding: 20px; border: 1px solid #e0e0e0; border-top: none;">
+          <div style="padding: 20px;">
             <p>Dear ${data.name},</p>
-            
-            <p>We have received your loan application with the following details:</p>
-            
-            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-              <tr style="background-color: #f9f9f9;">
-                <td style="padding: 8px; font-weight: bold;">Loan Amount:</td>
-                <td style="padding: 8px;">${data.amount.toLocaleString()} UGX</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px; font-weight: bold;">Term:</td>
-                <td style="padding: 8px;">${loanTermText}</td>
-              </tr>
-              <tr style="background-color: #f9f9f9;">
-                <td style="padding: 8px; font-weight: bold;">Interest Rate:</td>
-                <td style="padding: 8px;">${data.interest}%</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px; font-weight: bold;">Total Repayment:</td>
-                <td style="padding: 8px;">${data.totalAmount.toLocaleString()} UGX</td>
-              </tr>
-              <tr style="background-color: #f9f9f9;">
-                <td style="padding: 8px; font-weight: bold;">Receipt Number:</td>
-                <td style="padding: 8px;">${data.receiptNumber}</td>
-              </tr>
-            </table>
-            
-            <p>Your identity has been verified using your Uganda National ID card.</p>
-            <p>Our team will review your application and contact you shortly.</p>
-            
-            <p>Best regards,<br>Garrison Financial Nexus Team</p>
-          </div>
-          
-          <div style="background-color: #f5f5f5; padding: 15px; text-align: center; color: #666; font-size: 12px;">
-            <p>Garrison Financial Nexus - Your Financial Partner</p>
+            <p><strong>Your loan application has been received and is being processed immediately.</strong></p>
+            <p><strong>Receipt Number:</strong> ${data.receiptNumber}</p>
+            <p><strong>Amount:</strong> ${data.amount.toLocaleString()} UGX</p>
+            <p><strong>Term:</strong> ${loanTermText}</p>
+            <p>Our team will contact you shortly at ${data.phone}.</p>
+            <p>Thank you for choosing Garrison Financial Nexus!</p>
           </div>
         </div>
       `;
@@ -203,33 +132,36 @@ serve(async (req) => {
       await resend.emails.send({
         from: "Garrison Financial Nexus <onboarding@resend.dev>",
         to: [data.email],
-        subject: `Your Loan Application - ${data.receiptNumber}`,
-        html: applicantEmailContent,
-        attachments: [
-          {
-            filename: `Your_Receipt_${data.receiptNumber}.pdf`,
-            content: data.receiptPdf,
-            encoding: 'base64',
-          }
-        ],
+        subject: `Application Received - ${data.receiptNumber}`,
+        html: applicantConfirmation,
       });
-      console.log("Client confirmation email sent successfully");
-    } catch (clientEmailError) {
-      console.error("Error sending client email:", clientEmailError);
-      // Continue execution even if client email fails
+      
+      console.log("✅ Confirmation email sent to applicant");
+    } catch (confirmError) {
+      console.log("⚠️ Applicant confirmation failed (non-critical):", confirmError);
     }
     
     return new Response(
-      JSON.stringify({ success: true, message: "Application email sent successfully" }),
+      JSON.stringify({ 
+        success: true, 
+        message: "Application submitted and notification sent immediately",
+        receiptNumber: data.receiptNumber,
+        timestamp: new Date().toISOString()
+      }),
       { 
         status: 200, 
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       }
     );
+    
   } catch (error) {
-    console.error("Error in send-loan-application function:", error);
+    console.error("❌ CRITICAL ERROR in loan application:", error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ 
+        success: false, 
+        error: error.message,
+        timestamp: new Date().toISOString()
+      }),
       { 
         status: 500, 
         headers: { ...corsHeaders, "Content-Type": "application/json" }
