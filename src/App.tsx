@@ -17,6 +17,11 @@ import LoanDetails from "./pages/LoanDetails";
 import Contact from "./pages/Contact";
 import About from "./pages/About";
 import SettleYourDebt from "./pages/SettleYourDebt";
+import ClientAuth from "./pages/ClientAuth";
+import ClientSignup from "./pages/ClientSignup";
+import SignupSuccess from "./pages/SignupSuccess";
+import ClientDashboard from "./pages/ClientDashboard";
+import { ClientAuthProvider } from "./context/ClientAuthContext";
 
 // Create a client
 const queryClient = new QueryClient({
@@ -33,23 +38,29 @@ const App = () => {
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Layout><Index /></Layout>} />
-              <Route path="/money-lending" element={<Layout><MoneyLending /></Layout>} />
-              <Route path="/money-saving" element={<Layout><MoneySaving /></Layout>} />
-              <Route path="/financial-advisory" element={<Layout><FinancialAdvisory /></Layout>} />
-              <Route path="/wealth-management" element={<Layout><WealthManagement /></Layout>} />
-              <Route path="/loan-application" element={<Layout><LoanApplication /></Layout>} />
-              <Route path="/loan-details" element={<Layout><LoanDetails /></Layout>} />
-              <Route path="/settle-your-debt" element={<Layout><SettleYourDebt /></Layout>} />
-              <Route path="/contact" element={<Layout><Contact /></Layout>} />
-              <Route path="/about" element={<Layout><About /></Layout>} />
-              <Route path="*" element={<Layout><NotFound /></Layout>} />
-            </Routes>
-          </BrowserRouter>
+          <ClientAuthProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Layout><Index /></Layout>} />
+                <Route path="/money-lending" element={<Layout><MoneyLending /></Layout>} />
+                <Route path="/money-saving" element={<Layout><MoneySaving /></Layout>} />
+                <Route path="/financial-advisory" element={<Layout><FinancialAdvisory /></Layout>} />
+                <Route path="/wealth-management" element={<Layout><WealthManagement /></Layout>} />
+                <Route path="/loan-application" element={<Layout><LoanApplication /></Layout>} />
+                <Route path="/loan-details" element={<Layout><LoanDetails /></Layout>} />
+                <Route path="/settle-your-debt" element={<Layout><SettleYourDebt /></Layout>} />
+                <Route path="/contact" element={<Layout><Contact /></Layout>} />
+                <Route path="/about" element={<Layout><About /></Layout>} />
+                <Route path="/client-auth" element={<ClientAuth />} />
+                <Route path="/client-signup" element={<ClientSignup />} />
+                <Route path="/signup-success" element={<SignupSuccess />} />
+                <Route path="/client-dashboard" element={<ClientDashboard />} />
+                <Route path="*" element={<Layout><NotFound /></Layout>} />
+              </Routes>
+            </BrowserRouter>
+          </ClientAuthProvider>
         </TooltipProvider>
       </QueryClientProvider>
     </React.StrictMode>

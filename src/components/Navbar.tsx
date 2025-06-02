@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, MessageSquare } from 'lucide-react';
+import { Menu, X, MessageSquare, Users } from 'lucide-react';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -56,6 +56,13 @@ const Navbar = () => {
                 </div>
               </div>
             </div>
+            <Link 
+              to="/client-auth" 
+              className="flex items-center text-garrison-black hover:text-garrison-green font-medium"
+            >
+              <Users className="h-4 w-4 mr-1" />
+              Client's Accounts
+            </Link>
             <Link to="/about" className="text-garrison-black hover:text-garrison-green font-medium">About</Link>
             <Link to="/contact" className="text-garrison-black hover:text-garrison-green font-medium">Contact</Link>
           </div>
@@ -92,6 +99,13 @@ const Navbar = () => {
                 </Link>
               </div>
             </div>
+            <Link 
+              to="/client-auth" 
+              className="flex items-center px-3 py-2 rounded-md text-base font-medium text-garrison-black hover:text-garrison-green"
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Client's Accounts
+            </Link>
             <Link to="/about" className="block px-3 py-2 rounded-md text-base font-medium text-garrison-black hover:text-garrison-green">About</Link>
             <Link to="/contact" className="block px-3 py-2 rounded-md text-base font-medium text-garrison-black hover:text-garrison-green">Contact</Link>
           </div>

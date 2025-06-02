@@ -9,6 +9,48 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      client_accounts: {
+        Row: {
+          account_balance: number | null
+          account_number: string
+          created_at: string | null
+          email: string
+          id: string
+          name: string
+          nin: string
+          password_hash: string
+          phone: string
+          status: Database["public"]["Enums"]["account_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          account_balance?: number | null
+          account_number: string
+          created_at?: string | null
+          email: string
+          id?: string
+          name: string
+          nin: string
+          password_hash: string
+          phone: string
+          status?: Database["public"]["Enums"]["account_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          account_balance?: number | null
+          account_number?: string
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string
+          nin?: string
+          password_hash?: string
+          phone?: string
+          status?: Database["public"]["Enums"]["account_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       loan_applications: {
         Row: {
           amount: number
@@ -60,9 +102,17 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      validate_nin: {
+        Args: { nin_input: string }
+        Returns: boolean
+      }
+      validate_password: {
+        Args: { password_input: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      account_status: "pending" | "active" | "suspended"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -177,6 +227,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      account_status: ["pending", "active", "suspended"],
+    },
   },
 } as const
