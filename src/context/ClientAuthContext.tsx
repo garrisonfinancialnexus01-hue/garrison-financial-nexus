@@ -63,13 +63,6 @@ export const ClientAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         return { error: 'Account is not active. Please contact manager.' };
       }
 
-      // Set the account number for RLS policy
-      await supabase.rpc('set_config', {
-        setting_name: 'app.current_account_number',
-        setting_value: accountNumber,
-        is_local: false
-      });
-
       setCurrentClient(data);
       localStorage.setItem('currentClient', JSON.stringify(data));
       
