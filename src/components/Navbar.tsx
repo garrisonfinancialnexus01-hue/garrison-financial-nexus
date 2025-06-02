@@ -44,13 +44,13 @@ const Navbar = () => {
                   <Link to="/financial-advisory" className="block px-4 py-2 text-sm text-gray-700 hover:bg-garrison-light hover:text-garrison-green" role="menuitem">Financial Advisory</Link>
                   <Link to="/wealth-management" className="block px-4 py-2 text-sm text-gray-700 hover:bg-garrison-light hover:text-garrison-green" role="menuitem">Wealth Management</Link>
                   <Link 
-                    to="/repay-loan"
+                    to="/settle-your-debt"
                     className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-garrison-light hover:text-garrison-green" 
                     role="menuitem"
                   >
                     <span className="flex items-center">
                       <MessageSquare className="h-4 w-4 mr-2" />
-                      Repay your loan
+                      Settle Your Debt
                     </span>
                   </Link>
                 </div>
@@ -84,11 +84,11 @@ const Navbar = () => {
                 <Link to="/financial-advisory" className="block px-3 py-2 rounded-md text-sm text-garrison-black hover:text-garrison-green">Financial Advisory</Link>
                 <Link to="/wealth-management" className="block px-3 py-2 rounded-md text-sm text-garrison-black hover:text-garrison-green">Wealth Management</Link>
                 <Link 
-                  to="/repay-loan"
+                  to="/settle-your-debt"
                   className="flex items-center px-3 py-2 rounded-md text-sm text-garrison-black hover:text-garrison-green"
                 >
                   <MessageSquare className="h-4 w-4 mr-2" />
-                  Repay your loan
+                  Settle Your Debt
                 </Link>
               </div>
             </div>
