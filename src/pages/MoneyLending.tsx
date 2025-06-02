@@ -11,7 +11,7 @@ const MoneyLending = () => {
       <div className="text-center mb-12">
         <h1 className="text-3xl font-bold text-garrison-black mb-4">Money Lending Services</h1>
         <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-          Welcome to our loan services. Our loans range from 10,000 UGX to 500,000 UGX.
+          Welcome to our loan services. Our loans range from 10,000 UGX to 200,000 UGX.
         </p>
       </div>
 
@@ -19,13 +19,13 @@ const MoneyLending = () => {
         <Card>
           <CardHeader className="bg-garrison-green text-white">
             <CardTitle className="text-2xl">Short-Term Loan</CardTitle>
-            <CardDescription className="text-white/80">Pay after 14 days with 10% interest</CardDescription>
+            <CardDescription className="text-white/80">Pay within 14 days with 10% interest</CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
             <ul className="space-y-3">
               <li className="flex items-center">
                 <Check className="h-5 w-5 text-garrison-green mr-2" />
-                <span>Loan amount: 10,000 - 500,000 UGX</span>
+                <span>Loan amount: 10,000 - 200,000 UGX</span>
               </li>
               <li className="flex items-center">
                 <Check className="h-5 w-5 text-garrison-green mr-2" />
@@ -55,13 +55,13 @@ const MoneyLending = () => {
         <Card>
           <CardHeader className="bg-garrison-black text-white">
             <CardTitle className="text-2xl">Medium-Term Loan</CardTitle>
-            <CardDescription className="text-white/80">Pay after 30 days with 18% interest</CardDescription>
+            <CardDescription className="text-white/80">Pay within 30 days with 15% interest</CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
             <ul className="space-y-3">
               <li className="flex items-center">
                 <Check className="h-5 w-5 text-garrison-green mr-2" />
-                <span>Loan amount: 10,000 - 500,000 UGX</span>
+                <span>Loan amount: 10,000 - 200,000 UGX</span>
               </li>
               <li className="flex items-center">
                 <Check className="h-5 w-5 text-garrison-green mr-2" />
@@ -73,7 +73,7 @@ const MoneyLending = () => {
               </li>
               <li className="flex items-center">
                 <Check className="h-5 w-5 text-garrison-green mr-2" />
-                <span>18% interest rate</span>
+                <span>15% interest rate</span>
               </li>
               <li className="flex items-center">
                 <Check className="h-5 w-5 text-garrison-green mr-2" />

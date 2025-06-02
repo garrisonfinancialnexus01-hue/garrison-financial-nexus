@@ -29,8 +29,8 @@ const LoanApplication = () => {
     const value = e.target.value;
     setAmount(value);
     
-    if (value && (Number(value) < 10000 || Number(value) > 500000)) {
-      setError('Please enter an amount between 10,000 UGX and 500,000 UGX');
+    if (value && (Number(value) < 10000 || Number(value) > 200000)) {
+      setError('Please enter an amount between 10,000 UGX and 200,000 UGX');
     } else {
       setError('');
     }
@@ -47,12 +47,12 @@ const LoanApplication = () => {
     }
 
     const amountNum = Number(amount);
-    if (isNaN(amountNum) || amountNum < 10000 || amountNum > 500000) {
-      setError('Please enter an amount between 10,000 UGX and 500,000 UGX');
+    if (isNaN(amountNum) || amountNum < 10000 || amountNum > 200000) {
+      setError('Please enter an amount between 10,000 UGX and 200,000 UGX');
       return;
     }
 
-    const interest = term === 'short' ? 0.1 : 0.18;
+    const interest = term === 'short' ? 0.1 : 0.15;
     const totalAmount = amountNum + (amountNum * interest);
 
     navigate('/loan-details', { 
@@ -74,7 +74,7 @@ const LoanApplication = () => {
     if (!amount || isNaN(Number(amount))) return '';
     
     const amountNum = Number(amount);
-    const interest = term === 'short' ? 0.1 : 0.18;
+    const interest = term === 'short' ? 0.1 : 0.15;
     return (amountNum + (amountNum * interest)).toLocaleString();
   };
 
@@ -101,14 +101,14 @@ const LoanApplication = () => {
               <Input
                 id="amount"
                 type="number"
-                placeholder="Enter amount (10,000 - 500,000 UGX)"
+                placeholder="Enter amount (10,000 - 200,000 UGX)"
                 value={amount}
                 onChange={handleAmountChange}
                 className={error ? "border-red-500" : ""}
               />
               {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
               <p className="text-sm text-gray-500">
-                Please input amount that ranges from 10,000 UGX to 500,000 UGX
+                Please input amount that ranges from 10,000 UGX to 200,000 UGX
               </p>
             </div>
 
@@ -118,13 +118,13 @@ const LoanApplication = () => {
                 <div className="flex items-center space-x-3">
                   <RadioGroupItem value="short" id="short" />
                   <Label htmlFor="short" className="cursor-pointer">
-                    Pay after 14 days (10% interest)
+                    Pay within 14 days (10% interest)
                   </Label>
                 </div>
                 <div className="flex items-center space-x-3">
                   <RadioGroupItem value="medium" id="medium" />
                   <Label htmlFor="medium" className="cursor-pointer">
-                    Pay after 30 days (18% interest)
+                    Pay within 30 days (15% interest)
                   </Label>
                 </div>
               </RadioGroup>
@@ -139,7 +139,7 @@ const LoanApplication = () => {
                 </div>
                 <div className="flex justify-between mt-1 text-sm">
                   <span>Interest Rate:</span>
-                  <span>{term === 'short' ? '10%' : '18%'}</span>
+                  <span>{term === 'short' ? '10%' : '15%'}</span>
                 </div>
                 <div className="flex justify-between mt-1 text-sm">
                   <span>Repayment Term:</span>

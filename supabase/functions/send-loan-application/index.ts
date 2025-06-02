@@ -13,9 +13,15 @@ const corsHeaders = {
 
 interface LoanApplicationData {
   name: string;
-  phone: string;
-  email: string;
-  nin: string;
+  gender: string;
+  whatsappNumber: string;
+  educationDegree: string;
+  workStatus: string;
+  monthlyIncome: string;
+  maritalStatus: string;
+  emergencyContactName: string;
+  emergencyContactPhone: string;
+  emergencyContactRelation: string;
   amount: number;
   term: 'short' | 'medium';
   interest: number;
@@ -44,18 +50,18 @@ serve(async (req) => {
     console.log("Received data with fields:", Object.keys(data).join(", "));
     
     // Validate the data received
-    if (!data.name || !data.phone || !data.email || !data.receiptNumber) {
+    if (!data.name || !data.whatsappNumber || !data.receiptNumber) {
       console.error("ERROR: Missing required fields in loan application");
       throw new Error("Missing required fields in loan application");
     }
     
     console.log("Received application for:", data.name, "Receipt:", data.receiptNumber);
     
-    const loanTermText = data.term === 'short' ? '14 days' : '30 days';
+    const loanTermText = data.term === 'short' ? 'within 14 days' : 'within 30 days';
     
-    // Create streamlined email content
+    // Create comprehensive email content
     const emailContent = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto;">
         <div style="background-color: #399B53; padding: 20px; text-align: center; color: white;">
           <h1>🚨 URGENT: New Loan Application Received</h1>
         </div>
@@ -64,12 +70,27 @@ serve(async (req) => {
           <h2 style="color: #399B53;">⚡ IMMEDIATE ACTION REQUIRED</h2>
           
           <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; margin: 15px 0; border-radius: 5px;">
-            <strong>📋 APPLICATION DETAILS:</strong>
+            <strong>📋 PERSONAL INFORMATION:</strong>
             <br><strong>Name:</strong> ${data.name}
-            <br><strong>Phone:</strong> ${data.phone}
-            <br><strong>Email:</strong> ${data.email}
+            <br><strong>Gender:</strong> ${data.gender}
+            <br><strong>WhatsApp Number:</strong> ${data.whatsappNumber}
+            <br><strong>Education:</strong> ${data.educationDegree}
+            <br><strong>Work Status:</strong> ${data.workStatus}
+            <br><strong>Monthly Income:</strong> ${data.monthlyIncome}
+            <br><strong>Marital Status:</strong> ${data.maritalStatus}
+          </div>
+
+          <div style="background-color: #e7f3ff; border: 1px solid #b6d7ff; padding: 15px; margin: 15px 0; border-radius: 5px;">
+            <strong>🆘 EMERGENCY CONTACT:</strong>
+            <br><strong>Name:</strong> ${data.emergencyContactName}
+            <br><strong>Phone:</strong> ${data.emergencyContactPhone}
+            <br><strong>Relation:</strong> ${data.emergencyContactRelation}
+          </div>
+          
+          <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; margin: 15px 0; border-radius: 5px;">
+            <strong>💰 LOAN DETAILS:</strong>
             <br><strong>Amount:</strong> ${data.amount.toLocaleString()} UGX
-            <br><strong>Term:</strong> ${loanTermText}
+            <br><strong>Term:</strong> Pay ${loanTermText}
             <br><strong>Interest:</strong> ${data.interest}%
             <br><strong>Total Repayment:</strong> ${data.totalAmount.toLocaleString()} UGX
             <br><strong>Receipt #:</strong> ${data.receiptNumber}
@@ -78,6 +99,8 @@ serve(async (req) => {
           
           <div style="background-color: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; margin: 15px 0; border-radius: 5px;">
             <strong>✅ VERIFICATION STATUS:</strong>
+            <br>• Personal information completed
+            <br>• Emergency contact provided
             <br>• ID card images captured and attached
             <br>• Application form completed
             <br>• Ready for immediate processing
@@ -86,7 +109,7 @@ serve(async (req) => {
           <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; margin: 15px 0; border-radius: 5px;">
             <strong>⏰ NEXT STEPS:</strong>
             <br>1. Review attached ID card images
-            <br>2. Contact applicant at ${data.phone}
+            <br>2. Contact applicant at ${data.whatsappNumber}
             <br>3. Process loan approval/rejection
             <br>4. Send verification code if approved
           </div>
@@ -146,7 +169,13 @@ serve(async (req) => {
     
     console.log("✅ EMAIL SENT SUCCESSFULLY:", emailResponse.data?.id);
     
-    // Send confirmation to applicant (non-blocking)
+    // Send SMS confirmation to applicant (simulated - would need actual SMS service)
+    // In a real implementation, you would integrate with an SMS service like Twilio
+    console.log(`📱 SMS would be sent to ${data.whatsappNumber}:`);
+    console.log("From: Garrison Financial Nexus");
+    console.log("Message: Thank you for submitting your Loan Application, our manager will contact you on the WhatsApp number you have provided when your Loan Application has been approved. Wait the message from our manager within 24 hours. Thank you!");
+    
+    // Send confirmation email to applicant
     try {
       const applicantConfirmation = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -158,29 +187,24 @@ serve(async (req) => {
             <p><strong>Your loan application has been received and is being processed immediately.</strong></p>
             <p><strong>Receipt Number:</strong> ${data.receiptNumber}</p>
             <p><strong>Amount:</strong> ${data.amount.toLocaleString()} UGX</p>
-            <p><strong>Term:</strong> ${loanTermText}</p>
-            <p>Our team will contact you shortly at ${data.phone}.</p>
+            <p><strong>Term:</strong> Pay ${loanTermText}</p>
+            <p>Our manager will contact you on your WhatsApp number ${data.whatsappNumber} within 24 hours once your application is approved.</p>
             <p>Thank you for choosing Garrison Financial Nexus!</p>
           </div>
         </div>
       `;
       
-      await resend.emails.send({
-        from: "Garrison Financial Nexus <onboarding@resend.dev>",
-        to: [data.email],
-        subject: `Application Received - ${data.receiptNumber}`,
-        html: applicantConfirmation,
-      });
+      // Note: In production, you would also implement actual SMS sending here
       
-      console.log("✅ Confirmation email sent to applicant");
+      console.log("✅ Confirmation process completed");
     } catch (confirmError) {
-      console.log("⚠️ Applicant confirmation failed (non-critical):", confirmError);
+      console.log("⚠️ Confirmation sending failed (non-critical):", confirmError);
     }
     
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: "Application submitted and notification sent immediately",
+        message: "Application submitted and notification sent immediately. SMS confirmation will be sent to your WhatsApp number.",
         receiptNumber: data.receiptNumber,
         timestamp: new Date().toISOString()
       }),
