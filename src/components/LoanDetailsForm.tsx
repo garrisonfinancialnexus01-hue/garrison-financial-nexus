@@ -49,8 +49,10 @@ const LoanDetailsForm: React.FC<LoanDetailsFormProps> = ({ onSubmit, isSubmittin
   };
 
   const handleIDCardCapture = (frontImage: Blob, backImage: Blob) => {
+    console.log('ID Card images captured:', { frontSize: frontImage.size, backSize: backImage.size });
     setIdCardFront(frontImage);
     setIdCardBack(backImage);
+    setFormError(''); // Clear any previous errors
   };
 
   const validateForm = (): boolean => {
@@ -72,12 +74,30 @@ const LoanDetailsForm: React.FC<LoanDetailsFormProps> = ({ onSubmit, isSubmittin
       return false;
     }
 
+    // Additional validation for ID card blobs
+    if (idCardFront.size === 0 || idCardBack.size === 0) {
+      setFormError('ID card images appear to be empty. Please try scanning again.');
+      return false;
+    }
+
     return true;
   };
 
   const handleSubmit = () => {
-    if (!validateForm()) return;
-    onSubmit(formData, idCardFront!, idCardBack!);
+    console.log('Form submission started');
+    
+    if (!validateForm()) {
+      console.log('Form validation failed:', formError);
+      return;
+    }
+
+    console.log('Form validation passed, calling onSubmit');
+    try {
+      onSubmit(formData, idCardFront!, idCardBack!);
+    } catch (error) {
+      console.error('Error during form submission:', error);
+      setFormError('An error occurred during submission. Please try again.');
+    }
   };
 
   return (
