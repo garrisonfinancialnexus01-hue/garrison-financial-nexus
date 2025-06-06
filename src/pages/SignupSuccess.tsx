@@ -3,14 +3,21 @@ import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, MessageCircle } from 'lucide-react';
+import { MessageCircle, CheckCircle } from 'lucide-react';
 
 const SignupSuccess = () => {
   const location = useLocation();
-  const accountNumber = location.state?.accountNumber;
+  const userDetails = location.state?.userDetails;
 
   const handleContactManager = () => {
-    const message = `Hello, I just signed up for a client account (Account Number: ${accountNumber}) and would like to get my account activated. Please help me with the next steps.`;
+    const message = `Hello, I just signed up for a client account with the following details:
+Name: ${userDetails?.name || 'Not provided'}
+Email: ${userDetails?.email || 'Not provided'}
+Phone: ${userDetails?.phone || 'Not provided'}
+NIN: ${userDetails?.nin || 'Not provided'}
+
+Please provide me with an account number so I can access my account.`;
+    
     const whatsappUrl = `https://wa.me/256761281222?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
@@ -25,29 +32,26 @@ const SignupSuccess = () => {
             </div>
             <CardTitle className="text-2xl text-green-600">Sign Up Successful!</CardTitle>
             <CardDescription>
-              Your account has been created successfully. Your account number is:
+              Your details have been recorded successfully. To get your account number, please contact our manager.
             </CardDescription>
-            <div className="bg-garrison-light p-4 rounded-lg">
-              <p className="text-2xl font-bold text-garrison-black">{accountNumber}</p>
-              <p className="text-sm text-gray-600 mt-1">Please save this number for future reference</p>
-            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-center space-y-2">
               <p className="text-sm text-gray-600">
-                To activate your account and set your account balance, please contact our manager:
+                Contact our manager on WhatsApp to receive your account number:
               </p>
+              <p className="font-semibold text-garrison-black">+256761281222</p>
             </div>
             <Button 
               onClick={handleContactManager}
               className="w-full bg-green-600 hover:bg-green-700"
             >
               <MessageCircle className="h-4 w-4 mr-2" />
-              Get Your Account on WhatsApp
+              Contact Manager on WhatsApp
             </Button>
             <div className="text-center">
               <Link to="/client-auth" className="text-sm text-garrison-green hover:underline">
-                Back to Sign In
+                Already have an account number? Sign In
               </Link>
             </div>
           </CardContent>

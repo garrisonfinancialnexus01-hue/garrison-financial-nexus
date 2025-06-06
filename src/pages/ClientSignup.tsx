@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { isValidUgandanNIN } from '@/utils/ninValidation';
 
 const ClientSignup = () => {
@@ -77,108 +76,24 @@ const ClientSignup = () => {
         return;
       }
 
-      console.log('Starting account allocation process...');
+      console.log('Storing user signup details temporarily...');
 
-      // Check if email or NIN already exists
-      const { data: existingAccounts, error: existingError } = await supabase
-        .from('client_accounts')
-        .select('email, nin')
-        .or(`email.eq.${formData.email},nin.eq.${formData.nin.toUpperCase().replace(/\s+/g, '')}`);
+      // Store user details temporarily in localStorage for the manager to use
+      const userSignupDetails = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        nin: formData.nin.toUpperCase().replace(/\s+/g, ''),
+        password: formData.password,
+        signupDate: new Date().toISOString()
+      };
 
-      if (existingError) {
-        console.error('Error checking existing accounts:', existingError);
-        toast({
-          title: "Error",
-          description: "Failed to verify account uniqueness",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
+      localStorage.setItem('pendingSignupDetails', JSON.stringify(userSignupDetails));
 
-      if (existingAccounts && existingAccounts.length > 0) {
-        toast({
-          title: "Account Already Exists",
-          description: "An account with this email or NIN already exists",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
+      console.log('User details stored, redirecting to contact manager...');
 
-      // Get available account number
-      const { data: availableAccounts, error: fetchError } = await supabase
-        .from('client_accounts')
-        .select('account_number, name, status')
-        .eq('status', 'suspended')
-        .eq('name', 'System Reserved')
-        .limit(1);
-
-      console.log('Available accounts query result:', { availableAccounts, fetchError });
-
-      if (fetchError) {
-        console.error('Database error:', fetchError);
-        toast({
-          title: "Database Error",
-          description: "Failed to check available accounts. Please try again.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      if (!availableAccounts || availableAccounts.length === 0) {
-        console.log('No available accounts found');
-        
-        // Check total accounts in database for debugging
-        const { data: allAccounts, error: countError } = await supabase
-          .from('client_accounts')
-          .select('account_number, status, name');
-        
-        console.log('All accounts in database:', allAccounts);
-        
-        toast({
-          title: "No Available Accounts",
-          description: "All account numbers are currently allocated. Please contact our manager on WhatsApp to request more account numbers.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      const accountNumber = availableAccounts[0].account_number;
-      console.log('Allocating account number:', accountNumber);
-
-      // Update the reserved account with user data
-      const { error: updateError } = await supabase
-        .from('client_accounts')
-        .update({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          nin: formData.nin.toUpperCase().replace(/\s+/g, ''),
-          password_hash: formData.password, // In production, this should be hashed
-          status: 'pending',
-        })
-        .eq('account_number', accountNumber)
-        .eq('status', 'suspended')
-        .eq('name', 'System Reserved');
-
-      if (updateError) {
-        console.error('Update error:', updateError);
-        toast({
-          title: "Sign Up Failed",
-          description: updateError.message,
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      console.log('Account successfully allocated:', accountNumber);
-
-      // Navigate to success page with account number
-      navigate('/signup-success', { state: { accountNumber } });
+      // Navigate to success page with user details
+      navigate('/signup-success', { state: { userDetails: userSignupDetails } });
 
     } catch (error) {
       console.error('Unexpected error during signup:', error);
@@ -290,7 +205,7 @@ const ClientSignup = () => {
                 />
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Creating Account...' : 'Sign Up'}
+                {isLoading ? 'Processing...' : 'Sign Up'}
               </Button>
             </form>
           </CardContent>

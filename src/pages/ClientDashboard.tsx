@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useClientAuth } from '@/context/ClientAuthContext';
-import { LogOut, DollarSign, CreditCard, MessageCircle } from 'lucide-react';
+import { LogOut, DollarSign, CreditCard } from 'lucide-react';
 
 const ClientDashboard = () => {
   const { currentClient, signOut } = useClientAuth();
@@ -16,10 +16,8 @@ const ClientDashboard = () => {
     }
   }, [currentClient, navigate]);
 
-  const handleContactManager = (action: string) => {
-    const message = `Hello, I would like to ${action} from my account (Account Number: ${currentClient?.account_number}). Please assist me with this transaction.`;
-    const whatsappUrl = `https://wa.me/256761281222?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
+  const handleTransaction = (transactionType: string) => {
+    navigate('/transaction-request', { state: { transactionType } });
   };
 
   const handleSignOut = () => {
@@ -57,7 +55,7 @@ const ClientDashboard = () => {
           {/* Welcome Section */}
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h2 className="text-2xl font-bold text-garrison-black mb-2">
-              Welcome back, {currentClient.name}!
+              Welcome, {currentClient.name}!
             </h2>
             <p className="text-gray-600">Manage your account and transactions below.</p>
           </div>
@@ -72,7 +70,7 @@ const ClientDashboard = () => {
               <CardContent>
                 <div className="text-2xl font-bold">{currentClient.account_number}</div>
                 <p className="text-xs text-muted-foreground">
-                  Status: <span className="capitalize text-green-600">{currentClient.status}</span>
+                  Provided by Manager
                 </p>
               </CardContent>
             </Card>
@@ -102,35 +100,35 @@ const ClientDashboard = () => {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Email</label>
-                  <p className="text-sm">{currentClient.email}</p>
+                  <label className="text-sm font-medium text-gray-500">Name</label>
+                  <p className="text-sm">{currentClient.name}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Phone</label>
-                  <p className="text-sm">{currentClient.phone}</p>
+                  <label className="text-sm font-medium text-gray-500">Account Number</label>
+                  <p className="text-sm">{currentClient.account_number}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">NIN</label>
-                  <p className="text-sm">{currentClient.nin}</p>
+                  <label className="text-sm font-medium text-gray-500">Account Balance</label>
+                  <p className="text-sm">{currentClient.account_balance.toLocaleString()} UGX</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Account Status</label>
+                  <label className="text-sm font-medium text-gray-500">Status</label>
                   <p className="text-sm capitalize text-green-600">{currentClient.status}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Quick Actions */}
+          {/* Transaction Buttons */}
           <Card>
             <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>Manage your account transactions</CardDescription>
+              <CardTitle>Account Transactions</CardTitle>
+              <CardDescription>Deposit or withdraw money from your account</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Button 
-                  onClick={() => handleContactManager('deposit money')}
+                  onClick={() => handleTransaction('deposit money')}
                   className="h-20 flex flex-col items-center justify-center space-y-2"
                   variant="outline"
                 >
@@ -138,7 +136,7 @@ const ClientDashboard = () => {
                   <span>Deposit Money</span>
                 </Button>
                 <Button 
-                  onClick={() => handleContactManager('withdraw money')}
+                  onClick={() => handleTransaction('withdraw money')}
                   className="h-20 flex flex-col items-center justify-center space-y-2"
                   variant="outline"
                 >
@@ -147,17 +145,9 @@ const ClientDashboard = () => {
                 </Button>
               </div>
               <div className="text-center pt-4">
-                <p className="text-sm text-gray-600 mb-4">
-                  For all transactions, you will be connected to our manager via WhatsApp.
+                <p className="text-sm text-gray-600">
+                  All transactions are processed through our manager via WhatsApp (+256761281222)
                 </p>
-                <Button 
-                  onClick={() => handleContactManager('get assistance')}
-                  variant="outline"
-                  className="w-full md:w-auto"
-                >
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  Contact Manager Directly
-                </Button>
               </div>
             </CardContent>
           </Card>

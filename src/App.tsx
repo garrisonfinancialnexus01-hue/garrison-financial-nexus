@@ -21,6 +21,7 @@ import ClientAuth from "./pages/ClientAuth";
 import ClientSignup from "./pages/ClientSignup";
 import SignupSuccess from "./pages/SignupSuccess";
 import ClientDashboard from "./pages/ClientDashboard";
+import TransactionRequest from "./pages/TransactionRequest";
 import { ClientAuthProvider } from "./context/ClientAuthContext";
 
 // Create a client
@@ -57,6 +58,7 @@ const App = () => {
                 <Route path="/client-signup" element={<ClientSignup />} />
                 <Route path="/signup-success" element={<SignupSuccess />} />
                 <Route path="/client-dashboard" element={<ClientDashboard />} />
+                <Route path="/transaction-request" element={<TransactionRequest />} />
                 <Route path="*" element={<Layout><NotFound /></Layout>} />
               </Routes>
             </BrowserRouter>
