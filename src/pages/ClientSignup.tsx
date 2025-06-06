@@ -77,18 +77,69 @@ const ClientSignup = () => {
         return;
       }
 
+      console.log('Starting account allocation process...');
+
+      // Check if email or NIN already exists
+      const { data: existingAccounts, error: existingError } = await supabase
+        .from('client_accounts')
+        .select('email, nin')
+        .or(`email.eq.${formData.email},nin.eq.${formData.nin.toUpperCase().replace(/\s+/g, '')}`);
+
+      if (existingError) {
+        console.error('Error checking existing accounts:', existingError);
+        toast({
+          title: "Error",
+          description: "Failed to verify account uniqueness",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      if (existingAccounts && existingAccounts.length > 0) {
+        toast({
+          title: "Account Already Exists",
+          description: "An account with this email or NIN already exists",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
       // Get available account number
       const { data: availableAccounts, error: fetchError } = await supabase
         .from('client_accounts')
-        .select('account_number')
+        .select('account_number, name, status')
         .eq('status', 'suspended')
         .eq('name', 'System Reserved')
         .limit(1);
 
-      if (fetchError || !availableAccounts || availableAccounts.length === 0) {
+      console.log('Available accounts query result:', { availableAccounts, fetchError });
+
+      if (fetchError) {
+        console.error('Database error:', fetchError);
+        toast({
+          title: "Database Error",
+          description: "Failed to check available accounts. Please try again.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      if (!availableAccounts || availableAccounts.length === 0) {
+        console.log('No available accounts found');
+        
+        // Check total accounts in database for debugging
+        const { data: allAccounts, error: countError } = await supabase
+          .from('client_accounts')
+          .select('account_number, status, name');
+        
+        console.log('All accounts in database:', allAccounts);
+        
         toast({
           title: "No Available Accounts",
-          description: "Please contact the manager for account allocation",
+          description: "All account numbers are currently allocated. Please contact our manager on WhatsApp to request more account numbers.",
           variant: "destructive",
         });
         setIsLoading(false);
@@ -96,6 +147,7 @@ const ClientSignup = () => {
       }
 
       const accountNumber = availableAccounts[0].account_number;
+      console.log('Allocating account number:', accountNumber);
 
       // Update the reserved account with user data
       const { error: updateError } = await supabase
@@ -108,9 +160,12 @@ const ClientSignup = () => {
           password_hash: formData.password, // In production, this should be hashed
           status: 'pending',
         })
-        .eq('account_number', accountNumber);
+        .eq('account_number', accountNumber)
+        .eq('status', 'suspended')
+        .eq('name', 'System Reserved');
 
       if (updateError) {
+        console.error('Update error:', updateError);
         toast({
           title: "Sign Up Failed",
           description: updateError.message,
@@ -120,13 +175,16 @@ const ClientSignup = () => {
         return;
       }
 
+      console.log('Account successfully allocated:', accountNumber);
+
       // Navigate to success page with account number
       navigate('/signup-success', { state: { accountNumber } });
 
     } catch (error) {
+      console.error('Unexpected error during signup:', error);
       toast({
         title: "Error",
-        description: "An unexpected error occurred",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
