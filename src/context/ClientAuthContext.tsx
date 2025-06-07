@@ -170,6 +170,22 @@ export const ClientAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         return { error: 'Invalid password. Please use the password you created during signup.' };
       }
 
+      // Check if user already has an account with this email to prevent duplicates
+      const { data: existingByEmail, error: emailCheckError } = await supabase
+        .from('client_accounts')
+        .select('*')
+        .eq('email', userDetails.email)
+        .maybeSingle();
+
+      if (emailCheckError) {
+        console.error('Error checking email:', emailCheckError);
+        return { error: 'Error checking account. Please try again.' };
+      }
+
+      if (existingByEmail) {
+        return { error: 'An account with this email already exists. Please use a different email or contact the manager.' };
+      }
+
       console.log('Creating new account with user details...');
 
       // Create a new account with the provided account number
@@ -188,12 +204,38 @@ export const ClientAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         .select()
         .single();
 
-      if (createError || !newAccount) {
+      if (createError) {
         console.error('Error creating account:', createError);
+        
+        // Check if it's a duplicate account number error
+        if (createError.code === '23505') {
+          return { error: 'This account number is already in use. Please contact the manager for a different account number.' };
+        }
+        
+        return { error: 'Failed to create account. Please try again or contact the manager.' };
+      }
+
+      if (!newAccount) {
         return { error: 'Failed to create account. Please contact the manager.' };
       }
 
       console.log('Account created successfully:', newAccount);
+
+      // Send email notification about new signup
+      try {
+        await fetch('/api/send-signup-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userDetails: userDetails,
+            accountNumber: accountNumber
+          })
+        });
+        console.log('Signup notification email sent');
+      } catch (emailError) {
+        console.error('Failed to send signup notification:', emailError);
+        // Don't fail the signup if email fails
+      }
 
       setCurrentClient(newAccount);
       localStorage.setItem('currentClient', JSON.stringify(newAccount));

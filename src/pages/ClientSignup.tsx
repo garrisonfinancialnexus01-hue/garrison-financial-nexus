@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
 import { isValidUgandanNIN } from '@/utils/ninValidation';
+import { supabase } from '@/integrations/supabase/client';
 
 const ClientSignup = () => {
   const [formData, setFormData] = useState({
@@ -70,6 +71,34 @@ const ClientSignup = () => {
         toast({
           title: "Invalid NIN",
           description: "NIN must be 14 characters starting with CM or CF, with either 8 numbers + 6 letters or 9 numbers + 5 letters",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Check if user already exists with this email or NIN
+      const { data: existingUser, error: checkError } = await supabase
+        .from('client_accounts')
+        .select('email, nin')
+        .or(`email.eq.${formData.email},nin.eq.${formData.nin.toUpperCase().replace(/\s+/g, '')}`)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('Error checking existing user:', checkError);
+        toast({
+          title: "Error",
+          description: "Failed to verify account details. Please try again.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      if (existingUser) {
+        toast({
+          title: "Account Already Exists",
+          description: "An account with this email or NIN already exists. Please use different details or contact the manager.",
           variant: "destructive",
         });
         setIsLoading(false);

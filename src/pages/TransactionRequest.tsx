@@ -12,12 +12,19 @@ const TransactionRequest = () => {
   const transactionType = location.state?.transactionType || 'transaction';
 
   const handleContactManager = () => {
+    if (!currentClient) {
+      console.error('No current client found');
+      return;
+    }
+
+    const accountBalance = currentClient.account_balance || 0;
+    
     const message = `Hello, I would like to ${transactionType} from my account.
 
 My Account Details:
-Account Number: ${currentClient?.account_number}
-Name: ${currentClient?.name}
-Current Balance: ${currentClient?.account_balance.toLocaleString()} UGX
+Account Number: ${currentClient.account_number}
+Name: ${currentClient.name}
+Current Balance: ${accountBalance.toLocaleString()} UGX
 
 Please assist me with this ${transactionType}.`;
     

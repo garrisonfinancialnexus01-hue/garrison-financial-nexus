@@ -29,6 +29,9 @@ const ClientDashboard = () => {
     return null;
   }
 
+  // Ensure account balance is properly formatted and defaults to 0
+  const accountBalance = currentClient.account_balance || 0;
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white shadow-sm border-b">
@@ -82,7 +85,7 @@ const ClientDashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {currentClient.account_balance.toLocaleString()} UGX
+                  {accountBalance.toLocaleString()} UGX
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Available balance
@@ -109,7 +112,7 @@ const ClientDashboard = () => {
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Account Balance</label>
-                  <p className="text-sm">{currentClient.account_balance.toLocaleString()} UGX</p>
+                  <p className="text-sm">{accountBalance.toLocaleString()} UGX</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Status</label>
@@ -129,16 +132,14 @@ const ClientDashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Button 
                   onClick={() => handleTransaction('deposit money')}
-                  className="h-20 flex flex-col items-center justify-center space-y-2"
-                  variant="outline"
+                  className="h-20 flex flex-col items-center justify-center space-y-2 bg-green-600 hover:bg-green-700 text-white"
                 >
                   <DollarSign className="h-6 w-6" />
                   <span>Deposit Money</span>
                 </Button>
                 <Button 
                   onClick={() => handleTransaction('withdraw money')}
-                  className="h-20 flex flex-col items-center justify-center space-y-2"
-                  variant="outline"
+                  className="h-20 flex flex-col items-center justify-center space-y-2 bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   <CreditCard className="h-6 w-6" />
                   <span>Withdraw Money</span>
