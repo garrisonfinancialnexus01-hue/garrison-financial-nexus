@@ -148,8 +148,60 @@ export const ClientAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
 
       // If we get here, the account number is valid but doesn't exist in our system
-      console.log('Valid account number range but account not found in database');
-      return { error: 'Account number not found. Please contact the manager to set up your account in the system.' };
+      // Check if user has pending signup details to create new account
+      console.log('Valid account number but not found in database, checking for signup details...');
+      
+      const pendingDetails = localStorage.getItem('pendingSignupDetails');
+      if (!pendingDetails) {
+        return { error: 'Please complete the signup process first. Go to the signup page, enter your details, then return here with your manager-provided account number.' };
+      }
+
+      let userDetails;
+      try {
+        userDetails = JSON.parse(pendingDetails);
+      } catch (error) {
+        console.error('Error parsing pending details:', error);
+        localStorage.removeItem('pendingSignupDetails');
+        return { error: 'Invalid signup data. Please complete the signup process again.' };
+      }
+      
+      // Verify the password matches what they used during signup
+      if (userDetails.password !== password) {
+        return { error: 'Invalid password. Please use the password you created during signup.' };
+      }
+
+      console.log('Creating new account with user details...');
+
+      // Create a new account with the provided account number
+      const { data: newAccount, error: createError } = await supabase
+        .from('client_accounts')
+        .insert({
+          account_number: accountNumber,
+          name: userDetails.name,
+          email: userDetails.email,
+          phone: userDetails.phone,
+          nin: userDetails.nin,
+          password_hash: userDetails.password,
+          account_balance: 0.00,
+          status: 'active'
+        })
+        .select()
+        .single();
+
+      if (createError || !newAccount) {
+        console.error('Error creating account:', createError);
+        return { error: 'Failed to create account. Please contact the manager.' };
+      }
+
+      console.log('Account created successfully:', newAccount);
+
+      setCurrentClient(newAccount);
+      localStorage.setItem('currentClient', JSON.stringify(newAccount));
+      
+      // Clear the pending signup details as they're no longer needed
+      localStorage.removeItem('pendingSignupDetails');
+      
+      return {};
       
     } catch (error) {
       console.error('Sign in error:', error);
