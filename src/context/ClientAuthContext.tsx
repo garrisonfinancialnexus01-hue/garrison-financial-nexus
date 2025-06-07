@@ -38,7 +38,12 @@ export const ClientAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     // Check for stored session
     const storedClient = localStorage.getItem('currentClient');
     if (storedClient) {
-      setCurrentClient(JSON.parse(storedClient));
+      try {
+        setCurrentClient(JSON.parse(storedClient));
+      } catch (error) {
+        console.error('Error parsing stored client data:', error);
+        localStorage.removeItem('currentClient');
+      }
     }
     setIsLoading(false);
   }, []);
@@ -52,15 +57,20 @@ export const ClientAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       // First check if it's a valid system account number (from our pre-allocated accounts)
       const { data: systemAccount, error: systemError } = await supabase
         .from('client_accounts')
-        .select('account_number')
+        .select('*')
         .eq('account_number', accountNumber)
         .eq('name', 'System Reserved')
         .eq('status', 'suspended')
-        .single();
+        .maybeSingle();
 
       console.log('System account check:', { systemAccount, systemError });
 
-      if (systemError || !systemAccount) {
+      if (systemError) {
+        console.error('Error checking system account:', systemError);
+        return { error: 'Error checking account. Please try again.' };
+      }
+
+      if (!systemAccount) {
         return { error: 'Invalid account number. Please contact the manager to get a valid account number.' };
       }
 
@@ -70,7 +80,14 @@ export const ClientAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         return { error: 'Please complete the signup process first by contacting the manager.' };
       }
 
-      const userDetails = JSON.parse(pendingDetails);
+      let userDetails;
+      try {
+        userDetails = JSON.parse(pendingDetails);
+      } catch (error) {
+        console.error('Error parsing pending details:', error);
+        localStorage.removeItem('pendingSignupDetails');
+        return { error: 'Invalid signup data. Please complete the signup process again.' };
+      }
       
       // Verify the password matches what they used during signup
       if (userDetails.password !== password) {
@@ -91,9 +108,7 @@ export const ClientAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           account_balance: 0.00,
           status: 'active'
         })
-        .eq('account_number', accountNumber)
-        .eq('name', 'System Reserved')
-        .eq('status', 'suspended')
+        .eq('id', systemAccount.id)
         .select()
         .single();
 
