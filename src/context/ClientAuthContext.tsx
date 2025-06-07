@@ -54,81 +54,106 @@ export const ClientAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       
       console.log('Attempting to sign in with account number:', accountNumber);
       
-      // First check if it's a valid system account number (from our pre-allocated accounts)
-      const { data: systemAccount, error: systemError } = await supabase
+      // First, validate that the account number is one of our pre-allocated accounts (10000001-10000200)
+      const accountNum = parseInt(accountNumber);
+      if (isNaN(accountNum) || accountNum < 10000001 || accountNum > 10000200) {
+        console.log('Account number not in valid range:', accountNumber);
+        return { error: 'Invalid account number. Please use the 8-digit account number provided by the manager (10000001-10000200).' };
+      }
+
+      // Check if this account exists in our system
+      const { data: existingAccount, error: checkError } = await supabase
         .from('client_accounts')
         .select('*')
         .eq('account_number', accountNumber)
-        .eq('name', 'System Reserved')
-        .eq('status', 'suspended')
         .maybeSingle();
 
-      console.log('System account check:', { systemAccount, systemError });
+      console.log('Account lookup result:', { existingAccount, checkError });
 
-      if (systemError) {
-        console.error('Error checking system account:', systemError);
+      if (checkError) {
+        console.error('Error checking account:', checkError);
         return { error: 'Error checking account. Please try again.' };
       }
 
-      if (!systemAccount) {
-        return { error: 'Invalid account number. Please contact the manager to get a valid account number.' };
+      // If account exists and is active, sign them in directly
+      if (existingAccount && existingAccount.status === 'active') {
+        console.log('Found active account, checking password...');
+        
+        if (existingAccount.password_hash !== password) {
+          return { error: 'Invalid password. Please check your password and try again.' };
+        }
+
+        setCurrentClient(existingAccount);
+        localStorage.setItem('currentClient', JSON.stringify(existingAccount));
+        console.log('Successfully signed in existing account');
+        return {};
       }
 
-      // Get pending signup details from localStorage
-      const pendingDetails = localStorage.getItem('pendingSignupDetails');
-      if (!pendingDetails) {
-        return { error: 'Please complete the signup process first by contacting the manager.' };
-      }
+      // If account exists but is suspended (system reserved), activate it with pending signup details
+      if (existingAccount && existingAccount.status === 'suspended' && existingAccount.name === 'System Reserved') {
+        console.log('Found system reserved account, activating...');
+        
+        // Get pending signup details from localStorage
+        const pendingDetails = localStorage.getItem('pendingSignupDetails');
+        if (!pendingDetails) {
+          return { error: 'Please complete the signup process first. Contact the manager for an account number, then sign up with your details.' };
+        }
 
-      let userDetails;
-      try {
-        userDetails = JSON.parse(pendingDetails);
-      } catch (error) {
-        console.error('Error parsing pending details:', error);
+        let userDetails;
+        try {
+          userDetails = JSON.parse(pendingDetails);
+        } catch (error) {
+          console.error('Error parsing pending details:', error);
+          localStorage.removeItem('pendingSignupDetails');
+          return { error: 'Invalid signup data. Please complete the signup process again.' };
+        }
+        
+        // Verify the password matches what they used during signup
+        if (userDetails.password !== password) {
+          return { error: 'Invalid password. Please use the password you created during signup.' };
+        }
+
+        console.log('Activating account with user details...');
+
+        // Activate the account by updating the system reserved account
+        const { data: updatedAccount, error: updateError } = await supabase
+          .from('client_accounts')
+          .update({
+            name: userDetails.name,
+            email: userDetails.email,
+            phone: userDetails.phone,
+            nin: userDetails.nin,
+            password_hash: userDetails.password,
+            account_balance: 0.00,
+            status: 'active'
+          })
+          .eq('id', existingAccount.id)
+          .select()
+          .single();
+
+        if (updateError || !updatedAccount) {
+          console.error('Error activating account:', updateError);
+          return { error: 'Failed to activate account. Please contact the manager.' };
+        }
+
+        console.log('Account activated successfully:', updatedAccount);
+
+        setCurrentClient(updatedAccount);
+        localStorage.setItem('currentClient', JSON.stringify(updatedAccount));
+        
+        // Clear the pending signup details as they're no longer needed
         localStorage.removeItem('pendingSignupDetails');
-        return { error: 'Invalid signup data. Please complete the signup process again.' };
-      }
-      
-      // Verify the password matches what they used during signup
-      if (userDetails.password !== password) {
-        return { error: 'Invalid password. Please use the password you created during signup.' };
+        
+        return {};
       }
 
-      console.log('Creating active account for user...');
-
-      // Create the active account by updating the system reserved account
-      const { data: updatedAccount, error: updateError } = await supabase
-        .from('client_accounts')
-        .update({
-          name: userDetails.name,
-          email: userDetails.email,
-          phone: userDetails.phone,
-          nin: userDetails.nin,
-          password_hash: userDetails.password,
-          account_balance: 0.00,
-          status: 'active'
-        })
-        .eq('id', systemAccount.id)
-        .select()
-        .single();
-
-      if (updateError || !updatedAccount) {
-        console.error('Error creating active account:', updateError);
-        return { error: 'Failed to activate account. Please contact the manager.' };
-      }
-
-      console.log('Account activated successfully:', updatedAccount);
-
-      setCurrentClient(updatedAccount);
-      localStorage.setItem('currentClient', JSON.stringify(updatedAccount));
+      // If we get here, the account number is valid but doesn't exist in our system
+      console.log('Valid account number range but account not found in database');
+      return { error: 'Account number not found. Please contact the manager to set up your account in the system.' };
       
-      // Clear the pending signup details as they're no longer needed
-      localStorage.removeItem('pendingSignupDetails');
-      
-      return {};
     } catch (error) {
       console.error('Sign in error:', error);
-      return { error: 'An error occurred during sign in' };
+      return { error: 'An error occurred during sign in. Please try again.' };
     } finally {
       setIsLoading(false);
     }
