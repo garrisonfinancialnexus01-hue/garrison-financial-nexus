@@ -30,13 +30,15 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { userDetails, accountNumber }: SignupNotificationRequest = await req.json();
 
+    console.log('Received signup notification request:', { userDetails, accountNumber });
+
     const emailResponse = await resend.emails.send({
       from: "Garrison Financial Nexus <onboarding@resend.dev>",
       to: ["garrisonfinancialnexus01@gmail.com"],
-      subject: "New Client Signup Notification",
+      subject: "New Client Account Activated",
       html: `
-        <h2>New Client Account Created</h2>
-        <p>A new client has successfully signed up and created an account:</p>
+        <h2>New Client Account Successfully Activated</h2>
+        <p>A client has completed the signup process and their account has been activated:</p>
         
         <h3>Client Details:</h3>
         <ul>
@@ -46,9 +48,18 @@ const handler = async (req: Request): Promise<Response> => {
           <li><strong>NIN:</strong> ${userDetails.nin}</li>
           <li><strong>Account Number:</strong> ${accountNumber}</li>
           <li><strong>Signup Date:</strong> ${new Date(userDetails.signupDate).toLocaleString()}</li>
+          <li><strong>Account Status:</strong> Active</li>
+          <li><strong>Initial Balance:</strong> 0 UGX</li>
         </ul>
         
-        <p>The client's account has been activated and they can now access their dashboard.</p>
+        <p>The client can now access their dashboard and request transactions through WhatsApp (+256761281222).</p>
+        
+        <p><strong>Next Steps:</strong></p>
+        <ul>
+          <li>Client can log in using their account number and password</li>
+          <li>Client can view their account details on the dashboard</li>
+          <li>Client can request deposits/withdrawals through WhatsApp</li>
+        </ul>
         
         <p>Best regards,<br>Garrison Financial Nexus System</p>
       `,
@@ -56,7 +67,10 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Signup notification email sent successfully:", emailResponse);
 
-    return new Response(JSON.stringify(emailResponse), {
+    return new Response(JSON.stringify({ 
+      success: true, 
+      emailId: emailResponse.data?.id 
+    }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
@@ -66,7 +80,10 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error in send-signup-notification function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        success: false 
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

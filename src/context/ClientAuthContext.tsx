@@ -54,14 +54,14 @@ export const ClientAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       
       console.log('Attempting to sign in with account number:', accountNumber);
       
-      // First, validate that the account number is one of our pre-allocated accounts (10000001-10000200)
+      // Validate account number format (8 digits, 10000001-10000200)
       const accountNum = parseInt(accountNumber);
       if (isNaN(accountNum) || accountNum < 10000001 || accountNum > 10000200) {
         console.log('Account number not in valid range:', accountNumber);
         return { error: 'Invalid account number. Please use the 8-digit account number provided by the manager (10000001-10000200).' };
       }
 
-      // Check if this account exists in our system
+      // Check if account exists in our system
       const { data: existingAccount, error: checkError } = await supabase
         .from('client_accounts')
         .select('*')
@@ -75,7 +75,7 @@ export const ClientAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         return { error: 'Error checking account. Please try again.' };
       }
 
-      // If account exists and is active, sign them in directly
+      // If account exists and is active, authenticate
       if (existingAccount && existingAccount.status === 'active') {
         console.log('Found active account, checking password...');
         
@@ -89,14 +89,14 @@ export const ClientAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         return {};
       }
 
-      // If account exists but is suspended (system reserved), activate it with pending signup details
+      // If account exists but is suspended (system reserved), we need signup details
       if (existingAccount && existingAccount.status === 'suspended' && existingAccount.name === 'System Reserved') {
-        console.log('Found system reserved account, activating...');
+        console.log('Found system reserved account, need to activate with user details...');
         
         // Get pending signup details from localStorage
         const pendingDetails = localStorage.getItem('pendingSignupDetails');
         if (!pendingDetails) {
-          return { error: 'Please complete the signup process first. Contact the manager for an account number, then sign up with your details.' };
+          return { error: 'Please complete the signup process first. Go to signup, enter your details, then return here with your manager-provided account number.' };
         }
 
         let userDetails;
@@ -138,6 +138,20 @@ export const ClientAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
         console.log('Account activated successfully:', updatedAccount);
 
+        // Send email notification about new signup
+        try {
+          const response = await supabase.functions.invoke('send-signup-notification', {
+            body: {
+              userDetails: userDetails,
+              accountNumber: accountNumber
+            }
+          });
+          console.log('Signup notification sent:', response);
+        } catch (emailError) {
+          console.error('Failed to send signup notification:', emailError);
+          // Don't fail the signup if email fails
+        }
+
         setCurrentClient(updatedAccount);
         localStorage.setItem('currentClient', JSON.stringify(updatedAccount));
         
@@ -147,103 +161,13 @@ export const ClientAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         return {};
       }
 
-      // If we get here, the account number is valid but doesn't exist in our system
-      // Check if user has pending signup details to create new account
-      console.log('Valid account number but not found in database, checking for signup details...');
-      
-      const pendingDetails = localStorage.getItem('pendingSignupDetails');
-      if (!pendingDetails) {
-        return { error: 'Please complete the signup process first. Go to the signup page, enter your details, then return here with your manager-provided account number.' };
+      // If we get here, either account doesn't exist or has an unexpected status
+      if (existingAccount) {
+        return { error: `Account status: ${existingAccount.status}. Please contact the manager for assistance.` };
       }
 
-      let userDetails;
-      try {
-        userDetails = JSON.parse(pendingDetails);
-      } catch (error) {
-        console.error('Error parsing pending details:', error);
-        localStorage.removeItem('pendingSignupDetails');
-        return { error: 'Invalid signup data. Please complete the signup process again.' };
-      }
-      
-      // Verify the password matches what they used during signup
-      if (userDetails.password !== password) {
-        return { error: 'Invalid password. Please use the password you created during signup.' };
-      }
-
-      // Check if user already has an account with this email to prevent duplicates
-      const { data: existingByEmail, error: emailCheckError } = await supabase
-        .from('client_accounts')
-        .select('*')
-        .eq('email', userDetails.email)
-        .maybeSingle();
-
-      if (emailCheckError) {
-        console.error('Error checking email:', emailCheckError);
-        return { error: 'Error checking account. Please try again.' };
-      }
-
-      if (existingByEmail) {
-        return { error: 'An account with this email already exists. Please use a different email or contact the manager.' };
-      }
-
-      console.log('Creating new account with user details...');
-
-      // Create a new account with the provided account number
-      const { data: newAccount, error: createError } = await supabase
-        .from('client_accounts')
-        .insert({
-          account_number: accountNumber,
-          name: userDetails.name,
-          email: userDetails.email,
-          phone: userDetails.phone,
-          nin: userDetails.nin,
-          password_hash: userDetails.password,
-          account_balance: 0.00,
-          status: 'active'
-        })
-        .select()
-        .single();
-
-      if (createError) {
-        console.error('Error creating account:', createError);
-        
-        // Check if it's a duplicate account number error
-        if (createError.code === '23505') {
-          return { error: 'This account number is already in use. Please contact the manager for a different account number.' };
-        }
-        
-        return { error: 'Failed to create account. Please try again or contact the manager.' };
-      }
-
-      if (!newAccount) {
-        return { error: 'Failed to create account. Please contact the manager.' };
-      }
-
-      console.log('Account created successfully:', newAccount);
-
-      // Send email notification about new signup
-      try {
-        await fetch('/api/send-signup-notification', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userDetails: userDetails,
-            accountNumber: accountNumber
-          })
-        });
-        console.log('Signup notification email sent');
-      } catch (emailError) {
-        console.error('Failed to send signup notification:', emailError);
-        // Don't fail the signup if email fails
-      }
-
-      setCurrentClient(newAccount);
-      localStorage.setItem('currentClient', JSON.stringify(newAccount));
-      
-      // Clear the pending signup details as they're no longer needed
-      localStorage.removeItem('pendingSignupDetails');
-      
-      return {};
+      // Account doesn't exist - they need to contact manager first for account number
+      return { error: 'Account not found. Please contact the manager to get your account number, then complete the signup process.' };
       
     } catch (error) {
       console.error('Sign in error:', error);

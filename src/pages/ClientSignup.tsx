@@ -80,7 +80,7 @@ const ClientSignup = () => {
       // Check if user already exists with this email or NIN
       const { data: existingUser, error: checkError } = await supabase
         .from('client_accounts')
-        .select('email, nin')
+        .select('email, nin, name')
         .or(`email.eq.${formData.email},nin.eq.${formData.nin.toUpperCase().replace(/\s+/g, '')}`)
         .maybeSingle();
 
@@ -98,16 +98,16 @@ const ClientSignup = () => {
       if (existingUser) {
         toast({
           title: "Account Already Exists",
-          description: "An account with this email or NIN already exists. Please use different details or contact the manager.",
+          description: "An account with this email or NIN already exists. Please sign in or contact the manager if you forgot your account number.",
           variant: "destructive",
         });
         setIsLoading(false);
         return;
       }
 
-      console.log('Storing user signup details temporarily...');
+      console.log('No existing account found, storing signup details...');
 
-      // Store user details temporarily in localStorage for the manager to use
+      // Store user details temporarily for the manager to activate
       const userSignupDetails = {
         name: formData.name,
         email: formData.email,
@@ -119,9 +119,9 @@ const ClientSignup = () => {
 
       localStorage.setItem('pendingSignupDetails', JSON.stringify(userSignupDetails));
 
-      console.log('User details stored, redirecting to contact manager...');
+      console.log('User details stored, redirecting to success page...');
 
-      // Navigate to success page with user details
+      // Navigate to success page
       navigate('/signup-success', { state: { userDetails: userSignupDetails } });
 
     } catch (error) {
@@ -149,7 +149,7 @@ const ClientSignup = () => {
             </div>
             <CardTitle className="text-2xl text-center">Create Account</CardTitle>
             <CardDescription className="text-center">
-              Fill in your details to create a new client account
+              Fill in your details to create a new client account. You'll need an account number from the manager to complete the process.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -234,9 +234,17 @@ const ClientSignup = () => {
                 />
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Processing...' : 'Sign Up'}
+                {isLoading ? 'Processing...' : 'Complete Signup'}
               </Button>
             </form>
+            <div className="mt-4 text-center">
+              <p className="text-sm text-gray-600">
+                Already have an account?{' '}
+                <Link to="/client-auth" className="text-garrison-green hover:underline">
+                  Sign in here
+                </Link>
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>

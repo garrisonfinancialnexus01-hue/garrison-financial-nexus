@@ -29,8 +29,8 @@ const ClientDashboard = () => {
     return null;
   }
 
-  // Ensure account balance is properly formatted and defaults to 0
-  const accountBalance = currentClient.account_balance || 0;
+  // Ensure account balance defaults to 0 if null/undefined
+  const accountBalance = currentClient.account_balance ?? 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
