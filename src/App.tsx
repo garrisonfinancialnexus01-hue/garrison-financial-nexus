@@ -17,6 +17,7 @@ import LoanDetails from "./pages/LoanDetails";
 import Contact from "./pages/Contact";
 import About from "./pages/About";
 import SettleYourDebt from "./pages/SettleYourDebt";
+import RepayLoan from "./pages/RepayLoan";
 import ClientAuth from "./pages/ClientAuth";
 import ClientSignup from "./pages/ClientSignup";
 import SignupSuccess from "./pages/SignupSuccess";
@@ -52,6 +53,7 @@ const App = () => {
                 <Route path="/loan-application" element={<Layout><LoanApplication /></Layout>} />
                 <Route path="/loan-details" element={<Layout><LoanDetails /></Layout>} />
                 <Route path="/settle-your-debt" element={<Layout><SettleYourDebt /></Layout>} />
+                <Route path="/repay-loan" element={<Layout><RepayLoan /></Layout>} />
                 <Route path="/contact" element={<Layout><Contact /></Layout>} />
                 <Route path="/about" element={<Layout><About /></Layout>} />
                 <Route path="/client-auth" element={<ClientAuth />} />
