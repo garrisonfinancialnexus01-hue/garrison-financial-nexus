@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { MessageSquare, Scan, ShieldCheck } from 'lucide-react';
+import { MessageSquare, CreditCard, Clock, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const RepayLoan = () => {
@@ -10,12 +10,12 @@ const RepayLoan = () => {
 
   return (
     <div className="container mx-auto py-16 px-4">
-      <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-lg p-8">
+      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8">
         <h1 className="text-3xl font-bold text-center text-garrison-green mb-6">Repay Your Loan</h1>
         
         <div className="bg-gray-50 p-6 rounded-md mb-8">
-          <p className="text-lg text-center mb-4">
-            Want to repay your loan? Contact our Manager on WhatsApp for payment instructions and verification.
+          <p className="text-lg text-center mb-6">
+            Ready to repay your loan? Contact our manager on WhatsApp for payment instructions and to complete your repayment process.
           </p>
           
           <div className="flex justify-center">
@@ -27,63 +27,95 @@ const RepayLoan = () => {
               Contact Manager on WhatsApp
             </Button>
           </div>
-        </div>
-        
-        <div className="mt-8 border-t pt-6">
-          <h2 className="text-2xl font-semibold mb-4">Repayment Process</h2>
-          <ol className="list-decimal pl-6 space-y-3">
-            <li>Contact our manager via WhatsApp using the button above</li>
-            <li>Provide your loan reference number</li>
-            <li>You will receive payment instructions</li>
-            <li>Make your payment using the provided details</li>
-            <li>Send payment confirmation to the manager</li>
-            <li>Receive your updated loan statement</li>
-          </ol>
-        </div>
-        
-        <div className="mt-8 border-t pt-6">
-          <h2 className="text-2xl font-semibold mb-4">Verification Process for Receipt Download</h2>
-          <p className="mb-4">
-            To download your loan receipt, you will need to complete the following verification steps:
-          </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-blue-50 p-4 rounded-md border border-blue-100 flex flex-col items-center text-center">
-              <Scan className="h-8 w-8 text-blue-600 mb-2" />
-              <h3 className="font-medium text-blue-800 mb-1">1. ID Verification</h3>
-              <p className="text-sm text-blue-700">
-                Scan both sides of your National ID card for verification
-              </p>
-            </div>
-            
-            <div className="bg-blue-50 p-4 rounded-md border border-blue-100 flex flex-col items-center text-center">
-              <MessageSquare className="h-8 w-8 text-blue-600 mb-2" />
-              <h3 className="font-medium text-blue-800 mb-1">2. Contact Manager</h3>
-              <p className="text-sm text-blue-700">
-                Contact our Manager on WhatsApp for verification
-              </p>
-            </div>
-            
-            <div className="bg-blue-50 p-4 rounded-md border border-blue-100 flex flex-col items-center text-center">
-              <ShieldCheck className="h-8 w-8 text-blue-600 mb-2" />
-              <h3 className="font-medium text-blue-800 mb-1">3. Enter Code</h3>
-              <p className="text-sm text-blue-700">
-                Enter the verification code provided by the Manager
-              </p>
-            </div>
+          <div className="text-center mt-4">
+            <p className="text-sm text-gray-600">Manager: +256761281222</p>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-blue-50 p-6 rounded-md text-center">
+            <CreditCard className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-blue-800 mb-2">Flexible Payment</h3>
+            <p className="text-blue-700">Multiple payment options available to suit your needs</p>
           </div>
           
-          <ol className="list-decimal pl-6 space-y-3">
-            <li>After submitting your loan application, scan both sides of your National ID card</li>
-            <li>Contact our manager on WhatsApp</li>
-            <li>The manager will verify your application details</li>
-            <li>Upon verification, the manager will provide you with a 6-digit verification code</li>
-            <li>Enter this verification code in the application to unlock your receipt download</li>
-            <li>Download and save your receipt for future reference</li>
-          </ol>
-          <p className="mt-4 text-sm text-gray-600">
-            This verification process helps ensure the security of your loan information and prevents unauthorized access to your financial documents.
+          <div className="bg-green-50 p-6 rounded-md text-center">
+            <Clock className="h-12 w-12 text-green-600 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-green-800 mb-2">Quick Processing</h3>
+            <p className="text-green-700">Fast payment processing and instant confirmation</p>
+          </div>
+          
+          <div className="bg-purple-50 p-6 rounded-md text-center">
+            <CheckCircle className="h-12 w-12 text-purple-600 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-purple-800 mb-2">Secure & Safe</h3>
+            <p className="text-purple-700">All transactions are secure and verified</p>
+          </div>
+        </div>
+        
+        <div className="border-t pt-8">
+          <h2 className="text-2xl font-semibold mb-6 text-center">Loan Repayment Process</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+              <h3 className="text-xl font-medium mb-4 text-garrison-green">Step-by-Step Process:</h3>
+              <ol className="list-decimal pl-6 space-y-3">
+                <li className="text-gray-700">
+                  <strong>Contact Manager:</strong> Click the WhatsApp button above to start a conversation with our loan manager
+                </li>
+                <li className="text-gray-700">
+                  <strong>Provide Loan Details:</strong> Share your loan reference number and personal information for verification
+                </li>
+                <li className="text-gray-700">
+                  <strong>Receive Payment Instructions:</strong> Get detailed payment instructions including amount due and payment methods
+                </li>
+                <li className="text-gray-700">
+                  <strong>Make Payment:</strong> Complete your payment using the provided instructions
+                </li>
+                <li className="text-gray-700">
+                  <strong>Send Confirmation:</strong> Send payment proof/receipt to the manager via WhatsApp
+                </li>
+                <li className="text-gray-700">
+                  <strong>Get Receipt:</strong> Receive your loan closure receipt and updated account statement
+                </li>
+              </ol>
+            </div>
+            
+            <div>
+              <h3 className="text-xl font-medium mb-4 text-garrison-green">What You'll Need:</h3>
+              <ul className="list-disc pl-6 space-y-2">
+                <li className="text-gray-700">Your loan reference number</li>
+                <li className="text-gray-700">Valid identification (National ID)</li>
+                <li className="text-gray-700">Payment method (Mobile Money, Bank Transfer, etc.)</li>
+                <li className="text-gray-700">Phone number for communication</li>
+              </ul>
+              
+              <h3 className="text-xl font-medium mb-4 mt-6 text-garrison-green">Payment Methods Available:</h3>
+              <ul className="list-disc pl-6 space-y-2">
+                <li className="text-gray-700">Mobile Money (MTN, Airtel)</li>
+                <li className="text-gray-700">Bank Transfer</li>
+                <li className="text-gray-700">Cash Deposit</li>
+                <li className="text-gray-700">Online Banking</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        
+        <div className="mt-8 bg-garrison-green text-white p-6 rounded-lg">
+          <h3 className="text-xl font-semibold mb-3">Need Help?</h3>
+          <p className="mb-4">
+            Our loan manager is available to assist you with any questions about your loan repayment. 
+            Don't hesitate to reach out for support throughout the process.
           </p>
+          <div className="flex justify-center">
+            <Button 
+              onClick={openWhatsApp}
+              className="bg-white text-garrison-green hover:bg-gray-100"
+            >
+              <MessageSquare className="mr-2 h-5 w-5" />
+              Get Help via WhatsApp
+            </Button>
+          </div>
         </div>
       </div>
     </div>
