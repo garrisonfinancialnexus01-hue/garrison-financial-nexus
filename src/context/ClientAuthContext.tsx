@@ -52,56 +52,86 @@ export const ClientAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     try {
       setIsLoading(true);
       
-      console.log('Attempting to sign in with account number:', accountNumber);
+      console.log('=== DEBUGGING CLIENT AUTHENTICATION ===');
+      console.log('Input account number:', accountNumber);
+      console.log('Input password:', password);
       
-      // Validate account number format (8 digits, 10000001-10000200)
-      const accountNum = parseInt(accountNumber);
-      if (isNaN(accountNum) || accountNum < 10000001 || accountNum > 10000200) {
-        console.log('Account number not in valid range:', accountNumber);
-        return { error: 'Invalid account number. Please use the 8-digit account number provided by the manager (10000001-10000200).' };
+      // First, let's check what accounts actually exist in the database
+      const { data: allAccounts, error: listError } = await supabase
+        .from('client_accounts')
+        .select('account_number, name, status')
+        .limit(10);
+      
+      console.log('Sample accounts in database:', allAccounts);
+      if (listError) {
+        console.log('Error fetching sample accounts:', listError);
       }
-
-      // Check if account exists in our system
+      
+      // Clean the account number input
+      const cleanAccountNumber = accountNumber.trim();
+      console.log('Cleaned account number:', cleanAccountNumber);
+      
+      // Check if account exists with exact string match
       const { data: existingAccount, error: checkError } = await supabase
         .from('client_accounts')
         .select('*')
-        .eq('account_number', accountNumber)
+        .eq('account_number', cleanAccountNumber)
         .maybeSingle();
 
-      console.log('Account lookup result:', { existingAccount, checkError });
+      console.log('Database query result:', { existingAccount, checkError });
 
       if (checkError) {
-        console.error('Error checking account:', checkError);
-        return { error: 'Error checking account. Please try again.' };
+        console.error('Database error during account lookup:', checkError);
+        return { error: 'Database error occurred. Please try again.' };
       }
 
+      if (!existingAccount) {
+        console.log('No account found with number:', cleanAccountNumber);
+        
+        // Let's also try a broader search to see if there are similar account numbers
+        const { data: similarAccounts } = await supabase
+          .from('client_accounts')
+          .select('account_number')
+          .like('account_number', `%${cleanAccountNumber}%`)
+          .limit(5);
+        
+        console.log('Similar account numbers found:', similarAccounts);
+        
+        return { error: 'Account not found. Please verify your account number or contact the manager to get your account number.' };
+      }
+
+      console.log('Found account:', existingAccount);
+
       // If account exists and is active, authenticate
-      if (existingAccount && existingAccount.status === 'active') {
-        console.log('Found active account, checking password...');
+      if (existingAccount.status === 'active') {
+        console.log('Account is active, checking password...');
         
         if (existingAccount.password_hash !== password) {
+          console.log('Password mismatch');
           return { error: 'Invalid password. Please check your password and try again.' };
         }
 
+        console.log('Password match! Signing in...');
         setCurrentClient(existingAccount);
         localStorage.setItem('currentClient', JSON.stringify(existingAccount));
-        console.log('Successfully signed in existing account');
         return {};
       }
 
       // If account exists but is suspended (system reserved), we need signup details
-      if (existingAccount && existingAccount.status === 'suspended' && existingAccount.name === 'System Reserved') {
-        console.log('Found system reserved account, need to activate with user details...');
+      if (existingAccount.status === 'suspended' && existingAccount.name === 'System Reserved') {
+        console.log('Found system reserved account, checking for pending signup details...');
         
         // Get pending signup details from localStorage
         const pendingDetails = localStorage.getItem('pendingSignupDetails');
         if (!pendingDetails) {
+          console.log('No pending signup details found');
           return { error: 'Please complete the signup process first. Go to signup, enter your details, then return here with your manager-provided account number.' };
         }
 
         let userDetails;
         try {
           userDetails = JSON.parse(pendingDetails);
+          console.log('Found pending signup details:', userDetails);
         } catch (error) {
           console.error('Error parsing pending details:', error);
           localStorage.removeItem('pendingSignupDetails');
@@ -110,10 +140,11 @@ export const ClientAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         
         // Verify the password matches what they used during signup
         if (userDetails.password !== password) {
+          console.log('Password does not match signup password');
           return { error: 'Invalid password. Please use the password you created during signup.' };
         }
 
-        console.log('Activating account with user details...');
+        console.log('Activating system reserved account with user details...');
 
         // Activate the account by updating the system reserved account
         const { data: updatedAccount, error: updateError } = await supabase
@@ -143,7 +174,7 @@ export const ClientAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           const response = await supabase.functions.invoke('send-signup-notification', {
             body: {
               userDetails: userDetails,
-              accountNumber: accountNumber
+              accountNumber: cleanAccountNumber
             }
           });
           console.log('Signup notification sent:', response);
@@ -161,16 +192,12 @@ export const ClientAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         return {};
       }
 
-      // If we get here, either account doesn't exist or has an unexpected status
-      if (existingAccount) {
-        return { error: `Account status: ${existingAccount.status}. Please contact the manager for assistance.` };
-      }
-
-      // Account doesn't exist - they need to contact manager first for account number
-      return { error: 'Account not found. Please contact the manager to get your account number, then complete the signup process.' };
+      // If we get here, account has an unexpected status
+      console.log('Account has unexpected status:', existingAccount.status);
+      return { error: `Account status: ${existingAccount.status}. Please contact the manager for assistance.` };
       
     } catch (error) {
-      console.error('Sign in error:', error);
+      console.error('Unexpected sign in error:', error);
       return { error: 'An error occurred during sign in. Please try again.' };
     } finally {
       setIsLoading(false);
