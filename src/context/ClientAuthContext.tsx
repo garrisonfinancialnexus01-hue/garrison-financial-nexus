@@ -52,59 +52,130 @@ export const ClientAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     try {
       setIsLoading(true);
       
-      console.log('=== DEBUGGING CLIENT AUTHENTICATION ===');
+      console.log('=== COMPREHENSIVE AUTHENTICATION DEBUG ===');
       console.log('Input account number:', accountNumber);
-      console.log('Input password:', password);
+      console.log('Input password length:', password.length);
       
-      // First, let's check what accounts actually exist in the database
+      // First, let's get a complete picture of what's in the database
+      console.log('--- Step 1: Checking database connection and table structure ---');
+      const { data: tableExists, error: structureError } = await supabase
+        .from('client_accounts')
+        .select('count')
+        .limit(1);
+      
+      console.log('Database connection test:', { tableExists, structureError });
+      
+      if (structureError) {
+        console.error('Database structure error:', structureError);
+        return { error: 'Database connection failed. Please try again.' };
+      }
+      
+      // Get total count of accounts
+      const { count: totalAccounts, error: countError } = await supabase
+        .from('client_accounts')
+        .select('*', { count: 'exact', head: true });
+      
+      console.log('Total accounts in database:', totalAccounts);
+      if (countError) {
+        console.error('Error counting accounts:', countError);
+      }
+      
+      // Get sample of all accounts to see what's actually there
       const { data: allAccounts, error: listError } = await supabase
         .from('client_accounts')
-        .select('account_number, name, status')
-        .limit(10);
+        .select('account_number, name, status, created_at')
+        .order('account_number')
+        .limit(20);
       
       console.log('Sample accounts in database:', allAccounts);
       if (listError) {
-        console.log('Error fetching sample accounts:', listError);
+        console.error('Error fetching sample accounts:', listError);
       }
       
       // Clean the account number input
       const cleanAccountNumber = accountNumber.trim();
-      console.log('Cleaned account number:', cleanAccountNumber);
+      console.log('--- Step 2: Account lookup ---');
+      console.log('Original input:', `"${accountNumber}"`);
+      console.log('Cleaned input:', `"${cleanAccountNumber}"`);
+      console.log('Input length:', cleanAccountNumber.length);
+      console.log('Input type:', typeof cleanAccountNumber);
       
-      // Check if account exists with exact string match
-      const { data: existingAccount, error: checkError } = await supabase
+      // Try multiple search strategies
+      console.log('--- Step 3: Multiple search strategies ---');
+      
+      // Strategy 1: Exact match
+      console.log('Strategy 1: Exact string match');
+      const { data: exactMatch, error: exactError } = await supabase
         .from('client_accounts')
         .select('*')
         .eq('account_number', cleanAccountNumber)
         .maybeSingle();
-
-      console.log('Database query result:', { existingAccount, checkError });
-
-      if (checkError) {
-        console.error('Database error during account lookup:', checkError);
-        return { error: 'Database error occurred. Please try again.' };
-      }
-
+      
+      console.log('Exact match result:', { exactMatch, exactError });
+      
+      // Strategy 2: Case insensitive search
+      console.log('Strategy 2: Case insensitive search');
+      const { data: caseInsensitive, error: caseError } = await supabase
+        .from('client_accounts')
+        .select('*')
+        .ilike('account_number', cleanAccountNumber)
+        .maybeSingle();
+      
+      console.log('Case insensitive result:', { caseInsensitive, caseError });
+      
+      // Strategy 3: Partial match to see similar numbers
+      console.log('Strategy 3: Partial match search');
+      const { data: partialMatches, error: partialError } = await supabase
+        .from('client_accounts')
+        .select('account_number, name, status')
+        .like('account_number', `%${cleanAccountNumber}%`)
+        .limit(10);
+      
+      console.log('Partial matches:', { partialMatches, partialError });
+      
+      // Strategy 4: Check for accounts starting with the same digits
+      const firstFourDigits = cleanAccountNumber.substring(0, 4);
+      console.log('Strategy 4: Accounts starting with', firstFourDigits);
+      const { data: similarStart, error: similarError } = await supabase
+        .from('client_accounts')
+        .select('account_number, name, status')
+        .like('account_number', `${firstFourDigits}%`)
+        .limit(10);
+      
+      console.log('Similar start accounts:', { similarStart, similarError });
+      
+      // Use the exact match for further processing
+      const existingAccount = exactMatch;
+      
       if (!existingAccount) {
-        console.log('No account found with number:', cleanAccountNumber);
+        console.log('--- No account found with any strategy ---');
+        console.log('Searched for account number:', cleanAccountNumber);
+        console.log('Account length:', cleanAccountNumber.length);
+        console.log('Expected range: 10000001-10000200');
         
-        // Let's also try a broader search to see if there are similar account numbers
-        const { data: similarAccounts } = await supabase
-          .from('client_accounts')
-          .select('account_number')
-          .like('account_number', `%${cleanAccountNumber}%`)
-          .limit(5);
-        
-        console.log('Similar account numbers found:', similarAccounts);
+        // Additional debugging: check if the account number is in expected range
+        const accountNum = parseInt(cleanAccountNumber);
+        console.log('Parsed as integer:', accountNum);
+        console.log('Is in expected range (10000001-10000200)?', accountNum >= 10000001 && accountNum <= 10000200);
         
         return { error: 'Account not found. Please verify your account number or contact the manager to get your account number.' };
       }
 
-      console.log('Found account:', existingAccount);
+      console.log('--- Step 4: Account found, checking status and password ---');
+      console.log('Found account:', {
+        id: existingAccount.id,
+        account_number: existingAccount.account_number,
+        name: existingAccount.name,
+        status: existingAccount.status,
+        email: existingAccount.email,
+        created_at: existingAccount.created_at
+      });
 
       // If account exists and is active, authenticate
       if (existingAccount.status === 'active') {
         console.log('Account is active, checking password...');
+        console.log('Stored password hash:', existingAccount.password_hash);
+        console.log('Input password:', password);
         
         if (existingAccount.password_hash !== password) {
           console.log('Password mismatch');
