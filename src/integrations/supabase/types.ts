@@ -11,43 +11,43 @@ export type Database = {
     Tables: {
       client_accounts: {
         Row: {
-          account_balance: number
+          account_balance: number | null
           account_number: string
-          created_at: string
+          created_at: string | null
           email: string
           id: string
           name: string
           nin: string
           password_hash: string
           phone: string
-          status: Database["public"]["Enums"]["account_status"]
-          updated_at: string
+          status: Database["public"]["Enums"]["account_status"] | null
+          updated_at: string | null
         }
         Insert: {
-          account_balance?: number
+          account_balance?: number | null
           account_number: string
-          created_at?: string
+          created_at?: string | null
           email: string
           id?: string
           name: string
           nin: string
           password_hash: string
           phone: string
-          status?: Database["public"]["Enums"]["account_status"]
-          updated_at?: string
+          status?: Database["public"]["Enums"]["account_status"] | null
+          updated_at?: string | null
         }
         Update: {
-          account_balance?: number
+          account_balance?: number | null
           account_number?: string
-          created_at?: string
+          created_at?: string | null
           email?: string
           id?: string
           name?: string
           nin?: string
           password_hash?: string
           phone?: string
-          status?: Database["public"]["Enums"]["account_status"]
-          updated_at?: string
+          status?: Database["public"]["Enums"]["account_status"] | null
+          updated_at?: string | null
         }
         Relationships: []
       }
