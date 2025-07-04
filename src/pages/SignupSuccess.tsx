@@ -3,7 +3,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Copy, Phone, MessageCircle } from 'lucide-react';
+import { CheckCircle, Copy, Phone, MessageCircle, Key } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 const SignupSuccess = () => {
@@ -21,7 +21,7 @@ const SignupSuccess = () => {
   };
 
   const openWhatsApp = () => {
-    const message = `Hello, I just created a new account. My account number is ${accountNumber}. Please activate my account. Name: ${userDetails?.name}`;
+    const message = `Hello, I just created a new account. My account number is ${accountNumber}. Please provide me with a verification code to activate my account. Name: ${userDetails?.name}`;
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/256761281222?text=${encodedMessage}`, '_blank');
   };
@@ -56,7 +56,7 @@ const SignupSuccess = () => {
             </div>
             <CardTitle className="text-2xl text-green-600">Account Created Successfully!</CardTitle>
             <CardDescription>
-              Your account has been created and is pending activation
+              Your account has been created. Follow the steps below to activate it.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -75,7 +75,7 @@ const SignupSuccess = () => {
                     <Copy className="h-4 w-4" />
                   </Button>
                 </div>
-                <p className="text-xs text-green-700 mt-2">Save this number - you'll need it to sign in</p>
+                <p className="text-xs text-green-700 mt-2">Save this number - you'll need it for activation</p>
               </div>
             </div>
 
@@ -98,13 +98,14 @@ const SignupSuccess = () => {
               </div>
             </div>
 
-            {/* Next Steps */}
+            {/* Activation Steps */}
             <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-              <h3 className="font-medium text-blue-900 mb-2">Next Steps:</h3>
+              <h3 className="font-medium text-blue-900 mb-2">Activation Steps:</h3>
               <ol className="list-decimal list-inside text-sm text-blue-800 space-y-1">
                 <li>Save your account number: <strong>{accountNumber}</strong></li>
-                <li>Contact the manager to activate your account</li>
-                <li>Once activated, sign in using your account number and password</li>
+                <li>Contact the manager to get a verification code</li>
+                <li>Use the verification code to activate your account</li>
+                <li>Sign in with your account number and password</li>
               </ol>
             </div>
 
@@ -112,7 +113,7 @@ const SignupSuccess = () => {
             <div className="space-y-3">
               <Button onClick={openWhatsApp} className="w-full bg-green-600 hover:bg-green-700">
                 <MessageCircle className="h-4 w-4 mr-2" />
-                Contact Manager on WhatsApp
+                Contact Manager for Verification Code
               </Button>
               
               <div className="text-center">
@@ -124,11 +125,21 @@ const SignupSuccess = () => {
               </div>
             </div>
 
+            {/* Activation Link */}
+            <div className="space-y-3">
+              <Link to="/account-activation" state={{ accountNumber }}>
+                <Button variant="outline" className="w-full">
+                  <Key className="h-4 w-4 mr-2" />
+                  I Have a Verification Code
+                </Button>
+              </Link>
+            </div>
+
             {/* Sign In Link */}
             <div className="text-center pt-4 border-t">
               <p className="text-sm text-gray-600 mb-2">Account already activated?</p>
               <Link to="/client-auth">
-                <Button variant="outline" className="w-full">
+                <Button variant="ghost" className="text-garrison-green hover:text-garrison-black">
                   Sign In to Your Account
                 </Button>
               </Link>

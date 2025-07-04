@@ -35,10 +35,10 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: "Garrison Financial Nexus <onboarding@resend.dev>",
       to: ["garrisonfinancialnexus01@gmail.com"],
-      subject: "New Client Account Activated",
+      subject: "New Client Account Registration",
       html: `
-        <h2>New Client Account Successfully Activated</h2>
-        <p>A client has completed the signup process and their account has been activated:</p>
+        <h2>New Client Account Registration</h2>
+        <p>A new client has registered for an account and is waiting for activation:</p>
         
         <h3>Client Details:</h3>
         <ul>
@@ -47,19 +47,26 @@ const handler = async (req: Request): Promise<Response> => {
           <li><strong>Phone:</strong> ${userDetails.phone}</li>
           <li><strong>NIN:</strong> ${userDetails.nin}</li>
           <li><strong>Account Number:</strong> ${accountNumber}</li>
-          <li><strong>Signup Date:</strong> ${new Date(userDetails.signupDate).toLocaleString()}</li>
-          <li><strong>Account Status:</strong> Active</li>
+          <li><strong>Registration Date:</strong> ${new Date(userDetails.signupDate).toLocaleString()}</li>
+          <li><strong>Account Status:</strong> Pending Activation</li>
           <li><strong>Initial Balance:</strong> 0 UGX</li>
         </ul>
         
-        <p>The client can now access their dashboard and request transactions through WhatsApp (+256761281222).</p>
-        
         <p><strong>Next Steps:</strong></p>
         <ul>
-          <li>Client can log in using their account number and password</li>
-          <li>Client can view their account details on the dashboard</li>
-          <li>Client can request deposits/withdrawals through WhatsApp</li>
+          <li>Client will contact you for a verification code</li>
+          <li>Provide a 6-digit verification code from the system</li>
+          <li>Client will use the code to activate their account</li>
+          <li>Once activated, client can access their dashboard</li>
         </ul>
+        
+        <p><strong>Contact Information:</strong></p>
+        <ul>
+          <li>WhatsApp: +256 761 281 222</li>
+          <li>Phone: +256 761 281 222</li>
+        </ul>
+        
+        <p>The client may reach out via WhatsApp or phone to request their verification code.</p>
         
         <p>Best regards,<br>Garrison Financial Nexus System</p>
       `,

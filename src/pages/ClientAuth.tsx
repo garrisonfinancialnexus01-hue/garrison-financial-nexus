@@ -1,13 +1,13 @@
 
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useClientAuth } from '@/context/ClientAuthContext';
 import { toast } from '@/hooks/use-toast';
-import { ArrowLeft, AlertCircle } from 'lucide-react';
+import { ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react';
 
 const ClientAuth = () => {
   const [accountNumber, setAccountNumber] = useState('');
@@ -15,6 +15,17 @@ const ClientAuth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { signIn } = useClientAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Show success message if coming from account activation
+  React.useEffect(() => {
+    if (location.state?.message) {
+      toast({
+        title: "Success!",
+        description: location.state.message,
+      });
+    }
+  }, [location.state]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,17 +110,23 @@ const ClientAuth = () => {
               <div className="flex items-start space-x-2">
                 <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
                 <div className="text-sm text-blue-800">
-                  <p className="font-medium mb-1">New Account Status</p>
-                  <p>New accounts need to be activated by the manager before you can sign in. Please contact the manager if your account is not working.</p>
+                  <p className="font-medium mb-1">Account Not Working?</p>
+                  <p>New accounts need to be activated with a verification code from the manager before you can sign in.</p>
                 </div>
               </div>
             </div>
             
-            <div className="mt-4 text-center">
+            <div className="mt-4 text-center space-y-2">
               <p className="text-sm text-gray-600">
                 Don't have an account?{' '}
                 <Link to="/client-signup" className="text-garrison-green hover:underline">
                   Sign up here
+                </Link>
+              </p>
+              <p className="text-sm text-gray-600">
+                Need to activate your account?{' '}
+                <Link to="/account-activation" className="text-garrison-green hover:underline">
+                  Enter verification code
                 </Link>
               </p>
             </div>

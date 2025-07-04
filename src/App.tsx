@@ -21,6 +21,7 @@ import RepayLoan from "./pages/RepayLoan";
 import ClientAuth from "./pages/ClientAuth";
 import ClientSignup from "./pages/ClientSignup";
 import SignupSuccess from "./pages/SignupSuccess";
+import AccountActivation from "./pages/AccountActivation";
 import ClientDashboard from "./pages/ClientDashboard";
 import TransactionRequest from "./pages/TransactionRequest";
 import { ClientAuthProvider } from "./context/ClientAuthContext";
@@ -59,6 +60,7 @@ const App = () => {
                 <Route path="/client-auth" element={<ClientAuth />} />
                 <Route path="/client-signup" element={<ClientSignup />} />
                 <Route path="/signup-success" element={<SignupSuccess />} />
+                <Route path="/account-activation" element={<AccountActivation />} />
                 <Route path="/client-dashboard" element={<ClientDashboard />} />
                 <Route path="/transaction-request" element={<TransactionRequest />} />
                 <Route path="*" element={<Layout><NotFound /></Layout>} />
