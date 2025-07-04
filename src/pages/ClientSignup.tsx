@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
 import { isValidUgandanNIN } from '@/utils/ninValidation';
+import { generateNextAccountNumber } from '@/utils/accountNumberGenerator';
 import { supabase } from '@/integrations/supabase/client';
 
 const ClientSignup = () => {
@@ -50,7 +51,6 @@ const ClientSignup = () => {
           description: "Passwords do not match",
           variant: "destructive",
         });
-        setIsLoading(false);
         return;
       }
 
@@ -61,7 +61,6 @@ const ClientSignup = () => {
           description: "Password must be 6-10 characters with at least one uppercase letter, one number, and one special character",
           variant: "destructive",
         });
-        setIsLoading(false);
         return;
       }
 
@@ -73,56 +72,88 @@ const ClientSignup = () => {
           description: "NIN must be 14 characters starting with CM or CF, with either 8 numbers + 6 letters or 9 numbers + 5 letters",
           variant: "destructive",
         });
-        setIsLoading(false);
         return;
       }
 
-      // Check if user already exists with this email or NIN
-      const { data: existingUser, error: checkError } = await supabase
+      // Check if user already exists
+      const { data: existingUser } = await supabase
         .from('client_accounts')
-        .select('email, nin, name')
+        .select('email, nin')
         .or(`email.eq.${formData.email},nin.eq.${formData.nin.toUpperCase().replace(/\s+/g, '')}`)
         .maybeSingle();
-
-      if (checkError) {
-        console.error('Error checking existing user:', checkError);
-        toast({
-          title: "Error",
-          description: "Failed to verify account details. Please try again.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
 
       if (existingUser) {
         toast({
           title: "Account Already Exists",
-          description: "An account with this email or NIN already exists. Please sign in or contact the manager if you forgot your account number.",
+          description: "An account with this email or NIN already exists.",
           variant: "destructive",
         });
-        setIsLoading(false);
         return;
       }
 
-      console.log('No existing account found, storing signup details...');
+      // Generate account number
+      const accountNumber = await generateNextAccountNumber();
 
-      // Store user details temporarily for the manager to activate
-      const userSignupDetails = {
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        nin: formData.nin.toUpperCase().replace(/\s+/g, ''),
-        password: formData.password,
-        signupDate: new Date().toISOString()
-      };
+      // Create account directly in database
+      const { error: insertError } = await supabase
+        .from('client_accounts')
+        .insert({
+          account_number: accountNumber,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          nin: formData.nin.toUpperCase().replace(/\s+/g, ''),
+          password_hash: formData.password,
+          account_balance: 0.00,
+          status: 'pending'
+        });
 
-      localStorage.setItem('pendingSignupDetails', JSON.stringify(userSignupDetails));
+      if (insertError) {
+        console.error('Error creating account:', insertError);
+        toast({
+          title: "Error",
+          description: "Failed to create account. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      console.log('User details stored, redirecting to success page...');
+      // Send notification email
+      try {
+        await supabase.functions.invoke('send-signup-notification', {
+          body: {
+            userDetails: {
+              name: formData.name,
+              email: formData.email,
+              phone: formData.phone,
+              nin: formData.nin.toUpperCase().replace(/\s+/g, ''),
+              signupDate: new Date().toISOString()
+            },
+            accountNumber: accountNumber
+          }
+        });
+      } catch (emailError) {
+        console.error('Failed to send notification email:', emailError);
+      }
 
-      // Navigate to success page
-      navigate('/signup-success', { state: { userDetails: userSignupDetails } });
+      toast({
+        title: "Account Created Successfully!",
+        description: `Your account number is ${accountNumber}. Please save this number and contact the manager for activation.`,
+        duration: 8000,
+      });
+
+      // Navigate to success page with account details
+      navigate('/signup-success', { 
+        state: { 
+          accountNumber: accountNumber,
+          userDetails: {
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            nin: formData.nin.toUpperCase().replace(/\s+/g, ''),
+          }
+        } 
+      });
 
     } catch (error) {
       console.error('Unexpected error during signup:', error);
@@ -149,7 +180,7 @@ const ClientSignup = () => {
             </div>
             <CardTitle className="text-2xl text-center">Create Account</CardTitle>
             <CardDescription className="text-center">
-              Fill in your details to create a new client account. You'll need an account number from the manager to complete the process.
+              Fill in your details to create a new client account. You'll receive an account number upon successful registration.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -234,7 +265,7 @@ const ClientSignup = () => {
                 />
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Processing...' : 'Complete Signup'}
+                {isLoading ? 'Creating Account...' : 'Create Account'}
               </Button>
             </form>
             <div className="mt-4 text-center">

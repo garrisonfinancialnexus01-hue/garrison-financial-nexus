@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useClientAuth } from '@/context/ClientAuthContext';
 import { toast } from '@/hooks/use-toast';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, AlertCircle } from 'lucide-react';
 
 const ClientAuth = () => {
   const [accountNumber, setAccountNumber] = useState('');
@@ -18,9 +18,19 @@ const ClientAuth = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!accountNumber.trim() || !password.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please enter both account number and password.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
-    const { error } = await signIn(accountNumber, password);
+    const { error } = await signIn(accountNumber.trim(), password);
     
     if (error) {
       toast({
@@ -84,6 +94,17 @@ const ClientAuth = () => {
                 {isLoading ? 'Signing In...' : 'Sign In'}
               </Button>
             </form>
+            
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex items-start space-x-2">
+                <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                <div className="text-sm text-blue-800">
+                  <p className="font-medium mb-1">New Account Status</p>
+                  <p>New accounts need to be activated by the manager before you can sign in. Please contact the manager if your account is not working.</p>
+                </div>
+              </div>
+            </div>
+            
             <div className="mt-4 text-center">
               <p className="text-sm text-gray-600">
                 Don't have an account?{' '}

@@ -1,57 +1,136 @@
 
 import React from 'react';
-import { useLocation, Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, CheckCircle } from 'lucide-react';
+import { CheckCircle, Copy, Phone, MessageCircle } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 const SignupSuccess = () => {
   const location = useLocation();
-  const userDetails = location.state?.userDetails;
+  const { accountNumber, userDetails } = location.state || {};
 
-  const handleContactManager = () => {
-    const message = `Hello, I just signed up for a client account with the following details:
-Name: ${userDetails?.name || 'Not provided'}
-Email: ${userDetails?.email || 'Not provided'}
-Phone: ${userDetails?.phone || 'Not provided'}
-NIN: ${userDetails?.nin || 'Not provided'}
-
-Please provide me with an account number so I can access my account.`;
-    
-    const whatsappUrl = `https://wa.me/256761281222?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
+  const copyAccountNumber = () => {
+    if (accountNumber) {
+      navigator.clipboard.writeText(accountNumber);
+      toast({
+        title: "Copied!",
+        description: "Account number copied to clipboard",
+      });
+    }
   };
+
+  const openWhatsApp = () => {
+    const message = `Hello, I just created a new account. My account number is ${accountNumber}. Please activate my account. Name: ${userDetails?.name}`;
+    const encodedMessage = encodeURIComponent(message);
+    window.open(`https://wa.me/256761281222?text=${encodedMessage}`, '_blank');
+  };
+
+  if (!accountNumber) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-center text-red-600">Error</CardTitle>
+            <CardDescription className="text-center">
+              No account information found. Please try signing up again.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+            <Link to="/client-signup">
+              <Button>Go to Sign Up</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <Card>
-          <CardHeader className="text-center space-y-4">
-            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
               <CheckCircle className="h-8 w-8 text-green-600" />
             </div>
-            <CardTitle className="text-2xl text-green-600">Sign Up Successful!</CardTitle>
+            <CardTitle className="text-2xl text-green-600">Account Created Successfully!</CardTitle>
             <CardDescription>
-              Your details have been recorded successfully. To get your account number, please contact our manager.
+              Your account has been created and is pending activation
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-center space-y-2">
-              <p className="text-sm text-gray-600">
-                Contact our manager on WhatsApp to receive your account number:
-              </p>
-              <p className="font-semibold text-garrison-black">+256761281222</p>
+          <CardContent className="space-y-6">
+            {/* Account Number Display */}
+            <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+              <div className="text-center">
+                <p className="text-sm font-medium text-green-800 mb-2">Your Account Number</p>
+                <div className="flex items-center justify-center space-x-2">
+                  <span className="text-2xl font-bold text-green-900 font-mono">{accountNumber}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={copyAccountNumber}
+                    className="text-green-700 hover:text-green-900"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-green-700 mt-2">Save this number - you'll need it to sign in</p>
+              </div>
             </div>
-            <Button 
-              onClick={handleContactManager}
-              className="w-full bg-green-600 hover:bg-green-700"
-            >
-              <MessageCircle className="h-4 w-4 mr-2" />
-              Contact Manager on WhatsApp
-            </Button>
-            <div className="text-center">
-              <Link to="/client-auth" className="text-sm text-garrison-green hover:underline">
-                Already have an account number? Sign In
+
+            {/* Account Details */}
+            <div className="space-y-3">
+              <h3 className="font-medium text-gray-900">Account Details:</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Name:</span>
+                  <span className="font-medium">{userDetails?.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Email:</span>
+                  <span className="font-medium">{userDetails?.email}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Status:</span>
+                  <span className="font-medium text-orange-600">Pending Activation</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Next Steps */}
+            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+              <h3 className="font-medium text-blue-900 mb-2">Next Steps:</h3>
+              <ol className="list-decimal list-inside text-sm text-blue-800 space-y-1">
+                <li>Save your account number: <strong>{accountNumber}</strong></li>
+                <li>Contact the manager to activate your account</li>
+                <li>Once activated, sign in using your account number and password</li>
+              </ol>
+            </div>
+
+            {/* Contact Manager */}
+            <div className="space-y-3">
+              <Button onClick={openWhatsApp} className="w-full bg-green-600 hover:bg-green-700">
+                <MessageCircle className="h-4 w-4 mr-2" />
+                Contact Manager on WhatsApp
+              </Button>
+              
+              <div className="text-center">
+                <p className="text-sm text-gray-600 mb-2">Or call directly:</p>
+                <a href="tel:+256761281222" className="flex items-center justify-center space-x-2 text-garrison-green hover:underline">
+                  <Phone className="h-4 w-4" />
+                  <span>+256 761 281 222</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Sign In Link */}
+            <div className="text-center pt-4 border-t">
+              <p className="text-sm text-gray-600 mb-2">Account already activated?</p>
+              <Link to="/client-auth">
+                <Button variant="outline" className="w-full">
+                  Sign In to Your Account
+                </Button>
               </Link>
             </div>
           </CardContent>
