@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { ArrowLeft, Mail } from 'lucide-react';
+import { ArrowLeft, Mail, AlertCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 const ForgotPassword = () => {
@@ -14,10 +14,18 @@ const ForgotPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email.trim()) {
+    const trimmedEmail = email.trim().toLowerCase();
+    
+    // Enhanced validation
+    if (!trimmedEmail) {
       toast({
         title: "Email Required",
         description: "Please enter your email address.",
@@ -26,21 +34,32 @@ const ForgotPassword = () => {
       return;
     }
 
+    if (!validateEmail(trimmedEmail)) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
+      console.log('Checking account for email:', trimmedEmail);
+      
       // Check if account exists
       const { data: account, error: fetchError } = await supabase
         .from('client_accounts')
         .select('email, name')
-        .eq('email', email.trim())
+        .eq('email', trimmedEmail)
         .maybeSingle();
 
       if (fetchError) {
         console.error('Database error:', fetchError);
         toast({
-          title: "Error",
-          description: "Failed to verify email. Please try again.",
+          title: "System Error",
+          description: "Unable to verify email address. Please try again.",
           variant: "destructive",
         });
         return;
@@ -49,43 +68,62 @@ const ForgotPassword = () => {
       if (!account) {
         toast({
           title: "Email Not Found",
-          description: "No account found with this email address.",
+          description: "No account found with this email address. Please check your email or sign up for a new account.",
           variant: "destructive",
         });
         return;
       }
 
-      // Send password reset code
-      const { error: emailError } = await supabase.functions.invoke('send-password-reset-code', {
+      console.log('Account found, sending reset code...');
+
+      // Send password reset code with enhanced error handling
+      const { data, error: emailError } = await supabase.functions.invoke('send-password-reset-code', {
         body: {
-          email: email.trim(),
-          name: account.name
+          email: trimmedEmail,
+          name: account.name || 'User'
         }
       });
 
+      console.log('Function response:', data);
+
       if (emailError) {
-        console.error('Email sending error:', emailError);
+        console.error('Function invocation error:', emailError);
         toast({
           title: "Failed to Send Code",
-          description: "Could not send verification code. Please try again.",
+          description: "Unable to send verification code. Please check your email address and try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!data?.success) {
+        console.error('Function returned error:', data);
+        toast({
+          title: "Email Delivery Failed",
+          description: data?.error || "Failed to send verification code. Please try again.",
           variant: "destructive",
         });
         return;
       }
 
       toast({
-        title: "Code Sent!",
-        description: "A 6-digit verification code has been sent to your email.",
+        title: "Code Sent Successfully! ✅",
+        description: "A 6-digit verification code has been sent to your email. Please check your inbox (and spam folder).",
       });
 
       // Navigate to code verification page
-      navigate('/verify-reset-code', { state: { email: email.trim() } });
+      navigate('/verify-reset-code', { 
+        state: { 
+          email: trimmedEmail,
+          timestamp: Date.now() // For debugging timing issues
+        } 
+      });
 
     } catch (error) {
-      console.error('Unexpected error:', error);
+      console.error('Unexpected error in handleSendCode:', error);
       toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        title: "System Error",
+        description: "An unexpected error occurred. Please try again in a moment.",
         variant: "destructive",
       });
     } finally {
@@ -123,22 +161,44 @@ const ForgotPassword = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10"
                     required
+                    disabled={isLoading}
                   />
                 </div>
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Sending Code...' : 'Send Verification Code'}
+                {isLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Sending Code...
+                  </>
+                ) : (
+                  'Send Verification Code'
+                )}
               </Button>
             </form>
             
             <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="text-sm text-blue-800">
-                <p className="font-medium mb-1">What happens next?</p>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>We'll send a 6-digit code to your email</li>
-                  <li>The code will expire in 2 minutes</li>
-                  <li>Enter the code to reset your password</li>
-                </ul>
+              <div className="flex items-start space-x-2">
+                <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-blue-800">
+                  <p className="font-medium mb-2">What happens next?</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>We'll send a 6-digit code to your email instantly</li>
+                    <li>Check your inbox and spam folder</li>
+                    <li>The code expires in 2 minutes for security</li>
+                    <li>Enter the code to create a new secure password</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 p-4 bg-amber-50 rounded-lg border border-amber-200">
+              <div className="flex items-start space-x-2">
+                <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-amber-800">
+                  <p className="font-medium mb-1">Password Requirements:</p>
+                  <p>Your new password must be 6-10 characters with at least one uppercase letter, number, and special character.</p>
+                </div>
               </div>
             </div>
           </CardContent>
