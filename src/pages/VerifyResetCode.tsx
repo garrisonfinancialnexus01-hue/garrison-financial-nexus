@@ -35,6 +35,11 @@ const VerifyResetCode = () => {
       return () => clearTimeout(timer);
     } else {
       setCanResend(true);
+      toast({
+        title: "Code Expired",
+        description: "The verification code has expired. Please request a new one.",
+        variant: "destructive",
+      });
     }
   }, [timeLeft]);
 
@@ -71,8 +76,8 @@ const VerifyResetCode = () => {
       
       if (isValidCode) {
         toast({
-          title: "Code Verified!",
-          description: "You can now reset your password.",
+          title: "Code Verified Successfully! ✅",
+          description: "You can now create your new password.",
         });
         navigate('/reset-password', { state: { email, verifiedCode: code } });
       } else {
@@ -85,7 +90,7 @@ const VerifyResetCode = () => {
     } catch (error) {
       console.error('Code verification error:', error);
       toast({
-        title: "Error",
+        title: "Verification Error",
         description: "Failed to verify code. Please try again.",
         variant: "destructive",
       });
@@ -106,20 +111,20 @@ const VerifyResetCode = () => {
         .maybeSingle();
 
       // Send new code
-      const { error } = await supabase.functions.invoke('send-password-reset-code', {
+      const { data, error } = await supabase.functions.invoke('send-password-reset-code', {
         body: {
           email: email,
           name: account?.name || 'User'
         }
       });
 
-      if (error) {
-        throw error;
+      if (error || !data?.success) {
+        throw error || new Error('Failed to send code');
       }
 
       toast({
-        title: "New Code Sent!",
-        description: "A new verification code has been sent to your email.",
+        title: "New Code Sent! ✅",
+        description: "A new verification code has been sent to your email from Garrison Financial Nexus.",
       });
 
       // Reset timer
@@ -155,7 +160,7 @@ const VerifyResetCode = () => {
             </div>
             <CardTitle className="text-2xl text-center">Enter Verification Code</CardTitle>
             <CardDescription className="text-center">
-              We've sent a 6-digit code to {email}
+              We've sent a 6-digit code to {email} from Garrison Financial Nexus
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -219,7 +224,7 @@ const VerifyResetCode = () => {
             {timeLeft <= 0 && (
               <div className="p-4 bg-red-50 rounded-lg border border-red-200">
                 <p className="text-sm text-red-800 text-center">
-                  <strong>Code Expired:</strong> Please request a new verification code to continue.
+                  <strong>Code Expired:</strong> The verification code has expired. Please request a new one to continue.
                 </p>
               </div>
             )}

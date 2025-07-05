@@ -159,9 +159,9 @@ const ResetPassword = () => {
                 Back
               </Link>
             </div>
-            <CardTitle className="text-2xl text-center">Reset Password</CardTitle>
+            <CardTitle className="text-2xl text-center">Create New Password</CardTitle>
             <CardDescription className="text-center">
-              Create a new secure password for {email}
+              Set a new secure password for {email}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -221,7 +221,7 @@ const ResetPassword = () => {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                <Label htmlFor="confirmPassword">Confirm Your Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
@@ -250,6 +250,9 @@ const ResetPassword = () => {
                 {confirmPassword && password !== confirmPassword && (
                   <p className="text-sm text-red-600">Passwords do not match</p>
                 )}
+                {confirmPassword && password === confirmPassword && (
+                  <p className="text-sm text-green-600">Passwords match ✓</p>
+                )}
               </div>
 
               <Button 
@@ -260,10 +263,10 @@ const ResetPassword = () => {
                 {isLoading ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Resetting Password...
+                    Updating Password...
                   </>
                 ) : (
-                  'Reset Password'
+                  'Update Password'
                 )}
               </Button>
             </form>
@@ -271,7 +274,7 @@ const ResetPassword = () => {
             <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
               <div className="text-sm text-green-800">
                 <p className="font-medium mb-1">🔐 Security Note:</p>
-                <p>Your new password will be encrypted and stored securely. You can use it to sign in immediately after reset.</p>
+                <p>Your new password will be securely encrypted and you can use it to sign in immediately after it's updated.</p>
               </div>
             </div>
           </CardContent>
