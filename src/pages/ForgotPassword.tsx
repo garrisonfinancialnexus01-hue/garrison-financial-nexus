@@ -46,7 +46,7 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      console.log('Checking account for email:', trimmedEmail);
+      console.log('Starting password reset process for email:', trimmedEmail);
       
       // Check if account exists
       const { data: account, error: fetchError } = await supabase
@@ -56,16 +56,17 @@ const ForgotPassword = () => {
         .maybeSingle();
 
       if (fetchError) {
-        console.error('Database error:', fetchError);
+        console.error('Database error when checking account:', fetchError);
         toast({
           title: "System Error",
-          description: "Unable to verify email address. Please try again.",
+          description: "Unable to verify email address. Please try again later.",
           variant: "destructive",
         });
         return;
       }
 
       if (!account) {
+        console.log('No account found for email:', trimmedEmail);
         toast({
           title: "Email Not Found",
           description: "No account found with this email address. Please check your email or sign up for a new account.",
@@ -74,56 +75,61 @@ const ForgotPassword = () => {
         return;
       }
 
-      console.log('Account found, sending reset code...');
+      console.log('Account found, sending reset code for:', account.name);
 
-      // Send password reset code with enhanced error handling
-      const { data, error: emailError } = await supabase.functions.invoke('send-password-reset-code', {
+      // Send password reset code with comprehensive error handling
+      const { data, error: functionError } = await supabase.functions.invoke('send-password-reset-code', {
         body: {
           email: trimmedEmail,
           name: account.name || 'User'
         }
       });
 
-      console.log('Function response:', data);
+      console.log('Edge function response:', { data, error: functionError });
 
-      if (emailError) {
-        console.error('Function invocation error:', emailError);
+      // Handle function invocation errors
+      if (functionError) {
+        console.error('Edge function invocation error:', functionError);
         toast({
-          title: "Failed to Send Code",
-          description: "Unable to send verification code. Please check your email address and try again.",
+          title: "Service Error",
+          description: "Email service is temporarily unavailable. Please try again in a few minutes.",
           variant: "destructive",
         });
         return;
       }
 
-      if (!data?.success) {
-        console.error('Function returned error:', data);
+      // Handle function response errors
+      if (!data || data.error || !data.success) {
+        console.error('Edge function returned error:', data);
+        const errorMessage = data?.error || data?.message || "Unknown error occurred";
         toast({
           title: "Email Delivery Failed",
-          description: data?.error || "Failed to send verification code. Please try again.",
+          description: `Failed to send verification code: ${errorMessage}`,
           variant: "destructive",
         });
         return;
       }
 
+      console.log('Password reset email sent successfully:', data);
+      
       toast({
         title: "Code Sent Successfully! ✅",
-        description: "A 6-digit verification code has been sent to your email. Please check your inbox (and spam folder).",
+        description: "A 6-digit verification code has been sent to your email. Please check your inbox and spam folder.",
       });
 
       // Navigate to code verification page
       navigate('/verify-reset-code', { 
         state: { 
           email: trimmedEmail,
-          timestamp: Date.now() // For debugging timing issues
+          timestamp: Date.now()
         } 
       });
 
     } catch (error) {
-      console.error('Unexpected error in handleSendCode:', error);
+      console.error('Unexpected error in password reset:', error);
       toast({
         title: "System Error",
-        description: "An unexpected error occurred. Please try again in a moment.",
+        description: "An unexpected error occurred. Please try again or contact support if the problem persists.",
         variant: "destructive",
       });
     } finally {
