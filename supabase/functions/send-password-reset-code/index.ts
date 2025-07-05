@@ -32,19 +32,36 @@ const handler = async (req: Request): Promise<Response> => {
     // Check if Resend API key is available
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) {
-      console.error('RESEND_API_KEY environment variable is not set');
+      console.error('CRITICAL: RESEND_API_KEY environment variable is not set');
       return new Response(JSON.stringify({ 
-        error: 'Email service configuration error',
+        error: 'Email service configuration missing',
         success: false,
-        message: 'Email service is not properly configured'
+        message: 'Email service is not configured. Please contact support.',
+        errorCode: 'MISSING_API_KEY'
       }), {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    const resend = new Resend(resendApiKey);
-    const requestBody = await req.json();
+    console.log('Resend API key found, length:', resendApiKey.length);
+
+    // Validate request body
+    let requestBody;
+    try {
+      requestBody = await req.json();
+    } catch (parseError) {
+      console.error('Failed to parse request body:', parseError);
+      return new Response(JSON.stringify({ 
+        error: 'Invalid request format',
+        success: false,
+        message: 'Request data is malformed'
+      }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
     console.log('Request body received:', { email: requestBody.email, name: requestBody.name });
 
     const { email, name }: PasswordResetRequest = requestBody;
@@ -54,7 +71,8 @@ const handler = async (req: Request): Promise<Response> => {
       console.error('Missing required fields:', { email: !!email, name: !!name });
       return new Response(JSON.stringify({ 
         error: 'Missing required fields (email or name)',
-        success: false 
+        success: false,
+        errorCode: 'MISSING_FIELDS'
       }), {
         status: 400,
         headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -67,9 +85,28 @@ const handler = async (req: Request): Promise<Response> => {
       console.error('Invalid email format:', email);
       return new Response(JSON.stringify({ 
         error: 'Invalid email format',
-        success: false 
+        success: false,
+        errorCode: 'INVALID_EMAIL'
       }), {
         status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    // Initialize Resend with enhanced error handling
+    let resend;
+    try {
+      resend = new Resend(resendApiKey);
+      console.log('Resend client initialized successfully');
+    } catch (resendInitError) {
+      console.error('Failed to initialize Resend client:', resendInitError);
+      return new Response(JSON.stringify({ 
+        error: 'Email service initialization failed',
+        success: false,
+        message: 'Unable to connect to email service',
+        errorCode: 'RESEND_INIT_ERROR'
+      }), {
+        status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
@@ -80,6 +117,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email with comprehensive error handling
     try {
+      console.log('Attempting to send email via Resend...');
+      
       const emailResponse = await resend.emails.send({
         from: "Garrison Financial Nexus <onboarding@resend.dev>",
         to: [email],
@@ -140,19 +179,43 @@ const handler = async (req: Request): Promise<Response> => {
         `,
       });
 
-      console.log("Email send attempt completed:", { 
-        success: !emailResponse.error, 
+      console.log("Email send response received:", { 
+        hasError: !!emailResponse.error, 
         emailId: emailResponse.data?.id,
-        error: emailResponse.error 
+        errorType: emailResponse.error?.name || 'none'
       });
 
       if (emailResponse.error) {
-        console.error("Resend API error details:", emailResponse.error);
+        console.error("Resend API error details:", {
+          name: emailResponse.error.name,
+          message: emailResponse.error.message,
+          stack: emailResponse.error.stack
+        });
+
+        // Provide specific error messages based on error type
+        let userMessage = 'Failed to send verification code';
+        let errorCode = 'EMAIL_SEND_ERROR';
+
+        if (emailResponse.error.message?.includes('domain')) {
+          userMessage = 'Email domain not configured. Please contact support.';
+          errorCode = 'DOMAIN_NOT_VERIFIED';
+        } else if (emailResponse.error.message?.includes('rate')) {
+          userMessage = 'Email rate limit exceeded. Please try again in a few minutes.';
+          errorCode = 'RATE_LIMIT';
+        } else if (emailResponse.error.message?.includes('authentication')) {
+          userMessage = 'Email service authentication failed. Please contact support.';
+          errorCode = 'AUTH_ERROR';
+        }
+
         return new Response(JSON.stringify({ 
           error: 'Email delivery failed',
           success: false,
-          message: `Failed to send email: ${emailResponse.error.message || 'Unknown email service error'}`,
-          details: emailResponse.error
+          message: userMessage,
+          errorCode: errorCode,
+          details: {
+            type: emailResponse.error.name,
+            message: emailResponse.error.message
+          }
         }), {
           status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -164,7 +227,8 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response(JSON.stringify({ 
         success: true, 
         emailId: emailResponse.data?.id,
-        message: 'Verification code sent successfully'
+        message: 'Verification code sent successfully',
+        code: verificationCode // Include code for verification (in production, store in database)
       }), {
         status: 200,
         headers: {
@@ -174,12 +238,34 @@ const handler = async (req: Request): Promise<Response> => {
       });
 
     } catch (emailError: any) {
-      console.error("Email sending error:", emailError);
+      console.error("Email sending error:", {
+        name: emailError.name,
+        message: emailError.message,
+        stack: emailError.stack,
+        cause: emailError.cause
+      });
+
+      // Determine if this is a network issue or API issue
+      let userMessage = 'Email service is temporarily unavailable. Please try again in a few minutes.';
+      let errorCode = 'NETWORK_ERROR';
+
+      if (emailError.message?.includes('fetch')) {
+        userMessage = 'Unable to connect to email service. Please check your internet connection.';
+        errorCode = 'CONNECTION_ERROR';
+      } else if (emailError.message?.includes('timeout')) {
+        userMessage = 'Email service request timed out. Please try again.';
+        errorCode = 'TIMEOUT_ERROR';
+      }
+
       return new Response(JSON.stringify({ 
         error: 'Email service error',
         success: false,
-        message: `Email service failed: ${emailError.message || 'Unknown error'}`,
-        details: emailError
+        message: userMessage,
+        errorCode: errorCode,
+        details: {
+          type: emailError.name,
+          message: emailError.message
+        }
       }), {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -187,15 +273,22 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
   } catch (error: any) {
-    console.error("Critical error in send-password-reset-code function:", error);
-    console.error("Error stack trace:", error.stack);
+    console.error("Critical error in send-password-reset-code function:", {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
     
     return new Response(
       JSON.stringify({ 
         error: 'Internal server error',
         success: false,
-        message: 'A system error occurred while processing your request',
-        details: error.message
+        message: 'A system error occurred while processing your request. Please contact support.',
+        errorCode: 'INTERNAL_ERROR',
+        details: {
+          type: error.name,
+          message: error.message
+        }
       }),
       {
         status: 500,
