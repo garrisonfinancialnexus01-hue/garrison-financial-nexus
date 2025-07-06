@@ -46,14 +46,18 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      console.log('Starting password reset process for email:', trimmedEmail);
+      console.log('=== FRONTEND: Starting password reset process ===');
+      console.log('Email:', trimmedEmail);
       
       // Check if account exists
+      console.log('Checking if account exists...');
       const { data: account, error: fetchError } = await supabase
         .from('client_accounts')
         .select('email, name')
         .eq('email', trimmedEmail)
         .maybeSingle();
+
+      console.log('Account lookup result:', { account, error: fetchError });
 
       if (fetchError) {
         console.error('Database error when checking account:', fetchError);
@@ -75,9 +79,14 @@ const ForgotPassword = () => {
         return;
       }
 
-      console.log('Account found, sending reset code for:', account.name);
+      console.log('Account found:', account.name);
 
-      // Send password reset code
+      // Send password reset code with detailed logging
+      console.log('Calling edge function with data:', {
+        email: trimmedEmail,
+        name: account.name || 'User'
+      });
+
       const { data, error: functionError } = await supabase.functions.invoke('send-password-reset-code', {
         body: {
           email: trimmedEmail,
@@ -85,23 +94,39 @@ const ForgotPassword = () => {
         }
       });
 
-      console.log('Edge function response:', { data, error: functionError });
+      console.log('Edge function response received:', {
+        hasData: !!data,
+        hasError: !!functionError,
+        data: data,
+        error: functionError
+      });
 
       if (functionError) {
-        console.error('Function invocation error:', functionError);
+        console.error('Supabase function invocation error:', functionError);
         toast({
-          title: "Failed to Send Code",
-          description: "Unable to send verification code. Please try again.",
+          title: "Service Error",
+          description: `Failed to call email service: ${functionError.message}`,
           variant: "destructive",
         });
         return;
       }
 
-      if (!data || !data.success) {
-        console.error('Function returned error:', data);
+      if (!data) {
+        console.error('No data returned from edge function');
+        toast({
+          title: "Service Error",
+          description: "Email service returned no response. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!data.success) {
+        console.error('Edge function returned failure:', data);
+        const errorMessage = data.message || data.error || 'Unknown error occurred';
         toast({
           title: "Failed to Send Code",
-          description: data?.message || "Unable to send verification code. Please try again.",
+          description: `${errorMessage} (Code: ${data.errorCode || 'UNKNOWN'})`,
           variant: "destructive",
         });
         return;
@@ -109,10 +134,11 @@ const ForgotPassword = () => {
 
       // Store the verification code locally for validation
       if (data.code) {
+        console.log('Storing verification code locally');
         storeVerificationCode(trimmedEmail, data.code);
       }
 
-      console.log('Password reset email sent successfully');
+      console.log('SUCCESS: Password reset email sent');
       
       toast({
         title: "Code Sent Successfully! ✅",
@@ -131,7 +157,7 @@ const ForgotPassword = () => {
       console.error('Unexpected error in password reset:', error);
       toast({
         title: "System Error",
-        description: "An unexpected error occurred. Please try again.",
+        description: `An unexpected error occurred: ${error.message}`,
         variant: "destructive",
       });
     } finally {
