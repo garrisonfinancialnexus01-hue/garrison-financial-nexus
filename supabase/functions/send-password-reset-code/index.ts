@@ -26,13 +26,15 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  console.log('=== PASSWORD RESET FUNCTION STARTED ===');
+  
   try {
-    console.log('Password reset function called');
-    
     // Check if Resend API key is available
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    console.log('Resend API key check:', resendApiKey ? 'FOUND' : 'MISSING');
+    
     if (!resendApiKey) {
-      console.error('CRITICAL: RESEND_API_KEY environment variable is not set');
+      console.error('CRITICAL ERROR: RESEND_API_KEY environment variable is not set');
       return new Response(JSON.stringify({ 
         error: 'Email service configuration missing',
         success: false,
@@ -44,12 +46,14 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    console.log('Resend API key found');
-
-    // Validate request body
+    // Parse request body
     let requestBody;
     try {
       requestBody = await req.json();
+      console.log('Request body parsed successfully:', { 
+        hasEmail: !!requestBody.email, 
+        hasName: !!requestBody.name 
+      });
     } catch (parseError) {
       console.error('Failed to parse request body:', parseError);
       return new Response(JSON.stringify({ 
@@ -61,8 +65,6 @@ const handler = async (req: Request): Promise<Response> => {
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
-
-    console.log('Request body received:', { email: requestBody.email, name: requestBody.name });
 
     const { email, name }: PasswordResetRequest = requestBody;
 
@@ -93,7 +95,9 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Initialize Resend
+    console.log('Validation passed for email:', email);
+
+    // Initialize Resend with better error handling
     let resend;
     try {
       resend = new Resend(resendApiKey);
@@ -113,14 +117,14 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Generate verification code
     const verificationCode = generateVerificationCode();
-    console.log('Generated verification code for', email);
+    console.log('Generated verification code length:', verificationCode.length);
 
-    // Send email with your company branding
+    // Attempt to send email
+    console.log('Attempting to send email via Resend API...');
+    
     try {
-      console.log('Attempting to send email via Resend...');
-      
       const emailResponse = await resend.emails.send({
-        from: "Garrison Financial Nexus <garrisonfinancialnexus01@gmail.com>",
+        from: "Garrison Financial Nexus <no-reply@resend.dev>",
         to: [email],
         subject: "🔐 Password Reset Code - Garrison Financial Nexus",
         html: `
@@ -184,33 +188,37 @@ const handler = async (req: Request): Promise<Response> => {
         `,
       });
 
-      console.log("Email send response received:", { 
-        hasError: !!emailResponse.error, 
+      console.log("Email send attempt completed");
+      console.log("Email response:", {
+        hasData: !!emailResponse.data,
+        hasError: !!emailResponse.error,
         emailId: emailResponse.data?.id,
-        errorType: emailResponse.error?.name || 'none'
+        errorMessage: emailResponse.error?.message
       });
 
       if (emailResponse.error) {
-        console.error("Resend API error details:", emailResponse.error);
+        console.error("Resend API error:", emailResponse.error);
         
         return new Response(JSON.stringify({ 
           error: 'Email delivery failed',
           success: false,
           message: 'Failed to send verification code. Please try again.',
-          errorCode: 'EMAIL_SEND_ERROR'
+          errorCode: 'EMAIL_SEND_ERROR',
+          details: emailResponse.error.message
         }), {
           status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         });
       }
 
-      console.log("Password reset email sent successfully:", emailResponse.data?.id);
+      console.log("SUCCESS: Password reset email sent successfully");
+      console.log("Email ID:", emailResponse.data?.id);
 
       return new Response(JSON.stringify({ 
         success: true, 
         emailId: emailResponse.data?.id,
         message: 'Verification code sent successfully from Garrison Financial Nexus',
-        code: verificationCode // Include code for verification
+        code: verificationCode
       }), {
         status: 200,
         headers: {
@@ -219,29 +227,31 @@ const handler = async (req: Request): Promise<Response> => {
         },
       });
 
-    } catch (emailError: any) {
-      console.error("Email sending error:", emailError);
+    } catch (emailSendError: any) {
+      console.error("Email sending network error:", emailSendError);
       
       return new Response(JSON.stringify({ 
         error: 'Email service error',
         success: false,
         message: 'Email service is temporarily unavailable. Please try again in a few minutes.',
-        errorCode: 'NETWORK_ERROR'
+        errorCode: 'NETWORK_ERROR',
+        details: emailSendError.message
       }), {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-  } catch (error: any) {
-    console.error("Critical error in send-password-reset-code function:", error);
+  } catch (criticalError: any) {
+    console.error("CRITICAL ERROR in send-password-reset-code function:", criticalError);
     
     return new Response(
       JSON.stringify({ 
         error: 'Internal server error',
         success: false,
         message: 'A system error occurred. Please contact support.',
-        errorCode: 'INTERNAL_ERROR'
+        errorCode: 'INTERNAL_ERROR',
+        details: criticalError.message
       }),
       {
         status: 500,

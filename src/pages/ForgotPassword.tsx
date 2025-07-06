@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -76,7 +75,7 @@ const ForgotPassword = () => {
 
       console.log('Account found, sending reset code for:', account.name);
 
-      // Send password reset code
+      // Send password reset code with detailed error handling
       const { data, error: functionError } = await supabase.functions.invoke('send-password-reset-code', {
         body: {
           email: trimmedEmail,
@@ -86,11 +85,43 @@ const ForgotPassword = () => {
 
       console.log('Edge function response:', { data, error: functionError });
 
-      if (functionError || !data || !data.success) {
-        console.error('Failed to send reset code:', functionError || data);
+      // Handle function errors
+      if (functionError) {
+        console.error('Function invocation error:', functionError);
+        
+        let errorMessage = "Unable to send verification code. Please try again.";
+        
+        if (functionError.message?.includes('network')) {
+          errorMessage = "Network error. Please check your connection and try again.";
+        } else if (functionError.message?.includes('timeout')) {
+          errorMessage = "Request timed out. Please try again.";
+        }
+        
         toast({
           title: "Failed to Send Code",
-          description: "Unable to send verification code. Please try again or contact support.",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Handle response data errors
+      if (!data || !data.success) {
+        console.error('Function returned error:', data);
+        
+        let errorMessage = "Unable to send verification code. Please try again.";
+        
+        if (data?.errorCode === 'MISSING_API_KEY') {
+          errorMessage = "Email service is not configured. Please contact support.";
+        } else if (data?.errorCode === 'EMAIL_SEND_ERROR') {
+          errorMessage = "Failed to send email. Please try again or contact support.";
+        } else if (data?.errorCode === 'NETWORK_ERROR') {
+          errorMessage = "Email service is temporarily unavailable. Please try again in a few minutes.";
+        }
+        
+        toast({
+          title: "Failed to Send Code",
+          description: errorMessage,
           variant: "destructive",
         });
         return;
