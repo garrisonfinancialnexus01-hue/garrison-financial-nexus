@@ -119,12 +119,15 @@ const handler = async (req: Request): Promise<Response> => {
     const verificationCode = generateVerificationCode();
     console.log('Generated verification code length:', verificationCode.length);
 
-    // Attempt to send email
-    console.log('Attempting to send email via Resend API...');
+    // Store code with timestamp (in a real app, you'd store this in a database with expiry)
+    const timestamp = Date.now();
+    
+    // Attempt to send email from company address
+    console.log('Attempting to send email via Resend API from company email...');
     
     try {
       const emailResponse = await resend.emails.send({
-        from: "Garrison Financial Nexus <no-reply@resend.dev>",
+        from: "Garrison Financial Nexus <garrisonfinancialnexus01@gmail.com>",
         to: [email],
         subject: "🔐 Password Reset Code - Garrison Financial Nexus",
         html: `
@@ -218,7 +221,8 @@ const handler = async (req: Request): Promise<Response> => {
         success: true, 
         emailId: emailResponse.data?.id,
         message: 'Verification code sent successfully from Garrison Financial Nexus',
-        code: verificationCode
+        code: verificationCode,
+        timestamp: timestamp
       }), {
         status: 200,
         headers: {

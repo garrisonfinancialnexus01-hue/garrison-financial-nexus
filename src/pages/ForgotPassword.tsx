@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { ArrowLeft, Mail, AlertCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { storeVerificationCode } from '@/utils/passwordResetCodes';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -75,7 +77,7 @@ const ForgotPassword = () => {
 
       console.log('Account found, sending reset code for:', account.name);
 
-      // Send password reset code with detailed error handling
+      // Send password reset code
       const { data, error: functionError } = await supabase.functions.invoke('send-password-reset-code', {
         body: {
           email: trimmedEmail,
@@ -85,46 +87,29 @@ const ForgotPassword = () => {
 
       console.log('Edge function response:', { data, error: functionError });
 
-      // Handle function errors
       if (functionError) {
         console.error('Function invocation error:', functionError);
-        
-        let errorMessage = "Unable to send verification code. Please try again.";
-        
-        if (functionError.message?.includes('network')) {
-          errorMessage = "Network error. Please check your connection and try again.";
-        } else if (functionError.message?.includes('timeout')) {
-          errorMessage = "Request timed out. Please try again.";
-        }
-        
         toast({
           title: "Failed to Send Code",
-          description: errorMessage,
+          description: "Unable to send verification code. Please try again.",
           variant: "destructive",
         });
         return;
       }
 
-      // Handle response data errors
       if (!data || !data.success) {
         console.error('Function returned error:', data);
-        
-        let errorMessage = "Unable to send verification code. Please try again.";
-        
-        if (data?.errorCode === 'MISSING_API_KEY') {
-          errorMessage = "Email service is not configured. Please contact support.";
-        } else if (data?.errorCode === 'EMAIL_SEND_ERROR') {
-          errorMessage = "Failed to send email. Please try again or contact support.";
-        } else if (data?.errorCode === 'NETWORK_ERROR') {
-          errorMessage = "Email service is temporarily unavailable. Please try again in a few minutes.";
-        }
-        
         toast({
           title: "Failed to Send Code",
-          description: errorMessage,
+          description: data?.message || "Unable to send verification code. Please try again.",
           variant: "destructive",
         });
         return;
+      }
+
+      // Store the verification code locally for validation
+      if (data.code) {
+        storeVerificationCode(trimmedEmail, data.code);
       }
 
       console.log('Password reset email sent successfully');
@@ -134,7 +119,7 @@ const ForgotPassword = () => {
         description: "A 6-digit verification code has been sent to your email from Garrison Financial Nexus.",
       });
 
-      // Navigate to code verification page with 3-minute timer
+      // Navigate to code verification page
       navigate('/verify-reset-code', { 
         state: { 
           email: trimmedEmail,
@@ -208,7 +193,7 @@ const ForgotPassword = () => {
                   <ul className="list-disc list-inside space-y-1">
                     <li>We'll send a 6-digit code to your email from Garrison Financial Nexus</li>
                     <li>The code will arrive instantly - check your inbox and spam folder</li>
-                    <li>You'll have 3 minutes to enter the code before it expires</li>
+                    <li>You'll have exactly 3 minutes to enter the code before it expires</li>
                     <li>After verification, you can create a new secure password</li>
                   </ul>
                 </div>

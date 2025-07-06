@@ -27,6 +27,7 @@ const PasswordResetSuccess = () => {
                   <li>Your new password is now active and secured</li>
                   <li>You can immediately sign in with your new password</li>
                   <li>Your account security has been updated</li>
+                  <li>The system now recognizes your new password</li>
                 </ul>
               </div>
             </div>
@@ -49,8 +50,9 @@ const PasswordResetSuccess = () => {
 
             <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
               <div className="text-sm text-blue-800">
-                <p className="font-medium mb-1">💡 Security Tips:</p>
+                <p className="font-medium mb-1">💡 Next Steps:</p>
                 <ul className="list-disc list-inside space-y-1">
+                  <li>Use your new password to sign in to your account</li>
                   <li>Keep your password secure and don't share it</li>
                   <li>Consider saving it in a secure password manager</li>
                   <li>Contact support if you need any assistance</li>

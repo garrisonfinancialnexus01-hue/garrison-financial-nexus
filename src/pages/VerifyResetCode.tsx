@@ -6,13 +6,13 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { ArrowLeft, Timer, RefreshCw } from 'lucide-react';
-import { verifyCode } from '@/utils/verificationCodes';
+import { verifyPasswordResetCode, storeVerificationCode } from '@/utils/passwordResetCodes';
 import { supabase } from '@/integrations/supabase/client';
 
 const VerifyResetCode = () => {
   const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(180); // 3 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(180); // Exactly 3 minutes in seconds
   const [canResend, setCanResend] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,7 +26,7 @@ const VerifyResetCode = () => {
     }
   }, [email, navigate]);
 
-  // Countdown timer for 3 minutes
+  // Exact 3-minute countdown timer
   useEffect(() => {
     if (timeLeft > 0) {
       const timer = setTimeout(() => {
@@ -36,8 +36,8 @@ const VerifyResetCode = () => {
     } else {
       setCanResend(true);
       toast({
-        title: "Code Expired",
-        description: "The verification code has expired. Please request a new one.",
+        title: "Code Expired ⏰",
+        description: "The verification code has expired after 3 minutes. Please request a new one.",
         variant: "destructive",
       });
     }
@@ -53,7 +53,7 @@ const VerifyResetCode = () => {
     if (code.length !== 6) {
       toast({
         title: "Invalid Code",
-        description: "Please enter a 6-digit verification code.",
+        description: "Please enter a complete 6-digit verification code.",
         variant: "destructive",
       });
       return;
@@ -71,19 +71,23 @@ const VerifyResetCode = () => {
     setIsLoading(true);
 
     try {
+      console.log('Verifying code:', code, 'for email:', email);
+      
       // Verify the code using our verification codes utility
-      const isValidCode = verifyCode(code);
+      const isValidCode = verifyPasswordResetCode(email, code);
       
       if (isValidCode) {
+        console.log('Code verified successfully');
         toast({
           title: "Code Verified Successfully! ✅",
           description: "You can now create your new password.",
         });
         navigate('/reset-password', { state: { email, verifiedCode: code } });
       } else {
+        console.log('Invalid or expired code');
         toast({
           title: "Invalid Code",
-          description: "The verification code is incorrect. Please try again.",
+          description: "The verification code is incorrect or has expired. Please try again.",
           variant: "destructive",
         });
       }
@@ -103,6 +107,8 @@ const VerifyResetCode = () => {
     setIsLoading(true);
     
     try {
+      console.log('Resending code for email:', email);
+      
       // Get account info
       const { data: account } = await supabase
         .from('client_accounts')
@@ -122,12 +128,17 @@ const VerifyResetCode = () => {
         throw error || new Error('Failed to send code');
       }
 
+      // Store the new verification code
+      if (data.code) {
+        storeVerificationCode(email, data.code);
+      }
+
       toast({
         title: "New Code Sent! ✅",
         description: "A new verification code has been sent to your email from Garrison Financial Nexus.",
       });
 
-      // Reset timer to 3 minutes
+      // Reset timer to exactly 3 minutes
       setTimeLeft(180);
       setCanResend(false);
       setCode('');
@@ -164,16 +175,16 @@ const VerifyResetCode = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Timer Display - 3 minutes countdown */}
+            {/* Exact 3-minute countdown timer */}
             <div className="flex items-center justify-center space-x-2 p-4 bg-blue-50 rounded-lg border border-blue-200">
               <Timer className={`h-5 w-5 ${timeLeft <= 60 ? 'text-red-600' : 'text-blue-600'}`} />
-              <span className={`font-mono text-lg font-bold ${timeLeft <= 60 ? 'text-red-600' : 'text-blue-600'}`}>
+              <span className={`font-mono text-lg font-bold ${timeLeft <= 60 ? 'text-red-600' : timeLeft <= 120 ? 'text-amber-600' : 'text-blue-600'}`}>
                 {formatTime(timeLeft)}
               </span>
               <span className="text-sm text-gray-600">remaining</span>
             </div>
 
-            {/* OTP Input */}
+            {/* 6-digit OTP Input */}
             <div className="space-y-4">
               <div className="flex justify-center">
                 <InputOTP
@@ -224,7 +235,7 @@ const VerifyResetCode = () => {
             {timeLeft <= 0 && (
               <div className="p-4 bg-red-50 rounded-lg border border-red-200">
                 <p className="text-sm text-red-800 text-center">
-                  <strong>Code Expired:</strong> The verification code has expired. Please request a new one to continue.
+                  <strong>Code Expired:</strong> The 3-minute verification period has ended. Please request a new code to continue.
                 </p>
               </div>
             )}

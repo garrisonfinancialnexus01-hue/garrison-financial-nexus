@@ -113,7 +113,7 @@ const ResetPassword = () => {
       
       toast({
         title: "Password Reset Successful! ✅",
-        description: "Your password has been updated successfully.",
+        description: "Your password has been updated and you can now sign in with your new password.",
       });
 
       // Navigate to success page
@@ -274,7 +274,7 @@ const ResetPassword = () => {
             <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
               <div className="text-sm text-green-800">
                 <p className="font-medium mb-1">🔐 Security Note:</p>
-                <p>Your new password will be securely encrypted and you can use it to sign in immediately after it's updated.</p>
+                <p>Your new password will be securely saved and you can use it to sign in immediately after it's updated.</p>
               </div>
             </div>
           </CardContent>
