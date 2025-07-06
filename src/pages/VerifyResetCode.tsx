@@ -12,7 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 const VerifyResetCode = () => {
   const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(120); // 2 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(180); // 3 minutes in seconds
   const [canResend, setCanResend] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,7 +26,7 @@ const VerifyResetCode = () => {
     }
   }, [email, navigate]);
 
-  // Countdown timer
+  // Countdown timer for 3 minutes
   useEffect(() => {
     if (timeLeft > 0) {
       const timer = setTimeout(() => {
@@ -127,8 +127,8 @@ const VerifyResetCode = () => {
         description: "A new verification code has been sent to your email from Garrison Financial Nexus.",
       });
 
-      // Reset timer
-      setTimeLeft(120);
+      // Reset timer to 3 minutes
+      setTimeLeft(180);
       setCanResend(false);
       setCode('');
     } catch (error) {
@@ -164,10 +164,10 @@ const VerifyResetCode = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Timer Display */}
+            {/* Timer Display - 3 minutes countdown */}
             <div className="flex items-center justify-center space-x-2 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <Timer className={`h-5 w-5 ${timeLeft <= 30 ? 'text-red-600' : 'text-blue-600'}`} />
-              <span className={`font-mono text-lg font-bold ${timeLeft <= 30 ? 'text-red-600' : 'text-blue-600'}`}>
+              <Timer className={`h-5 w-5 ${timeLeft <= 60 ? 'text-red-600' : 'text-blue-600'}`} />
+              <span className={`font-mono text-lg font-bold ${timeLeft <= 60 ? 'text-red-600' : 'text-blue-600'}`}>
                 {formatTime(timeLeft)}
               </span>
               <span className="text-sm text-gray-600">remaining</span>

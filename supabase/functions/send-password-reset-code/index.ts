@@ -152,7 +152,7 @@ const handler = async (req: Request): Promise<Response> => {
                     <div>
                       <p style="color: #92400e; font-size: 16px; font-weight: 700; margin: 0 0 8px;">Important Security Information:</p>
                       <ul style="color: #92400e; font-size: 14px; margin: 0; padding-left: 15px; line-height: 1.5;">
-                        <li><strong>This code expires in exactly 2 minutes</strong></li>
+                        <li><strong>This code expires in exactly 3 minutes</strong></li>
                         <li>Never share this code with anyone</li>
                         <li>If you didn't request this reset, please ignore this email</li>
                         <li>Contact us immediately if you suspect unauthorized access</li>

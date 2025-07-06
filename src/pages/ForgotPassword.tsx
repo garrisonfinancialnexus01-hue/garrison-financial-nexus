@@ -103,7 +103,7 @@ const ForgotPassword = () => {
         description: "A 6-digit verification code has been sent to your email from Garrison Financial Nexus.",
       });
 
-      // Navigate to code verification page
+      // Navigate to code verification page with 3-minute timer
       navigate('/verify-reset-code', { 
         state: { 
           email: trimmedEmail,
@@ -177,7 +177,7 @@ const ForgotPassword = () => {
                   <ul className="list-disc list-inside space-y-1">
                     <li>We'll send a 6-digit code to your email from Garrison Financial Nexus</li>
                     <li>The code will arrive instantly - check your inbox and spam folder</li>
-                    <li>You'll have 2 minutes to enter the code before it expires</li>
+                    <li>You'll have 3 minutes to enter the code before it expires</li>
                     <li>After verification, you can create a new secure password</li>
                   </ul>
                 </div>
