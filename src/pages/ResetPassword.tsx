@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { ArrowLeft, Eye, EyeOff, Lock, CheckCircle, XCircle, Shield } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, Lock, CheckCircle, XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 const ResetPassword = () => {
@@ -32,7 +32,7 @@ const ResetPassword = () => {
     if (!email || !verifiedCode) {
       toast({
         title: "Access Denied",
-        description: "Please complete the verification process first.",
+        description: "Please start the password reset process from the beginning.",
         variant: "destructive",
       });
       navigate('/forgot-password');
@@ -113,7 +113,7 @@ const ResetPassword = () => {
       
       toast({
         title: "Password Reset Successful! ✅",
-        description: "Your password has been updated successfully.",
+        description: "Your password has been updated and you can now sign in with your new password.",
       });
 
       // Navigate to success page
@@ -138,9 +138,9 @@ const ResetPassword = () => {
   const ValidationItem = ({ isValid, text }: { isValid: boolean; text: string }) => (
     <div className="flex items-center space-x-2">
       {isValid ? (
-        <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+        <CheckCircle className="h-4 w-4 text-green-600" />
       ) : (
-        <XCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
+        <XCircle className="h-4 w-4 text-red-500" />
       )}
       <span className={`text-sm ${isValid ? 'text-green-700' : 'text-red-600'}`}>
         {text}
@@ -149,31 +149,25 @@ const ResetPassword = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <Card className="shadow-xl border-0">
-          <CardHeader className="space-y-1 pb-6">
+        <Card>
+          <CardHeader className="space-y-1">
             <div className="flex items-center mb-4">
-              <Link to="/verify-reset-code" state={{ email }} className="flex items-center text-blue-600 hover:text-blue-800 transition-colors">
+              <Link to="/verify-reset-code" state={{ email }} className="flex items-center text-garrison-green hover:text-garrison-black">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back
               </Link>
             </div>
-            <div className="text-center">
-              <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
-                <Shield className="h-6 w-6 text-blue-600" />
-              </div>
-              <CardTitle className="text-2xl font-bold text-gray-900">Create New Password</CardTitle>
-              <CardDescription className="text-gray-600 mt-2">
-                Set a new secure password for your account
-              </CardDescription>
-            </div>
+            <CardTitle className="text-2xl text-center">Create New Password</CardTitle>
+            <CardDescription className="text-center">
+              Set a new secure password for {email}
+            </CardDescription>
           </CardHeader>
-          
-          <CardContent className="space-y-6">
+          <CardContent>
             <form onSubmit={handleResetPassword} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium text-gray-700">New Password</Label>
+                <Label htmlFor="password">New Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
@@ -182,14 +176,14 @@ const ResetPassword = () => {
                     placeholder="Enter your new password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 pr-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    className="pl-10 pr-10"
                     required
                     disabled={isLoading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
                     disabled={isLoading}
                   >
                     {showPassword ? (
@@ -203,9 +197,9 @@ const ResetPassword = () => {
 
               {/* Real-time password validation */}
               {password && (
-                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <p className="text-sm font-medium text-gray-700 mb-3">Password Requirements:</p>
-                  <div className="space-y-2">
+                <div className="p-3 bg-gray-50 rounded-lg border">
+                  <p className="text-sm font-medium text-gray-700 mb-2">Password Requirements:</p>
+                  <div className="space-y-1">
                     <ValidationItem 
                       isValid={passwordValidation.length} 
                       text="6-10 characters in length" 
@@ -227,7 +221,7 @@ const ResetPassword = () => {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">Confirm Your Password</Label>
+                <Label htmlFor="confirmPassword">Confirm Your Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
@@ -236,14 +230,14 @@ const ResetPassword = () => {
                     placeholder="Confirm your new password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="pl-10 pr-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    className="pl-10 pr-10"
                     required
                     disabled={isLoading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
                     disabled={isLoading}
                   >
                     {showConfirmPassword ? (
@@ -254,22 +248,16 @@ const ResetPassword = () => {
                   </button>
                 </div>
                 {confirmPassword && password !== confirmPassword && (
-                  <p className="text-sm text-red-600 flex items-center">
-                    <XCircle className="h-3 w-3 mr-1" />
-                    Passwords do not match
-                  </p>
+                  <p className="text-sm text-red-600">Passwords do not match</p>
                 )}
-                {confirmPassword && password === confirmPassword && password && (
-                  <p className="text-sm text-green-600 flex items-center">
-                    <CheckCircle className="h-3 w-3 mr-1" />
-                    Passwords match
-                  </p>
+                {confirmPassword && password === confirmPassword && (
+                  <p className="text-sm text-green-600">Passwords match ✓</p>
                 )}
               </div>
 
               <Button 
                 type="submit" 
-                className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium" 
+                className="w-full" 
                 disabled={isLoading || !isPasswordValid() || password !== confirmPassword}
               >
                 {isLoading ? (
@@ -283,13 +271,10 @@ const ResetPassword = () => {
               </Button>
             </form>
 
-            <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+            <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
               <div className="text-sm text-green-800">
-                <p className="font-medium mb-1 flex items-center">
-                  <Shield className="h-4 w-4 mr-2" />
-                  Security Note:
-                </p>
-                <p>Your new password will be active immediately and you can sign in with it right away.</p>
+                <p className="font-medium mb-1">🔐 Security Note:</p>
+                <p>Your new password will be securely saved and you can use it to sign in immediately after it's updated.</p>
               </div>
             </div>
           </CardContent>

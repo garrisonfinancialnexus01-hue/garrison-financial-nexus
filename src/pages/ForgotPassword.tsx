@@ -46,77 +46,129 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      console.log('Starting password reset for:', trimmedEmail);
+      console.log('=== FRONTEND: Starting password reset process ===');
+      console.log('Email:', trimmedEmail);
       
       // Check if account exists
+      console.log('Checking if account exists...');
       const { data: account, error: fetchError } = await supabase
         .from('client_accounts')
         .select('email, name')
         .eq('email', trimmedEmail)
         .maybeSingle();
 
+      console.log('Account lookup result:', { account, error: fetchError });
+
       if (fetchError) {
-        console.error('Database error:', fetchError);
+        console.error('Database error when checking account:', fetchError);
         toast({
           title: "System Error",
-          description: "Unable to verify email address. Please try again.",
+          description: "Unable to verify email address. Please try again later.",
           variant: "destructive",
         });
         return;
       }
 
       if (!account) {
+        console.log('No account found for email:', trimmedEmail);
         toast({
           title: "Email Not Found",
-          description: "No account found with this email address. Please check your email or create a new account.",
+          description: "No account found with this email address. Please check your email or sign up for a new account.",
           variant: "destructive",
         });
         return;
       }
 
-      console.log('Account found, sending reset code...');
+      console.log('Account found:', account.name);
 
-      // Send password reset code
-      const { data, error } = await supabase.functions.invoke('send-password-reset-code', {
-        body: {
-          email: trimmedEmail,
-          name: account.name || 'Valued Client'
-        }
+      // Send password reset code with detailed logging
+      console.log('Calling edge function with data:', {
+        email: trimmedEmail,
+        name: account.name || 'User'
       });
 
-      if (error) {
-        console.error('Function invocation error:', error);
+      // Use the Supabase anon key from the environment
+      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlkc2ppd3pkYmtqaGN3dW5kdWRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczMzgwMzcsImV4cCI6MjA2MjkxNDAzN30.IulnrGc4iddAdWN2_KGwpztJRkNyitz5qPXonxtZNiQ";
+
+      // CRITICAL DEBUG: Let's capture the full response including headers and status
+      const response = await fetch(`https://idsjiiwzdbkjhcwundudp.supabase.co/functions/v1/send-password-reset-code`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({
+          email: trimmedEmail,
+          name: account.name || 'User'
+        })
+      });
+
+      console.log('=== RAW FETCH RESPONSE ===');
+      console.log('Status:', response.status);
+      console.log('Status Text:', response.statusText);
+      console.log('Headers:', Object.fromEntries(response.headers.entries()));
+      
+      const responseText = await response.text();
+      console.log('Raw Response Body:', responseText);
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+        console.log('Parsed Response Data:', data);
+      } catch (parseError) {
+        console.error('Failed to parse response as JSON:', parseError);
+        console.error('Response was:', responseText);
+        
         toast({
           title: "Service Error",
-          description: "Failed to send verification code. Please try again.",
+          description: `Server returned invalid response. Status: ${response.status}. Body: ${responseText.substring(0, 100)}...`,
           variant: "destructive",
         });
         return;
       }
 
-      if (!data?.success) {
-        console.error('Function returned failure:', data);
+      if (!response.ok) {
+        console.error('=== HTTP ERROR RESPONSE ===');
+        console.error('Status:', response.status);
+        console.error('Response:', data);
+        
+        toast({
+          title: "Service Error",
+          description: `Email service failed with status ${response.status}: ${data?.message || data?.error || 'Unknown error'}`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('=== SUCCESS RESPONSE ===');
+      console.log('Response data:', JSON.stringify(data, null, 2));
+
+      if (!data.success) {
+        console.error('Edge function returned failure:', data);
+        const errorMessage = data.message || data.error || 'Unknown error occurred';
         toast({
           title: "Failed to Send Code",
-          description: data?.error || "Unable to send verification code.",
+          description: `${errorMessage} (Code: ${data.errorCode || 'UNKNOWN'})`,
           variant: "destructive",
         });
         return;
       }
 
-      // Store the verification code locally
+      // Store the verification code locally for validation
       if (data.code) {
+        console.log('Storing verification code locally');
         storeVerificationCode(trimmedEmail, data.code);
       }
 
-      console.log('Password reset code sent successfully');
+      console.log('SUCCESS: Password reset email sent');
       
       toast({
         title: "Code Sent Successfully! ✅",
         description: "A 6-digit verification code has been sent to your email from Garrison Financial Nexus.",
       });
 
-      // Navigate to verification page
+      // Navigate to code verification page
       navigate('/verify-reset-code', { 
         state: { 
           email: trimmedEmail,
@@ -124,11 +176,16 @@ const ForgotPassword = () => {
         } 
       });
 
-    } catch (error: any) {
-      console.error('Unexpected error:', error);
+    } catch (error) {
+      console.error('=== UNEXPECTED ERROR IN PASSWORD RESET ===');
+      console.error('Error type:', typeof error);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      console.error('Full error object:', JSON.stringify(error, null, 2));
+      
       toast({
         title: "System Error",
-        description: "An unexpected error occurred. Please try again.",
+        description: `An unexpected error occurred: ${error.message}`,
         variant: "destructive",
       });
     } finally {
@@ -137,27 +194,25 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <Card className="shadow-xl border-0">
-          <CardHeader className="space-y-1 pb-6">
+        <Card>
+          <CardHeader className="space-y-1">
             <div className="flex items-center mb-4">
-              <Link to="/client-auth" className="flex items-center text-blue-600 hover:text-blue-800 transition-colors">
+              <Link to="/client-auth" className="flex items-center text-garrison-green hover:text-garrison-black">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Sign In
               </Link>
             </div>
-            <div className="text-center">
-              <CardTitle className="text-2xl font-bold text-gray-900">Reset Your Password</CardTitle>
-              <CardDescription className="text-gray-600 mt-2">
-                Enter your email address to receive a verification code
-              </CardDescription>
-            </div>
+            <CardTitle className="text-2xl text-center">Reset Your Password</CardTitle>
+            <CardDescription className="text-center">
+              Enter your email address to receive a verification code
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent>
             <form onSubmit={handleSendCode} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email Address</Label>
+                <Label htmlFor="email">Email Address</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
@@ -166,18 +221,13 @@ const ForgotPassword = () => {
                     placeholder="Enter your email address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    className="pl-10"
                     required
                     disabled={isLoading}
                   />
                 </div>
               </div>
-              
-              <Button 
-                type="submit" 
-                className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-medium" 
-                disabled={isLoading}
-              >
+              <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -189,27 +239,27 @@ const ForgotPassword = () => {
               </Button>
             </form>
             
-            <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
               <div className="flex items-start space-x-2">
-                <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                <div className="text-sm text-green-800">
+                <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-blue-800">
                   <p className="font-medium mb-2">What happens next?</p>
-                  <ul className="space-y-1">
-                    <li>• We'll send a 6-digit code to your email from Garrison Financial Nexus</li>
-                    <li>• Check your inbox and spam folder</li>
-                    <li>• You have exactly 3 minutes to enter the code</li>
-                    <li>• After verification, create a new secure password</li>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>We'll send a 6-digit code to your email from Garrison Financial Nexus</li>
+                    <li>The code will arrive instantly - check your inbox and spam folder</li>
+                    <li>You'll have exactly 3 minutes to enter the code before it expires</li>
+                    <li>After verification, you can create a new secure password</li>
                   </ul>
                 </div>
               </div>
             </div>
 
-            <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+            <div className="mt-4 p-4 bg-amber-50 rounded-lg border border-amber-200">
               <div className="flex items-start space-x-2">
                 <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-amber-800">
                   <p className="font-medium mb-1">Password Requirements:</p>
-                  <p>6-10 characters with uppercase letter, number, and special character.</p>
+                  <p>Your new password must be 6-10 characters with at least one uppercase letter, number, and special character.</p>
                 </div>
               </div>
             </div>
