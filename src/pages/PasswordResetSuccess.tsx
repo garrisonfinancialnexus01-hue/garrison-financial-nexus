@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, LogIn } from 'lucide-react';
+import { CheckCircle, LogIn, Home } from 'lucide-react';
 
 const PasswordResetSuccess = () => {
   return (
@@ -16,32 +16,48 @@ const PasswordResetSuccess = () => {
             </div>
             <CardTitle className="text-2xl text-green-600">Password Reset Successful!</CardTitle>
             <CardDescription>
-              Your password has been successfully updated. You can now sign in with your new password.
+              Your password has been successfully updated and is ready to use.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="bg-green-50 rounded-lg p-4 border border-green-200">
               <div className="text-sm text-green-800">
-                <p className="font-medium mb-1">What's Next?</p>
+                <p className="font-medium mb-2">✅ What's completed:</p>
                 <ul className="list-disc list-inside space-y-1">
-                  <li>Your new password is now active</li>
-                  <li>Use it to sign in to your account</li>
-                  <li>Keep your password secure and don't share it</li>
+                  <li>Your new password is now active and secured</li>
+                  <li>You can immediately sign in with your new password</li>
+                  <li>Your account security has been updated</li>
+                  <li>The system now recognizes your new password</li>
                 </ul>
               </div>
             </div>
 
-            <Link to="/client-auth">
-              <Button className="w-full">
-                <LogIn className="h-4 w-4 mr-2" />
-                Sign In to Your Account
-              </Button>
-            </Link>
-
-            <div className="text-center">
-              <Link to="/" className="text-sm text-garrison-green hover:underline">
-                Return to Home
+            <div className="space-y-3">
+              <Link to="/client-auth">
+                <Button className="w-full">
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Sign In to Your Account
+                </Button>
               </Link>
+
+              <Link to="/">
+                <Button variant="outline" className="w-full">
+                  <Home className="h-4 w-4 mr-2" />
+                  Return to Home
+                </Button>
+              </Link>
+            </div>
+
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="text-sm text-blue-800">
+                <p className="font-medium mb-1">💡 Next Steps:</p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Use your new password to sign in to your account</li>
+                  <li>Keep your password secure and don't share it</li>
+                  <li>Consider saving it in a secure password manager</li>
+                  <li>Contact support if you need any assistance</li>
+                </ul>
+              </div>
             </div>
           </CardContent>
         </Card>

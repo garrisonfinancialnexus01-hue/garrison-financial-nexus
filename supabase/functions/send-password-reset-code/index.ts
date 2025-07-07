@@ -2,8 +2,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -15,18 +13,11 @@ interface PasswordResetRequest {
   name: string;
 }
 
-// Predefined verification codes (using the same set for consistency)
-const verificationCodes = [
-  "123456", "234567", "345678", "456789", "567890", 
-  "135790", "246801", "357912", "468023", "579134",
-  "102938", "293847", "384756", "475665", "566574",
-  "657483", "748392", "839201", "920110", "011029",
-  "112233", "223344", "334455", "445566", "556677"
-];
-
-const getRandomVerificationCode = (): string => {
-  const randomIndex = Math.floor(Math.random() * verificationCodes.length);
-  return verificationCodes[randomIndex];
+// Generate a secure random 6-digit code
+const generateVerificationCode = (): string => {
+  const min = 100000;
+  const max = 999999;
+  return Math.floor(Math.random() * (max - min + 1) + min).toString();
 };
 
 const handler = async (req: Request): Promise<Response> => {
@@ -35,92 +26,237 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  console.log('=== PASSWORD RESET FUNCTION STARTED ===');
+  console.log('Request method:', req.method);
+  
   try {
-    const { email, name }: PasswordResetRequest = await req.json();
+    // Check environment variables first
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    
+    console.log('=== ENVIRONMENT CHECK ===');
+    console.log('RESEND_API_KEY exists:', !!resendApiKey);
+    console.log('RESEND_API_KEY length:', resendApiKey?.length || 0);
+    console.log('RESEND_API_KEY starts with re_:', resendApiKey?.startsWith('re_') || false);
+    
+    if (!resendApiKey) {
+      console.error('CRITICAL: RESEND_API_KEY is missing');
+      return new Response(JSON.stringify({ 
+        error: 'Email service not configured',
+        success: false,
+        message: 'RESEND_API_KEY environment variable is missing',
+        errorCode: 'MISSING_API_KEY'
+      }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
 
-    console.log('Received password reset request for:', { email, name });
+    // Parse request body
+    let requestBody;
+    try {
+      const rawBody = await req.text();
+      console.log('Raw request body length:', rawBody.length);
+      requestBody = JSON.parse(rawBody);
+      console.log('Request body parsed successfully:', {
+        hasEmail: !!requestBody.email,
+        hasName: !!requestBody.name
+      });
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      return new Response(JSON.stringify({ 
+        error: 'Invalid JSON in request body',
+        success: false,
+        message: 'Request body is not valid JSON',
+        errorCode: 'INVALID_JSON'
+      }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
 
-    // Generate a random verification code
-    const verificationCode = getRandomVerificationCode();
+    const { email, name }: PasswordResetRequest = requestBody;
 
-    const emailResponse = await resend.emails.send({
-      from: "Garrison Financial Nexus <garrisonfinancialnexus01@gmail.com>",
-      to: [email],
-      subject: "Password Reset Verification Code",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #2563eb; margin-bottom: 10px;">Garrison Financial Nexus</h1>
-            <h2 style="color: #333; font-size: 24px; margin-bottom: 20px;">Password Reset Request</h2>
-          </div>
-          
-          <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-            <p style="color: #333; font-size: 16px; margin-bottom: 15px;">Hello ${name},</p>
-            <p style="color: #333; font-size: 16px; margin-bottom: 15px;">
-              We received a request to reset the password for your account. Please use the verification code below to proceed with your password reset:
-            </p>
-            
+    // Validate required fields
+    if (!email || !name) {
+      console.error('Missing required fields:', { email: !!email, name: !!name });
+      return new Response(JSON.stringify({ 
+        error: 'Missing required fields',
+        success: false,
+        message: 'Both email and name are required',
+        errorCode: 'MISSING_FIELDS'
+      }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const trimmedEmail = email.trim().toLowerCase();
+    
+    if (!emailRegex.test(trimmedEmail)) {
+      console.error('Invalid email format:', trimmedEmail);
+      return new Response(JSON.stringify({ 
+        error: 'Invalid email format',
+        success: false,
+        message: 'Please provide a valid email address',
+        errorCode: 'INVALID_EMAIL'
+      }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    console.log('=== VALIDATION PASSED ===');
+    console.log('Email:', trimmedEmail);
+    console.log('Name:', name);
+
+    // Initialize Resend
+    console.log('=== INITIALIZING RESEND ===');
+    let resend;
+    try {
+      resend = new Resend(resendApiKey);
+      console.log('Resend client initialized successfully');
+    } catch (resendInitError) {
+      console.error('Resend initialization failed:', resendInitError);
+      return new Response(JSON.stringify({ 
+        error: 'Email service initialization failed',
+        success: false,
+        message: 'Could not connect to email service',
+        errorCode: 'RESEND_INIT_ERROR',
+        details: resendInitError.message
+      }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    // Generate verification code
+    const verificationCode = generateVerificationCode();
+    console.log('Generated verification code:', verificationCode);
+
+    // Send email
+    console.log('=== SENDING EMAIL ===');
+    console.log('From: onboarding@resend.dev');
+    console.log('To:', trimmedEmail);
+    
+    try {
+      const emailResponse = await resend.emails.send({
+        from: "Garrison Financial Nexus <onboarding@resend.dev>",
+        to: [trimmedEmail],
+        subject: "🔐 Password Reset Code - Garrison Financial Nexus",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h1 style="color: #333; text-align: center;">Password Reset Request</h1>
+            <p>Hello <strong>${name}</strong>,</p>
+            <p>We received a request to reset your password for your Garrison Financial Nexus account.</p>
             <div style="text-align: center; margin: 30px 0;">
-              <div style="background-color: #2563eb; color: white; font-size: 32px; font-weight: bold; padding: 20px; border-radius: 8px; letter-spacing: 4px; display: inline-block;">
+              <div style="background: #f0f0f0; padding: 20px; border-radius: 8px; font-size: 32px; font-weight: bold; letter-spacing: 8px;">
                 ${verificationCode}
               </div>
             </div>
-            
-            <div style="background-color: #fef3cd; padding: 15px; border-radius: 6px; border-left: 4px solid #f59e0b; margin: 20px 0;">
-              <p style="color: #92400e; font-size: 14px; margin: 0;">
-                <strong>Important:</strong> This code will expire in 2 minutes for security reasons.
-              </p>
-            </div>
-          </div>
-          
-          <div style="margin-bottom: 20px;">
-            <h3 style="color: #333; font-size: 18px; margin-bottom: 10px;">Security Notice:</h3>
-            <ul style="color: #666; font-size: 14px; line-height: 1.6;">
-              <li>If you did not request a password reset, please ignore this email</li>
-              <li>Never share your verification code with anyone</li>
-              <li>This code is only valid for 2 minutes</li>
-              <li>For security, you may need to contact us if the code expires</li>
+            <p><strong>Important:</strong></p>
+            <ul>
+              <li>This code expires in exactly 3 minutes</li>
+              <li>Never share this code with anyone</li>
+              <li>If you didn't request this reset, please ignore this email</li>
             </ul>
+            <p>Need help? Contact us at +256 761 281 222</p>
+            <p>Best regards,<br>Garrison Financial Nexus Team</p>
           </div>
-          
-          <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; text-align: center;">
-            <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
-              <strong>Need Help?</strong>
-            </p>
-            <p style="color: #666; font-size: 14px; margin-bottom: 5px;">
-              WhatsApp: +256 761 281 222
-            </p>
-            <p style="color: #666; font-size: 14px; margin-bottom: 15px;">
-              Phone: +256 761 281 222
-            </p>
-            <p style="color: #888; font-size: 12px;">
-              This is an automated message from Garrison Financial Nexus.<br>
-              Please do not reply to this email.
-            </p>
-          </div>
-        </div>
-      `,
-    });
+        `,
+      });
 
-    console.log("Password reset code email sent successfully:", emailResponse);
+      console.log('=== EMAIL SEND RESULT ===');
+      console.log('Email response:', {
+        hasData: !!emailResponse.data,
+        hasError: !!emailResponse.error,
+        dataId: emailResponse.data?.id,
+        errorMessage: emailResponse.error?.message
+      });
 
-    return new Response(JSON.stringify({ 
-      success: true, 
-      emailId: emailResponse.data?.id,
-      code: verificationCode // In production, don't return this
-    }), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders,
-      },
-    });
-  } catch (error: any) {
-    console.error("Error in send-password-reset-code function:", error);
+      if (emailResponse.error) {
+        console.error('Resend API error:', emailResponse.error);
+        return new Response(JSON.stringify({ 
+          error: 'Email delivery failed',
+          success: false,
+          message: `Email service error: ${emailResponse.error.message}`,
+          errorCode: 'EMAIL_SEND_ERROR',
+          details: emailResponse.error
+        }), {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+
+      if (!emailResponse.data) {
+        console.error('No data returned from Resend API');
+        return new Response(JSON.stringify({ 
+          error: 'Email service returned no data',
+          success: false,
+          message: 'Email service did not return confirmation',
+          errorCode: 'NO_EMAIL_DATA'
+        }), {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+
+      console.log('=== SUCCESS ===');
+      console.log('Email sent successfully with ID:', emailResponse.data.id);
+
+      return new Response(JSON.stringify({ 
+        success: true, 
+        emailId: emailResponse.data.id,
+        message: 'Verification code sent successfully',
+        code: verificationCode,
+        timestamp: Date.now()
+      }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders,
+        },
+      });
+
+    } catch (emailError: any) {
+      console.error('=== EMAIL SENDING ERROR ===');
+      console.error('Error message:', emailError.message);
+      console.error('Error name:', emailError.name);
+      console.error('Error stack:', emailError.stack);
+      console.error('Full error:', JSON.stringify(emailError, null, 2));
+      
+      return new Response(JSON.stringify({ 
+        error: 'Email service network error',
+        success: false,
+        message: `Failed to send email: ${emailError.message}`,
+        errorCode: 'NETWORK_ERROR',
+        details: {
+          errorType: emailError.name,
+          errorMessage: emailError.message
+        }
+      }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+  } catch (criticalError: any) {
+    console.error('=== CRITICAL ERROR ===');
+    console.error('Critical error message:', criticalError.message);
+    console.error('Critical error name:', criticalError.name);
+    console.error('Critical error stack:', criticalError.stack);
+    
     return new Response(
       JSON.stringify({ 
-        error: error.message,
-        success: false 
+        error: 'Internal server error',
+        success: false,
+        message: `System error: ${criticalError.message}`,
+        errorCode: 'INTERNAL_ERROR',
+        details: {
+          errorType: criticalError.name,
+          errorMessage: criticalError.message
+        }
       }),
       {
         status: 500,
