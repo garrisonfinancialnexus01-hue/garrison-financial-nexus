@@ -25,7 +25,7 @@ import AccountActivation from "./pages/AccountActivation";
 import ClientDashboard from "./pages/ClientDashboard";
 import TransactionRequest from "./pages/TransactionRequest";
 import ForgotPassword from "./pages/ForgotPassword";
-import VerifyResetCode from "./pages/VerifyResetCode";
+import VerifyMobileOtp from "./pages/VerifyMobileOtp";
 import ResetPassword from "./pages/ResetPassword";
 import PasswordResetSuccess from "./pages/PasswordResetSuccess";
 import { ClientAuthProvider } from "./context/ClientAuthContext";
@@ -68,7 +68,7 @@ const App = () => {
                 <Route path="/client-dashboard" element={<ClientDashboard />} />
                 <Route path="/transaction-request" element={<TransactionRequest />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/verify-reset-code" element={<VerifyResetCode />} />
+                <Route path="/verify-mobile-otp" element={<VerifyMobileOtp />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/password-reset-success" element={<PasswordResetSuccess />} />
                 <Route path="*" element={<Layout><NotFound /></Layout>} />
