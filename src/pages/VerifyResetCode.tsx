@@ -5,16 +5,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
-import { ArrowLeft, Timer, RefreshCw, AlertTriangle } from 'lucide-react';
-import { verifyPasswordResetCode, storeVerificationCode, getRemainingTime } from '@/utils/passwordResetCodes';
+import { ArrowLeft, Timer, RefreshCw } from 'lucide-react';
+import { verifyCode } from '@/utils/verificationCodes';
 import { supabase } from '@/integrations/supabase/client';
 
 const VerifyResetCode = () => {
   const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(180);
+  const [timeLeft, setTimeLeft] = useState(120); // 2 minutes in seconds
   const [canResend, setCanResend] = useState(false);
-  const [isResending, setIsResending] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const email = location.state?.email;
@@ -22,18 +21,9 @@ const VerifyResetCode = () => {
   // Redirect if no email provided
   useEffect(() => {
     if (!email) {
-      toast({
-        title: "Access Denied",
-        description: "Please start the password reset process from the beginning.",
-        variant: "destructive",
-      });
       navigate('/forgot-password');
       return;
     }
-    
-    // Initialize timer with remaining time
-    const remaining = getRemainingTime(email);
-    setTimeLeft(remaining > 0 ? remaining : 180);
   }, [email, navigate]);
 
   // Countdown timer
@@ -45,15 +35,8 @@ const VerifyResetCode = () => {
       return () => clearTimeout(timer);
     } else {
       setCanResend(true);
-      if (!canResend) { // Only show toast once
-        toast({
-          title: "Code Expired ⏰",
-          description: "The verification code has expired. Please request a new one.",
-          variant: "destructive",
-        });
-      }
     }
-  }, [timeLeft, canResend]);
+  }, [timeLeft]);
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -64,8 +47,8 @@ const VerifyResetCode = () => {
   const handleVerifyCode = async () => {
     if (code.length !== 6) {
       toast({
-        title: "Invalid Code Length",
-        description: "Please enter a complete 6-digit verification code.",
+        title: "Invalid Code",
+        description: "Please enter a 6-digit verification code.",
         variant: "destructive",
       });
       return;
@@ -83,67 +66,50 @@ const VerifyResetCode = () => {
     setIsLoading(true);
 
     try {
-      console.log('Verifying code:', code, 'for email:', email);
+      // Verify the code using our verification codes utility
+      const isValidCode = verifyCode(code);
       
-      const result = verifyPasswordResetCode(email, code);
-      
-      if (result.success) {
-        console.log('Code verified successfully');
+      if (isValidCode) {
         toast({
-          title: "Code Verified! ✅",
-          description: "You can now create your new password.",
+          title: "Code Verified!",
+          description: "You can now reset your password.",
         });
         navigate('/reset-password', { state: { email, verifiedCode: code } });
       } else {
-        console.log('Code verification failed:', result.message);
         toast({
-          title: "Verification Failed",
-          description: result.message,
+          title: "Invalid Code",
+          description: "The verification code is incorrect. Please try again.",
           variant: "destructive",
         });
-        
-        // Clear the code input if verification failed
-        setCode('');
       }
     } catch (error) {
       console.error('Code verification error:', error);
       toast({
-        title: "Verification Error",
-        description: "An unexpected error occurred. Please try again.",
+        title: "Error",
+        description: "Failed to verify code. Please try again.",
         variant: "destructive",
       });
-      setCode('');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleResendCode = async () => {
-    setIsResending(true);
+    setIsLoading(true);
     
     try {
-      console.log('Resending code for email:', email);
-      
       // Get account info
-      const { data: account, error: fetchError } = await supabase
+      const { data: account } = await supabase
         .from('client_accounts')
         .select('name')
         .eq('email', email)
         .maybeSingle();
 
-      if (fetchError) {
-        throw new Error('Failed to retrieve account information');
-      }
-
-      if (!account) {
-        throw new Error('Account not found');
-      }
-
       // Send new code
-      const { data, error } = await supabase.functions.invoke('send-password-reset-code', {
+      const { error } = await supabase.functions.invoke('send-password-reset-code', {
         body: {
           email: email,
-          name: account.name || 'User'
+          name: account?.name || 'User'
         }
       });
 
@@ -151,34 +117,24 @@ const VerifyResetCode = () => {
         throw error;
       }
 
-      if (!data?.success) {
-        throw new Error(data?.message || 'Failed to send verification code');
-      }
-
-      // Store the new verification code
-      if (data.code) {
-        storeVerificationCode(email, data.code);
-      }
-
       toast({
-        title: "New Code Sent! ✅",
+        title: "New Code Sent!",
         description: "A new verification code has been sent to your email.",
       });
 
-      // Reset timer and UI state
-      setTimeLeft(180);
+      // Reset timer
+      setTimeLeft(120);
       setCanResend(false);
       setCode('');
-      
-    } catch (error: any) {
+    } catch (error) {
       console.error('Resend error:', error);
       toast({
         title: "Failed to Resend",
-        description: error.message || "Could not send new code. Please try again.",
+        description: "Could not send new code. Please try again.",
         variant: "destructive",
       });
     } finally {
-      setIsResending(false);
+      setIsLoading(false);
     }
   };
 
@@ -192,39 +148,27 @@ const VerifyResetCode = () => {
         <Card>
           <CardHeader className="space-y-1">
             <div className="flex items-center mb-4">
-              <Link to="/forgot-password" className="flex items-center text-blue-600 hover:text-blue-800 transition-colors">
+              <Link to="/forgot-password" className="flex items-center text-garrison-green hover:text-garrison-black">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back
               </Link>
             </div>
             <CardTitle className="text-2xl text-center">Enter Verification Code</CardTitle>
             <CardDescription className="text-center">
-              We've sent a 6-digit code to <strong>{email}</strong> from Garrison Financial Nexus
+              We've sent a 6-digit code to {email}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Timer Display */}
-            <div className={`flex items-center justify-center space-x-2 p-4 rounded-lg border ${
-              timeLeft <= 60 ? 'bg-red-50 border-red-200' : 
-              timeLeft <= 120 ? 'bg-amber-50 border-amber-200' : 
-              'bg-blue-50 border-blue-200'
-            }`}>
-              <Timer className={`h-5 w-5 ${
-                timeLeft <= 60 ? 'text-red-600' : 
-                timeLeft <= 120 ? 'text-amber-600' : 
-                'text-blue-600'
-              }`} />
-              <span className={`font-mono text-lg font-bold ${
-                timeLeft <= 60 ? 'text-red-600' : 
-                timeLeft <= 120 ? 'text-amber-600' : 
-                'text-blue-600'
-              }`}>
+            <div className="flex items-center justify-center space-x-2 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <Timer className={`h-5 w-5 ${timeLeft <= 30 ? 'text-red-600' : 'text-blue-600'}`} />
+              <span className={`font-mono text-lg font-bold ${timeLeft <= 30 ? 'text-red-600' : 'text-blue-600'}`}>
                 {formatTime(timeLeft)}
               </span>
               <span className="text-sm text-gray-600">remaining</span>
             </div>
 
-            {/* Code Input */}
+            {/* OTP Input */}
             <div className="space-y-4">
               <div className="flex justify-center">
                 <InputOTP
@@ -254,16 +198,16 @@ const VerifyResetCode = () => {
             </div>
 
             {/* Resend Section */}
-            <div className="text-center space-y-3">
+            <div className="text-center space-y-2">
               {canResend ? (
                 <Button
                   variant="ghost"
                   onClick={handleResendCode}
-                  disabled={isResending}
-                  className="text-blue-600 hover:text-blue-800"
+                  disabled={isLoading}
+                  className="text-garrison-green hover:text-garrison-black"
                 >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${isResending ? 'animate-spin' : ''}`} />
-                  {isResending ? 'Sending...' : 'Send New Code'}
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Send New Code
                 </Button>
               ) : (
                 <p className="text-sm text-gray-600">
@@ -272,16 +216,11 @@ const VerifyResetCode = () => {
               )}
             </div>
 
-            {/* Expired Notice */}
             {timeLeft <= 0 && (
               <div className="p-4 bg-red-50 rounded-lg border border-red-200">
-                <div className="flex items-start space-x-2">
-                  <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
-                  <div className="text-sm text-red-800">
-                    <p className="font-medium">Code Expired</p>
-                    <p>The 3-minute verification period has ended. Please request a new code to continue.</p>
-                  </div>
-                </div>
+                <p className="text-sm text-red-800 text-center">
+                  <strong>Code Expired:</strong> Please request a new verification code to continue.
+                </p>
               </div>
             )}
           </CardContent>
