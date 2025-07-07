@@ -94,15 +94,23 @@ const ForgotPassword = () => {
         }
       });
 
-      console.log('Edge function response received:', {
-        hasData: !!data,
-        hasError: !!functionError,
-        data: data,
-        error: functionError
+      console.log('=== DETAILED EDGE FUNCTION RESPONSE ===');
+      console.log('Raw response data:', data);
+      console.log('Raw response error:', functionError);
+      console.log('Function error details:', {
+        message: functionError?.message,
+        details: functionError?.details,
+        hint: functionError?.hint,
+        code: functionError?.code
       });
 
       if (functionError) {
-        console.error('Supabase function invocation error:', functionError);
+        console.error('=== EDGE FUNCTION ERROR DETAILS ===');
+        console.error('Error message:', functionError.message);
+        console.error('Error code:', functionError.code);
+        console.error('Error details:', functionError.details);
+        console.error('Full error object:', JSON.stringify(functionError, null, 2));
+        
         toast({
           title: "Service Error",
           description: `Failed to call email service: ${functionError.message}`,
@@ -120,6 +128,9 @@ const ForgotPassword = () => {
         });
         return;
       }
+
+      console.log('=== EDGE FUNCTION SUCCESS RESPONSE ===');
+      console.log('Response data:', JSON.stringify(data, null, 2));
 
       if (!data.success) {
         console.error('Edge function returned failure:', data);
@@ -154,7 +165,12 @@ const ForgotPassword = () => {
       });
 
     } catch (error) {
-      console.error('Unexpected error in password reset:', error);
+      console.error('=== UNEXPECTED ERROR IN PASSWORD RESET ===');
+      console.error('Error type:', typeof error);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      console.error('Full error object:', JSON.stringify(error, null, 2));
+      
       toast({
         title: "System Error",
         description: `An unexpected error occurred: ${error.message}`,
