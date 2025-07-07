@@ -87,13 +87,16 @@ const ForgotPassword = () => {
         name: account.name || 'User'
       });
 
+      // Use the Supabase anon key from the environment
+      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlkc2ppd3pkYmtqaGN3dW5kdWRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDczMzgwMzcsImV4cCI6MjA2MjkxNDAzN30.IulnrGc4iddAdWN2_KGwpztJRkNyitz5qPXonxtZNiQ";
+
       // CRITICAL DEBUG: Let's capture the full response including headers and status
       const response = await fetch(`https://idsjiiwzdbkjhcwundudp.supabase.co/functions/v1/send-password-reset-code`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${supabase.supabaseKey}`,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
           'Content-Type': 'application/json',
-          'apikey': supabase.supabaseKey
+          'apikey': SUPABASE_ANON_KEY
         },
         body: JSON.stringify({
           email: trimmedEmail,
