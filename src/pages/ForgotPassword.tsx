@@ -87,49 +87,58 @@ const ForgotPassword = () => {
         name: account.name || 'User'
       });
 
-      const { data, error: functionError } = await supabase.functions.invoke('send-password-reset-code', {
-        body: {
+      // CRITICAL DEBUG: Let's capture the full response including headers and status
+      const response = await fetch(`https://idsjiiwzdbkjhcwundudp.supabase.co/functions/v1/send-password-reset-code`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabase.supabaseKey}`,
+          'Content-Type': 'application/json',
+          'apikey': supabase.supabaseKey
+        },
+        body: JSON.stringify({
           email: trimmedEmail,
           name: account.name || 'User'
-        }
+        })
       });
 
-      console.log('=== DETAILED EDGE FUNCTION RESPONSE ===');
-      console.log('Raw response data:', data);
-      console.log('Raw response error:', functionError);
-      console.log('Function error details:', {
-        message: functionError?.message,
-        details: functionError?.details,
-        hint: functionError?.hint,
-        code: functionError?.code
-      });
+      console.log('=== RAW FETCH RESPONSE ===');
+      console.log('Status:', response.status);
+      console.log('Status Text:', response.statusText);
+      console.log('Headers:', Object.fromEntries(response.headers.entries()));
+      
+      const responseText = await response.text();
+      console.log('Raw Response Body:', responseText);
 
-      if (functionError) {
-        console.error('=== EDGE FUNCTION ERROR DETAILS ===');
-        console.error('Error message:', functionError.message);
-        console.error('Error code:', functionError.code);
-        console.error('Error details:', functionError.details);
-        console.error('Full error object:', JSON.stringify(functionError, null, 2));
+      let data;
+      try {
+        data = JSON.parse(responseText);
+        console.log('Parsed Response Data:', data);
+      } catch (parseError) {
+        console.error('Failed to parse response as JSON:', parseError);
+        console.error('Response was:', responseText);
         
         toast({
           title: "Service Error",
-          description: `Failed to call email service: ${functionError.message}`,
+          description: `Server returned invalid response. Status: ${response.status}. Body: ${responseText.substring(0, 100)}...`,
           variant: "destructive",
         });
         return;
       }
 
-      if (!data) {
-        console.error('No data returned from edge function');
+      if (!response.ok) {
+        console.error('=== HTTP ERROR RESPONSE ===');
+        console.error('Status:', response.status);
+        console.error('Response:', data);
+        
         toast({
           title: "Service Error",
-          description: "Email service returned no response. Please try again.",
+          description: `Email service failed with status ${response.status}: ${data?.message || data?.error || 'Unknown error'}`,
           variant: "destructive",
         });
         return;
       }
 
-      console.log('=== EDGE FUNCTION SUCCESS RESPONSE ===');
+      console.log('=== SUCCESS RESPONSE ===');
       console.log('Response data:', JSON.stringify(data, null, 2));
 
       if (!data.success) {
