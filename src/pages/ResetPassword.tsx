@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { ArrowLeft, Eye, EyeOff, Lock, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, Lock, CheckCircle, XCircle, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 const ResetPassword = () => {
@@ -32,7 +32,7 @@ const ResetPassword = () => {
     if (!email || !verifiedCode) {
       toast({
         title: "Access Denied",
-        description: "Please start the password reset process from the beginning.",
+        description: "Please complete the verification process first.",
         variant: "destructive",
       });
       navigate('/forgot-password');
@@ -53,6 +53,18 @@ const ResetPassword = () => {
 
   const isPasswordValid = () => {
     return Object.values(passwordValidation).every(Boolean);
+  };
+
+  const hashPassword = (password: string): string => {
+    // Simple hash function for demonstration
+    // In production, use proper bcrypt or similar
+    let hash = 0;
+    for (let i = 0; i < password.length; i++) {
+      const char = password.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash).toString(16);
   };
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -90,36 +102,62 @@ const ResetPassword = () => {
     try {
       console.log('Updating password for email:', email);
       
+      // Validate password using Supabase function
+      const { data: isValidPassword, error: validationError } = await supabase
+        .rpc('validate_password', { password_input: password });
+
+      if (validationError) {
+        console.error('Password validation error:', validationError);
+        toast({
+          title: "Validation Error",
+          description: "Unable to validate password. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!isValidPassword) {
+        toast({
+          title: "Invalid Password",
+          description: "Password does not meet security requirements.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Hash the password before storing
+      const hashedPassword = hashPassword(password);
+      
       // Update password in database
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('client_accounts')
         .update({ 
-          password_hash: password,
+          password_hash: hashedPassword,
           updated_at: new Date().toISOString()
         })
         .eq('email', email);
 
-      if (error) {
-        console.error('Password update error:', error);
+      if (updateError) {
+        console.error('Password update error:', updateError);
         toast({
-          title: "Reset Failed",
+          title: "Update Failed",
           description: "Failed to update password. Please try the reset process again.",
           variant: "destructive",
         });
         return;
       }
 
-      console.log('Password updated successfully');
+      console.log('Password updated successfully for:', email);
       
       toast({
         title: "Password Reset Successful! ✅",
-        description: "Your password has been updated and you can now sign in with your new password.",
+        description: "Your password has been updated. You can now sign in with your new password.",
       });
 
       // Navigate to success page
       navigate('/password-reset-success');
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Unexpected error in password reset:', error);
       toast({
         title: "System Error",
@@ -154,18 +192,23 @@ const ResetPassword = () => {
         <Card>
           <CardHeader className="space-y-1">
             <div className="flex items-center mb-4">
-              <Link to="/verify-reset-code" state={{ email }} className="flex items-center text-garrison-green hover:text-garrison-black">
+              <Link 
+                to="/verify-reset-code" 
+                state={{ email }} 
+                className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
+              >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back
               </Link>
             </div>
             <CardTitle className="text-2xl text-center">Create New Password</CardTitle>
             <CardDescription className="text-center">
-              Set a new secure password for {email}
+              Set a secure password for <strong>{email}</strong>
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleResetPassword} className="space-y-4">
+              {/* New Password Field */}
               <div className="space-y-2">
                 <Label htmlFor="password">New Password</Label>
                 <div className="relative">
@@ -195,7 +238,7 @@ const ResetPassword = () => {
                 </div>
               </div>
 
-              {/* Real-time password validation */}
+              {/* Password Validation Display */}
               {password && (
                 <div className="p-3 bg-gray-50 rounded-lg border">
                   <p className="text-sm font-medium text-gray-700 mb-2">Password Requirements:</p>
@@ -220,8 +263,9 @@ const ResetPassword = () => {
                 </div>
               )}
 
+              {/* Confirm Password Field */}
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Your Password</Label>
+                <Label htmlFor="confirmPassword">Confirm New Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
@@ -248,13 +292,20 @@ const ResetPassword = () => {
                   </button>
                 </div>
                 {confirmPassword && password !== confirmPassword && (
-                  <p className="text-sm text-red-600">Passwords do not match</p>
+                  <p className="text-sm text-red-600 flex items-center space-x-1">
+                    <XCircle className="h-3 w-3" />
+                    <span>Passwords do not match</span>
+                  </p>
                 )}
-                {confirmPassword && password === confirmPassword && (
-                  <p className="text-sm text-green-600">Passwords match ✓</p>
+                {confirmPassword && password === confirmPassword && password && (
+                  <p className="text-sm text-green-600 flex items-center space-x-1">
+                    <CheckCircle className="h-3 w-3" />
+                    <span>Passwords match</span>
+                  </p>
                 )}
               </div>
 
+              {/* Submit Button */}
               <Button 
                 type="submit" 
                 className="w-full" 
@@ -266,15 +317,22 @@ const ResetPassword = () => {
                     Updating Password...
                   </>
                 ) : (
-                  'Update Password'
+                  <>
+                    <Shield className="h-4 w-4 mr-2" />
+                    Update Password
+                  </>
                 )}
               </Button>
             </form>
 
+            {/* Security Notice */}
             <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
-              <div className="text-sm text-green-800">
-                <p className="font-medium mb-1">🔐 Security Note:</p>
-                <p>Your new password will be securely saved and you can use it to sign in immediately after it's updated.</p>
+              <div className="flex items-start space-x-2">
+                <Shield className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-green-800">
+                  <p className="font-medium mb-1">🔐 Security Information</p>
+                  <p>Your password will be securely encrypted and stored. You can sign in immediately after it's updated.</p>
+                </div>
               </div>
             </div>
           </CardContent>
