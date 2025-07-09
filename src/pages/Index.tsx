@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, TrendingUp, Wallet, Building, Users, MessageSquare } from 'lucide-react';
+import { ArrowRight, TrendingUp, Wallet, Building, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Index = () => {
@@ -89,7 +90,7 @@ const Index = () => {
                   onClick={openWhatsApp}
                   className="text-garrison-green hover:underline inline-flex items-center mt-2"
                 >
-                  <MessageSquare className="mr-1 h-4 w-4" /> Contact Manager
+                  <img src="/lovable-uploads/cca0085d-a5e4-45a3-958c-e0e66dc68e16.png" alt="WhatsApp" className="mr-1 h-4 w-4" /> Contact Manager
                 </button>
               </div>
             </div>
@@ -137,7 +138,7 @@ const Index = () => {
               className="bg-white text-garrison-green hover:bg-gray-100 flex items-center"
               onClick={openWhatsApp}
             >
-              <MessageSquare className="mr-2 h-4 w-4" />
+              <img src="/lovable-uploads/cca0085d-a5e4-45a3-958c-e0e66dc68e16.png" alt="WhatsApp" className="mr-2 h-4 w-4" />
               Contact Manager on WhatsApp
             </Button>
           </div>

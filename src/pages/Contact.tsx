@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Phone, Mail, MessageCircle, MapPin } from 'lucide-react';
+import { Phone, Mail, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Contact = () => {
@@ -44,7 +44,7 @@ const Contact = () => {
               </div>
               
               <div className="flex items-center">
-                <MessageCircle className="h-6 w-6 text-garrison-green mr-4" />
+                <img src="/lovable-uploads/cca0085d-a5e4-45a3-958c-e0e66dc68e16.png" alt="WhatsApp" className="h-6 w-6 mr-4" />
                 <div>
                   <h3 className="font-semibold">WhatsApp</h3>
                   <p className="text-gray-600">Chat with us directly</p>

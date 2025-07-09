@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { MessageSquare, ArrowRight, CheckCircle, Clock, DollarSign, User } from 'lucide-react';
+import { ArrowRight, CheckCircle, Clock, DollarSign, User } from 'lucide-react';
 
 const SettleYourDebt = () => {
   const handleWhatsAppClick = () => {
@@ -22,7 +21,7 @@ const SettleYourDebt = () => {
         <Card className="shadow-lg">
           <CardHeader className="bg-garrison-green text-white">
             <CardTitle className="text-2xl flex items-center">
-              <MessageSquare className="mr-3 h-6 w-6" />
+              <img src="/lovable-uploads/cca0085d-a5e4-45a3-958c-e0e66dc68e16.png" alt="WhatsApp" className="mr-3 h-6 w-6" />
               Contact Manager
             </CardTitle>
             <CardDescription className="text-white/80">
@@ -40,7 +39,7 @@ const SettleYourDebt = () => {
                 className="bg-[#25D366] hover:bg-[#128C7E] text-white flex items-center mx-auto"
                 size="lg"
               >
-                <MessageSquare className="mr-2 h-5 w-5" />
+                <img src="/lovable-uploads/cca0085d-a5e4-45a3-958c-e0e66dc68e16.png" alt="WhatsApp" className="mr-2 h-5 w-5" />
                 Contact Manager on WhatsApp
               </Button>
               <p className="text-sm text-gray-500 mt-3">

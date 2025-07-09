@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { MessageSquare, CreditCard, Clock, CheckCircle } from 'lucide-react';
+import { CreditCard, Clock, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const RepayLoan = () => {
@@ -23,7 +23,7 @@ const RepayLoan = () => {
               onClick={openWhatsApp}
               className="bg-[#25D366] hover:bg-[#128C7E] text-white flex items-center gap-2 py-6 px-8 text-lg"
             >
-              <MessageSquare className="h-6 w-6" />
+              <img src="/lovable-uploads/cca0085d-a5e4-45a3-958c-e0e66dc68e16.png" alt="WhatsApp" className="h-6 w-6" />
               Contact Manager on WhatsApp
             </Button>
           </div>
@@ -112,7 +112,7 @@ const RepayLoan = () => {
               onClick={openWhatsApp}
               className="bg-white text-garrison-green hover:bg-gray-100"
             >
-              <MessageSquare className="mr-2 h-5 w-5" />
+              <img src="/lovable-uploads/cca0085d-a5e4-45a3-958c-e0e66dc68e16.png" alt="WhatsApp" className="mr-2 h-5 w-5" />
               Get Help via WhatsApp
             </Button>
           </div>

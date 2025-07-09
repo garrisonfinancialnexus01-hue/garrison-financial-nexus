@@ -3,7 +3,7 @@ import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useClientAuth } from '@/context/ClientAuthContext';
 
 const TransactionRequest = () => {
@@ -61,7 +61,7 @@ Please assist me with this ${transactionType}.`;
               onClick={handleContactManager}
               className="w-full bg-green-600 hover:bg-green-700"
             >
-              <MessageCircle className="h-4 w-4 mr-2" />
+              <img src="/lovable-uploads/cca0085d-a5e4-45a3-958c-e0e66dc68e16.png" alt="WhatsApp" className="h-4 w-4 mr-2" />
               Contact Manager on WhatsApp
             </Button>
           </CardContent>

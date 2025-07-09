@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { ArrowRight, MessageCircle, Percent, Check, Clock, UserPlus } from 'lucide-react';
+import { ArrowRight, Percent, Check, Clock, UserPlus } from 'lucide-react';
 
 const MoneySaving = () => {
   const handleWhatsAppClick = () => {
@@ -52,7 +51,7 @@ const MoneySaving = () => {
             onClick={handleWhatsAppClick}
             className="bg-[#25D366] hover:bg-[#128C7E] flex items-center"
           >
-            <MessageCircle className="mr-2 h-5 w-5" />
+            <img src="/lovable-uploads/cca0085d-a5e4-45a3-958c-e0e66dc68e16.png" alt="WhatsApp" className="mr-2 h-5 w-5" />
             Contact Manager on WhatsApp
           </Button>
         </div>
