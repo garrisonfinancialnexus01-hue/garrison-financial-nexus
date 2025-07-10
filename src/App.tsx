@@ -28,6 +28,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import VerifyMobileOtp from "./pages/VerifyMobileOtp";
 import ResetPassword from "./pages/ResetPassword";
 import PasswordResetSuccess from "./pages/PasswordResetSuccess";
+import AdminBalanceEditor from "./pages/AdminBalanceEditor";
 import { ClientAuthProvider } from "./context/ClientAuthContext";
 
 // Create a client
@@ -71,6 +72,7 @@ const App = () => {
                 <Route path="/verify-mobile-otp" element={<VerifyMobileOtp />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/password-reset-success" element={<PasswordResetSuccess />} />
+                <Route path="/admin-balance-editor" element={<AdminBalanceEditor />} />
                 <Route path="*" element={<Layout><NotFound /></Layout>} />
               </Routes>
             </BrowserRouter>
