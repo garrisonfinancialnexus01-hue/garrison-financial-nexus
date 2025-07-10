@@ -1,14 +1,20 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, DollarSign, User, CreditCard, Lock, Eye, EyeOff } from 'lucide-react';
+import { Loader2, DollarSign, User, CreditCard, Lock, Eye, EyeOff, Shield, AlertTriangle } from 'lucide-react';
+import { validateAdminToken, markTokenAsUsed } from '@/utils/adminTokenGenerator';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 
 const AdminBalanceEditor = () => {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [isTokenValid, setIsTokenValid] = useState(false);
+  const [isCheckingToken, setIsCheckingToken] = useState(true);
+  
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -22,6 +28,53 @@ const AdminBalanceEditor = () => {
   const { toast } = useToast();
 
   const ADMIN_PASSWORD = 'Nalunda@23';
+
+  useEffect(() => {
+    const checkTokenAccess = () => {
+      const token = searchParams.get('access_token');
+      const expires = searchParams.get('expires');
+      
+      if (!token || !expires) {
+        setIsTokenValid(false);
+        setIsCheckingToken(false);
+        return;
+      }
+
+      const expiryTime = parseInt(expires);
+      const now = Date.now();
+      
+      if (now > expiryTime) {
+        toast({
+          title: "Access Expired",
+          description: "This admin access link has expired",
+          variant: "destructive",
+        });
+        setIsTokenValid(false);
+        setIsCheckingToken(false);
+        return;
+      }
+
+      if (validateAdminToken(token)) {
+        setIsTokenValid(true);
+        markTokenAsUsed(token);
+        toast({
+          title: "Secure Access Verified",
+          description: "Admin access granted via secure email link",
+        });
+      } else {
+        setIsTokenValid(false);
+        toast({
+          title: "Invalid Access",
+          description: "This admin access link is invalid or has been used",
+          variant: "destructive",
+        });
+      }
+      
+      setIsCheckingToken(false);
+    };
+
+    checkTokenAccess();
+  }, [searchParams, toast]);
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -183,7 +236,52 @@ const AdminBalanceEditor = () => {
     });
   };
 
-  // If not authenticated, show login form
+  if (isCheckingToken) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-garrison-green" />
+          <p className="text-gray-600">Verifying secure access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isTokenValid) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8 flex items-center justify-center">
+        <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8">
+          <Card className="w-full border-red-200">
+            <CardHeader className="text-center">
+              <CardTitle className="flex items-center justify-center gap-2 text-2xl text-red-600">
+                <AlertTriangle className="h-6 w-6" />
+                Access Denied
+              </CardTitle>
+              <CardDescription className="text-red-500">
+                Invalid or expired admin access link
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <p className="text-gray-600">
+                This admin access link is either invalid, expired, or has already been used.
+              </p>
+              <p className="text-sm text-gray-500">
+                Please request a new access link from the authorized email address.
+              </p>
+              <Button
+                onClick={() => navigate('/')}
+                variant="outline"
+                className="w-full"
+              >
+                Return to Home
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 py-8 flex items-center justify-center">
@@ -197,6 +295,10 @@ const AdminBalanceEditor = () => {
               <CardDescription>
                 Enter the admin password to access the Balance Editor
               </CardDescription>
+              <div className="flex items-center justify-center gap-2 mt-2 text-xs text-green-600">
+                <Shield className="h-3 w-3" />
+                <span>Secure email access verified</span>
+              </div>
             </CardHeader>
             <CardContent>
               <form onSubmit={handlePasswordSubmit} className="space-y-4">
@@ -249,7 +351,6 @@ const AdminBalanceEditor = () => {
     );
   }
 
-  // If authenticated, show the balance editor
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -261,6 +362,10 @@ const AdminBalanceEditor = () => {
             <p className="text-gray-600">
               Manually update client account balances for Garrison Financial Nexus savings accounts
             </p>
+            <div className="flex items-center gap-2 mt-2 text-xs text-green-600">
+              <Shield className="h-3 w-3" />
+              <span>Secure email access • Password verified</span>
+            </div>
           </div>
           <Button
             onClick={handleLogout}
