@@ -120,7 +120,7 @@ const AdminBalanceEditor = () => {
 
       toast({
         title: "Success",
-        description: `Account balance updated to $${balanceValue.toFixed(2)} for ${clientData.name}`,
+        description: `Account balance updated to ${balanceValue.toLocaleString()} UGX for ${clientData.name}`,
       });
     } catch (error) {
       console.error('Update error:', error);
@@ -235,7 +235,7 @@ const AdminBalanceEditor = () => {
                   <div>
                     <Label className="text-sm font-medium text-gray-600">Current Balance</Label>
                     <p className="text-garrison-green font-bold text-lg">
-                      ${parseFloat(clientData.account_balance).toFixed(2)}
+                      {parseFloat(clientData.account_balance).toLocaleString()} UGX
                     </p>
                   </div>
                   <div>
@@ -276,11 +276,11 @@ const AdminBalanceEditor = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="newBalance">New Balance Amount ($)</Label>
+                <Label htmlFor="newBalance">New Balance Amount (UGX)</Label>
                 <Input
                   id="newBalance"
                   type="number"
-                  step="0.01"
+                  step="1"
                   min="0"
                   value={newBalance}
                   onChange={(e) => setNewBalance(e.target.value)}
@@ -305,11 +305,11 @@ const AdminBalanceEditor = () => {
                 </Button>
                 <div className="flex-1 text-right">
                   <p className="text-sm text-gray-600">
-                    Current: <span className="font-semibold">${parseFloat(clientData.account_balance).toFixed(2)}</span>
+                    Current: <span className="font-semibold">{parseFloat(clientData.account_balance).toLocaleString()} UGX</span>
                   </p>
                   {newBalance && !isNaN(parseFloat(newBalance)) && (
                     <p className="text-sm text-garrison-green font-semibold">
-                      New: ${parseFloat(newBalance).toFixed(2)}
+                      New: {parseFloat(newBalance).toLocaleString()} UGX
                     </p>
                   )}
                 </div>
