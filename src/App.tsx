@@ -30,10 +30,6 @@ import ResetPassword from "./pages/ResetPassword";
 import PasswordResetSuccess from "./pages/PasswordResetSuccess";
 import AdminBalanceEditor from "./pages/AdminBalanceEditor";
 import AdminEmailPortal from "./components/AdminEmailPortal";
-import MobileMoneyDeposit from "./pages/MobileMoneyDeposit";
-import MobileMoneyWithdraw from "./pages/MobileMoneyWithdraw";
-import TransactionStatus from "./pages/TransactionStatus";
-import TransactionHistory from "./pages/TransactionHistory";
 import { ClientAuthProvider } from "./context/ClientAuthContext";
 
 // Create a client
@@ -79,10 +75,6 @@ const App = () => {
                 <Route path="/password-reset-success" element={<PasswordResetSuccess />} />
                 <Route path="/admin-balance-editor" element={<AdminBalanceEditor />} />
                 <Route path="/admin-email-portal" element={<AdminEmailPortal />} />
-                <Route path="/mobile-money-deposit" element={<MobileMoneyDeposit />} />
-                <Route path="/mobile-money-withdraw" element={<MobileMoneyWithdraw />} />
-                <Route path="/transaction-status" element={<TransactionStatus />} />
-                <Route path="/transaction-history" element={<TransactionHistory />} />
                 <Route path="*" element={<Layout><NotFound /></Layout>} />
               </Routes>
             </BrowserRouter>

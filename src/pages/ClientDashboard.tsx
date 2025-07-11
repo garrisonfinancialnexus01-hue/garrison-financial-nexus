@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useClientAuth } from '@/context/ClientAuthContext';
-import { LogOut, DollarSign, CreditCard, History, Smartphone } from 'lucide-react';
+import { LogOut, DollarSign, CreditCard } from 'lucide-react';
 
 const ClientDashboard = () => {
   const { currentClient, signOut } = useClientAuth();
@@ -15,6 +15,10 @@ const ClientDashboard = () => {
       navigate('/client-auth');
     }
   }, [currentClient, navigate]);
+
+  const handleTransaction = (transactionType: string) => {
+    navigate('/transaction-request', { state: { transactionType } });
+  };
 
   const handleSignOut = () => {
     signOut();
@@ -118,43 +122,32 @@ const ClientDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Mobile Money Transactions */}
+          {/* Transaction Buttons */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <Smartphone className="h-5 w-5 mr-2" />
-                Mobile Money
-              </CardTitle>
-              <CardDescription>Deposit or withdraw money using MTN or Airtel Mobile Money</CardDescription>
+              <CardTitle>Account Transactions</CardTitle>
+              <CardDescription>Deposit or withdraw money from your account</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Button 
-                  onClick={() => navigate('/mobile-money-deposit')}
+                  onClick={() => handleTransaction('deposit money')}
                   className="h-20 flex flex-col items-center justify-center space-y-2 bg-green-600 hover:bg-green-700 text-white"
                 >
                   <DollarSign className="h-6 w-6" />
                   <span>Deposit Money</span>
                 </Button>
                 <Button 
-                  onClick={() => navigate('/mobile-money-withdraw')}
+                  onClick={() => handleTransaction('withdraw money')}
                   className="h-20 flex flex-col items-center justify-center space-y-2 bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   <CreditCard className="h-6 w-6" />
                   <span>Withdraw Money</span>
                 </Button>
-                <Button 
-                  onClick={() => navigate('/transaction-history')}
-                  variant="outline"
-                  className="h-20 flex flex-col items-center justify-center space-y-2"
-                >
-                  <History className="h-6 w-6" />
-                  <span>Transaction History</span>
-                </Button>
               </div>
               <div className="text-center pt-4">
                 <p className="text-sm text-gray-600">
-                  Instant deposits and withdrawals using Mobile Money
+                  All transactions are processed through our manager via WhatsApp (+256761281222)
                 </p>
               </div>
             </CardContent>
