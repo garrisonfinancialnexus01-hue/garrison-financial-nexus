@@ -4,76 +4,85 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ClientAuthProvider } from "./context/ClientAuthContext";
-import Layout from "./components/Layout";
+import React from "react";
 import Index from "./pages/Index";
-import About from "./pages/About";
-import Contact from "./pages/Contact";
-import MoneySaving from "./pages/MoneySaving";
+import NotFound from "./pages/NotFound";
+import Layout from "./components/Layout";
 import MoneyLending from "./pages/MoneyLending";
-import WealthManagement from "./pages/WealthManagement";
+import MoneySaving from "./pages/MoneySaving";
 import FinancialAdvisory from "./pages/FinancialAdvisory";
+import WealthManagement from "./pages/WealthManagement";
 import LoanApplication from "./pages/LoanApplication";
-import ClientSignup from "./pages/ClientSignup";
+import LoanDetails from "./pages/LoanDetails";
+import Contact from "./pages/Contact";
+import About from "./pages/About";
+import SettleYourDebt from "./pages/SettleYourDebt";
+import RepayLoan from "./pages/RepayLoan";
 import ClientAuth from "./pages/ClientAuth";
-import ClientDashboard from "./pages/ClientDashboard";
-import ForgotPassword from "./pages/ForgotPassword";
-import VerifyResetCode from "./pages/VerifyResetCode";
-import ResetPassword from "./pages/ResetPassword";
-import PasswordResetSuccess from "./pages/PasswordResetSuccess";
+import ClientSignup from "./pages/ClientSignup";
 import SignupSuccess from "./pages/SignupSuccess";
 import AccountActivation from "./pages/AccountActivation";
-import VerifyMobileOtp from "./pages/VerifyMobileOtp";
+import ClientDashboard from "./pages/ClientDashboard";
 import TransactionRequest from "./pages/TransactionRequest";
-import LoanDetails from "./pages/LoanDetails";
-import RepayLoan from "./pages/RepayLoan";
-import SettleYourDebt from "./pages/SettleYourDebt";
-import NotFound from "./pages/NotFound";
+import ForgotPassword from "./pages/ForgotPassword";
+import VerifyMobileOtp from "./pages/VerifyMobileOtp";
+import ResetPassword from "./pages/ResetPassword";
+import PasswordResetSuccess from "./pages/PasswordResetSuccess";
 import AdminBalanceEditor from "./pages/AdminBalanceEditor";
-import MobileMoneyDashboard from "./pages/MobileMoneyDashboard";
+import AdminEmailPortal from "./components/AdminEmailPortal";
+import { ClientAuthProvider } from "./context/ClientAuthContext";
 
-const queryClient = new QueryClient();
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 1,
+    },
+  },
+});
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <ClientAuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Layout>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/money-saving" element={<MoneySaving />} />
-              <Route path="/money-lending" element={<MoneyLending />} />
-              <Route path="/wealth-management" element={<WealthManagement />} />
-              <Route path="/financial-advisory" element={<FinancialAdvisory />} />
-              <Route path="/loan-application" element={<LoanApplication />} />
-              <Route path="/client-signup" element={<ClientSignup />} />
-              <Route path="/client-auth" element={<ClientAuth />} />
-              <Route path="/client-dashboard" element={<ClientDashboard />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/verify-reset-code" element={<VerifyResetCode />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/password-reset-success" element={<PasswordResetSuccess />} />
-              <Route path="/signup-success" element={<SignupSuccess />} />
-              <Route path="/account-activation" element={<AccountActivation />} />
-              <Route path="/verify-mobile-otp" element={<VerifyMobileOtp />} />
-              <Route path="/transaction-request" element={<TransactionRequest />} />
-              <Route path="/loan-details" element={<LoanDetails />} />
-              <Route path="/repay-loan" element={<RepayLoan />} />
-              <Route path="/settle-debt" element={<SettleYourDebt />} />
-              <Route path="/admin-balance-editor" element={<AdminBalanceEditor />} />
-              <Route path="/mobile-money" element={<MobileMoneyDashboard />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Layout>
-        </BrowserRouter>
-      </ClientAuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  return (
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <ClientAuthProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Layout><Index /></Layout>} />
+                <Route path="/money-lending" element={<Layout><MoneyLending /></Layout>} />
+                <Route path="/money-saving" element={<Layout><MoneySaving /></Layout>} />
+                <Route path="/financial-advisory" element={<Layout><FinancialAdvisory /></Layout>} />
+                <Route path="/wealth-management" element={<Layout><WealthManagement /></Layout>} />
+                <Route path="/loan-application" element={<Layout><LoanApplication /></Layout>} />
+                <Route path="/loan-details" element={<Layout><LoanDetails /></Layout>} />
+                <Route path="/settle-your-debt" element={<Layout><SettleYourDebt /></Layout>} />
+                <Route path="/repay-loan" element={<Layout><RepayLoan /></Layout>} />
+                <Route path="/contact" element={<Layout><Contact /></Layout>} />
+                <Route path="/about" element={<Layout><About /></Layout>} />
+                <Route path="/client-auth" element={<ClientAuth />} />
+                <Route path="/client-signup" element={<ClientSignup />} />
+                <Route path="/signup-success" element={<SignupSuccess />} />
+                <Route path="/account-activation" element={<AccountActivation />} />
+                <Route path="/client-dashboard" element={<ClientDashboard />} />
+                <Route path="/transaction-request" element={<TransactionRequest />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/verify-mobile-otp" element={<VerifyMobileOtp />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/password-reset-success" element={<PasswordResetSuccess />} />
+                <Route path="/admin-balance-editor" element={<AdminBalanceEditor />} />
+                <Route path="/admin-email-portal" element={<AdminEmailPortal />} />
+                <Route path="*" element={<Layout><NotFound /></Layout>} />
+              </Routes>
+            </BrowserRouter>
+          </ClientAuthProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </React.StrictMode>
+  );
+};
 
 export default App;
