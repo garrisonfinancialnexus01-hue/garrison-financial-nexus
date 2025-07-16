@@ -56,6 +56,48 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_transaction_records: {
+        Row: {
+          account_balance: number
+          account_number: string
+          amount_deposited: number | null
+          amount_withdrawn: number | null
+          created_at: string
+          id: string
+          receipt_data: Json | null
+          record_number: number
+          transaction_date: string
+          transaction_time: string
+          updated_at: string
+        }
+        Insert: {
+          account_balance: number
+          account_number: string
+          amount_deposited?: number | null
+          amount_withdrawn?: number | null
+          created_at?: string
+          id?: string
+          receipt_data?: Json | null
+          record_number: number
+          transaction_date: string
+          transaction_time?: string
+          updated_at?: string
+        }
+        Update: {
+          account_balance?: number
+          account_number?: string
+          amount_deposited?: number | null
+          amount_withdrawn?: number | null
+          created_at?: string
+          id?: string
+          receipt_data?: Json | null
+          record_number?: number
+          transaction_date?: string
+          transaction_time?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       loan_applications: {
         Row: {
           amount: number
@@ -98,6 +140,101 @@ export type Database = {
         }
         Relationships: []
       }
+      mobile_money_transactions: {
+        Row: {
+          amount: number
+          client_id: string
+          client_phone: string
+          company_phone: string
+          completed_at: string | null
+          created_at: string
+          external_transaction_id: string | null
+          failure_reason: string | null
+          id: string
+          provider: string
+          status: string
+          transaction_reference: string | null
+          transaction_type: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          client_id: string
+          client_phone: string
+          company_phone?: string
+          completed_at?: string | null
+          created_at?: string
+          external_transaction_id?: string | null
+          failure_reason?: string | null
+          id?: string
+          provider: string
+          status?: string
+          transaction_reference?: string | null
+          transaction_type: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          client_phone?: string
+          company_phone?: string
+          completed_at?: string | null
+          created_at?: string
+          external_transaction_id?: string | null
+          failure_reason?: string | null
+          id?: string
+          provider?: string
+          status?: string
+          transaction_reference?: string | null
+          transaction_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mobile_money_transactions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "client_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transaction_records: {
+        Row: {
+          account_balance: number
+          account_number: string
+          amount_deposited: number | null
+          amount_withdrawn: number | null
+          created_at: string
+          id: string
+          receipt_number: string
+          transaction_date: string
+          transaction_time: string
+        }
+        Insert: {
+          account_balance: number
+          account_number: string
+          amount_deposited?: number | null
+          amount_withdrawn?: number | null
+          created_at?: string
+          id?: string
+          receipt_number?: string
+          transaction_date: string
+          transaction_time: string
+        }
+        Update: {
+          account_balance?: number
+          account_number?: string
+          amount_deposited?: number | null
+          amount_withdrawn?: number | null
+          created_at?: string
+          id?: string
+          receipt_number?: string
+          transaction_date?: string
+          transaction_time?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -115,9 +252,13 @@ export type Database = {
         Args: { password_input: string }
         Returns: boolean
       }
+      validate_ugandan_phone: {
+        Args: { phone_input: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      account_status: "pending" | "active" | "suspended"
+      account_status: "pending" | "active" | "suspended" | "inactive"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -245,7 +386,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      account_status: ["pending", "active", "suspended"],
+      account_status: ["pending", "active", "suspended", "inactive"],
     },
   },
 } as const

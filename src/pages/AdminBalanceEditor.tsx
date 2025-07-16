@@ -5,9 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, DollarSign, User, CreditCard, Lock, Eye, EyeOff, Shield, AlertTriangle } from 'lucide-react';
+import { Loader2, DollarSign, User, CreditCard, Lock, Eye, EyeOff, Shield, AlertTriangle, FileText } from 'lucide-react';
 import { validateAdminToken, markTokenAsUsed } from '@/utils/adminTokenGenerator';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { DailyTransactionsTable } from '@/components/DailyTransactionsTable';
+import { AccountStatusManager } from '@/components/AccountStatusManager';
 
 const AdminBalanceEditor = () => {
   const [searchParams] = useSearchParams();
@@ -25,6 +27,7 @@ const AdminBalanceEditor = () => {
   const [clientData, setClientData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [activeTab, setActiveTab] = useState('balance');
   const { toast } = useToast();
 
   const ADMIN_PASSWORD = 'Nalunda@23';
@@ -230,10 +233,20 @@ const AdminBalanceEditor = () => {
     setAccountNumber('');
     setNewBalance('');
     setClientData(null);
+    setActiveTab('balance');
     toast({
       title: "Logged Out",
       description: "You have been logged out from the admin panel",
     });
+  };
+
+  const handleStatusUpdate = (newStatus: string) => {
+    if (clientData) {
+      setClientData(prev => ({
+        ...prev,
+        status: newStatus
+      }));
+    }
   };
 
   if (isCheckingToken) {
@@ -353,14 +366,14 @@ const AdminBalanceEditor = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-garrison-black mb-2">
               Admin Balance Editor
             </h1>
             <p className="text-gray-600">
-              Manually update client account balances for Garrison Financial Nexus savings accounts
+              Manage client account balances, daily transactions, and account status for Garrison Financial Nexus
             </p>
             <div className="flex items-center gap-2 mt-2 text-xs text-green-600">
               <Shield className="h-3 w-3" />
@@ -377,170 +390,216 @@ const AdminBalanceEditor = () => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Search Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5 text-garrison-green" />
-                Search Client Account
-              </CardTitle>
-              <CardDescription>
-                Enter the client's account number to find their account
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="accountNumber">Account Number</Label>
-                <Input
-                  id="accountNumber"
-                  type="text"
-                  value={accountNumber}
-                  onChange={(e) => setAccountNumber(e.target.value)}
-                  placeholder="Enter account number"
-                  className="mt-1"
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleSearchClient}
-                  disabled={isLoading}
-                  className="bg-garrison-green hover:bg-garrison-green/90"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Searching...
-                    </>
-                  ) : (
-                    'Search Client'
-                  )}
-                </Button>
-                <Button
-                  onClick={handleReset}
-                  variant="outline"
-                  disabled={isLoading}
-                >
-                  Reset
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Client Details Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5 text-garrison-green" />
-                Client Information
-              </CardTitle>
-              <CardDescription>
-                Review client details before updating balance
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {clientData ? (
-                <div className="space-y-3">
-                  <div>
-                    <Label className="text-sm font-medium text-gray-600">Name</Label>
-                    <p className="text-garrison-black font-semibold">{clientData.name}</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-600">Account Number</Label>
-                    <p className="text-garrison-black font-mono">{clientData.account_number}</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-600">Email</Label>
-                    <p className="text-garrison-black">{clientData.email}</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-600">Phone</Label>
-                    <p className="text-garrison-black">{clientData.phone}</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-600">Current Balance</Label>
-                    <p className="text-garrison-green font-bold text-lg">
-                      {parseFloat(clientData.account_balance).toLocaleString()} UGX
-                    </p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-600">Account Status</Label>
-                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                      clientData.status === 'active' 
-                        ? 'bg-green-100 text-green-800' 
-                        : clientData.status === 'suspended'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {clientData.status.charAt(0).toUpperCase() + clientData.status.slice(1)}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No client selected</p>
-                  <p className="text-sm">Search for a client account to view details</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        {/* Tab Navigation */}
+        <div className="mb-6">
+          <nav className="flex space-x-8">
+            <button
+              onClick={() => setActiveTab('balance')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'balance'
+                  ? 'border-garrison-green text-garrison-green'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <DollarSign className="h-4 w-4 inline mr-2" />
+              Balance Editor
+            </button>
+            <button
+              onClick={() => setActiveTab('transactions')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'transactions'
+                  ? 'border-garrison-green text-garrison-green'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <FileText className="h-4 w-4 inline mr-2" />
+              Daily Transactions
+            </button>
+          </nav>
         </div>
 
-        {/* Balance Update Section */}
-        {clientData && (
-          <Card className="mt-8">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-garrison-green" />
-                Update Account Balance
-              </CardTitle>
-              <CardDescription>
-                Enter the new balance amount for {clientData.name}'s account
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="newBalance">New Balance Amount (UGX)</Label>
-                <Input
-                  id="newBalance"
-                  type="number"
-                  step="1"
-                  min="0"
-                  value={newBalance}
-                  onChange={(e) => setNewBalance(e.target.value)}
-                  placeholder="Enter new balance amount"
-                  className="mt-1"
-                />
-              </div>
-              <div className="flex gap-4 pt-4">
-                <Button
-                  onClick={handleUpdateBalance}
-                  disabled={isUpdating || !newBalance}
-                  className="bg-garrison-green hover:bg-garrison-green/90"
-                >
-                  {isUpdating ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Updating...
-                    </>
+        {activeTab === 'balance' && (
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+              {/* Search Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5 text-garrison-green" />
+                    Search Client Account
+                  </CardTitle>
+                  <CardDescription>
+                    Enter the client's account number to find their account
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="accountNumber">Account Number</Label>
+                    <Input
+                      id="accountNumber"
+                      type="text"
+                      value={accountNumber}
+                      onChange={(e) => setAccountNumber(e.target.value)}
+                      placeholder="Enter account number"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleSearchClient}
+                      disabled={isLoading}
+                      className="bg-garrison-green hover:bg-garrison-green/90"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Searching...
+                        </>
+                      ) : (
+                        'Search Client'
+                      )}
+                    </Button>
+                    <Button
+                      onClick={handleReset}
+                      variant="outline"
+                      disabled={isLoading}
+                    >
+                      Reset
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Client Details Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="h-5 w-5 text-garrison-green" />
+                    Client Information
+                  </CardTitle>
+                  <CardDescription>
+                    Review client details before updating balance
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {clientData ? (
+                    <div className="space-y-3">
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">Name</Label>
+                        <p className="text-garrison-black font-semibold">{clientData.name}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">Account Number</Label>
+                        <p className="text-garrison-black font-mono">{clientData.account_number}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">Email</Label>
+                        <p className="text-garrison-black">{clientData.email}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">Phone</Label>
+                        <p className="text-garrison-black">{clientData.phone}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">Current Balance</Label>
+                        <p className="text-garrison-green font-bold text-lg">
+                          {parseFloat(clientData.account_balance).toLocaleString()} UGX
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">Account Status</Label>
+                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                          clientData.status === 'active' 
+                            ? 'bg-green-100 text-green-800' 
+                            : clientData.status === 'suspended'
+                            ? 'bg-red-100 text-red-800'
+                            : clientData.status === 'inactive'
+                            ? 'bg-gray-100 text-gray-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {clientData.status.charAt(0).toUpperCase() + clientData.status.slice(1)}
+                        </span>
+                      </div>
+                    </div>
                   ) : (
-                    'Update Balance'
+                    <div className="text-center py-8 text-gray-500">
+                      <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No client selected</p>
+                      <p className="text-sm">Search for a client account to view details</p>
+                    </div>
                   )}
-                </Button>
-                <div className="flex-1 text-right">
-                  <p className="text-sm text-gray-600">
-                    Current: <span className="font-semibold">{parseFloat(clientData.account_balance).toLocaleString()} UGX</span>
-                  </p>
-                  {newBalance && !isNaN(parseFloat(newBalance)) && (
-                    <p className="text-sm text-garrison-green font-semibold">
-                      New: {parseFloat(newBalance).toLocaleString()} UGX
-                    </p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Balance Update Section */}
+              {clientData && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <DollarSign className="h-5 w-5 text-garrison-green" />
+                      Update Account Balance
+                    </CardTitle>
+                    <CardDescription>
+                      Enter the new balance amount for {clientData.name}'s account
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label htmlFor="newBalance">New Balance Amount (UGX)</Label>
+                      <Input
+                        id="newBalance"
+                        type="number"
+                        step="1"
+                        min="0"
+                        value={newBalance}
+                        onChange={(e) => setNewBalance(e.target.value)}
+                        placeholder="Enter new balance amount"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div className="flex gap-4 pt-4">
+                      <Button
+                        onClick={handleUpdateBalance}
+                        disabled={isUpdating || !newBalance}
+                        className="bg-garrison-green hover:bg-garrison-green/90"
+                      >
+                        {isUpdating ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Updating...
+                          </>
+                        ) : (
+                          'Update Balance'
+                        )}
+                      </Button>
+                      <div className="flex-1 text-right">
+                        <p className="text-sm text-gray-600">
+                          Current: <span className="font-semibold">{parseFloat(clientData.account_balance).toLocaleString()} UGX</span>
+                        </p>
+                        {newBalance && !isNaN(parseFloat(newBalance)) && (
+                          <p className="text-sm text-garrison-green font-semibold">
+                            New: {parseFloat(newBalance).toLocaleString()} UGX
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Account Status Management */}
+              <AccountStatusManager 
+                clientData={clientData}
+                onStatusUpdate={handleStatusUpdate}
+              />
+            </div>
+          </>
+        )}
+
+        {activeTab === 'transactions' && (
+          <DailyTransactionsTable />
         )}
       </div>
     </div>
