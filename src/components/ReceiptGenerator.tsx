@@ -3,6 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { generatePDFReceipt } from '@/utils/pdfReceiptGenerator';
 
 interface ReceiptData {
   company_name: string;
@@ -28,63 +29,17 @@ export const ReceiptGenerator: React.FC<ReceiptGeneratorProps> = ({ receiptData 
 
   const generateReceipt = () => {
     try {
-      const { transaction_details } = receiptData;
+      generatePDFReceipt(receiptData);
       
-      // Create receipt content as plain text (thermal printer style)
-      const receiptContent = `
-========================================
-${receiptData.company_name}
-"${receiptData.motto}"
-========================================
-
-TRANSACTION RECEIPT
-Record No: ${transaction_details.record_number}
-
-Account Number: ${transaction_details.account_number}
-Date: ${new Date(transaction_details.transaction_date).toLocaleDateString('en-GB')}
-Time: ${new Date(transaction_details.transaction_time).toLocaleString('en-UG', {
-        timeZone: 'Africa/Kampala',
-        hour12: false,
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      })}
-
-----------------------------------------
-TRANSACTION DETAILS:
-Amount Deposited: ${transaction_details.amount_deposited.toLocaleString()} UGX
-Amount Withdrawn: ${transaction_details.amount_withdrawn.toLocaleString()} UGX
-Account Balance: ${transaction_details.account_balance.toLocaleString()} UGX
-----------------------------------------
-
-Generated: ${new Date(receiptData.generated_at).toLocaleString('en-UG', {
-        timeZone: 'Africa/Kampala'
-      })}
-
-Thank you for banking with us!
-========================================
-      `.trim();
-
-      // Create and download the receipt file
-      const blob = new Blob([receiptContent], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `receipt-${transaction_details.record_number}-${transaction_details.account_number}.txt`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
       toast({
         title: "Success",
-        description: "Receipt downloaded successfully",
+        description: "Receipt PDF downloaded successfully",
       });
     } catch (error) {
-      console.error('Error generating receipt:', error);
+      console.error('Error generating PDF receipt:', error);
       toast({
         title: "Error",
-        description: "Failed to generate receipt",
+        description: "Failed to generate PDF receipt",
         variant: "destructive",
       });
     }

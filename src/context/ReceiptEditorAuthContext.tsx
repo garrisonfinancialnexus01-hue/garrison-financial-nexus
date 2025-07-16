@@ -50,8 +50,40 @@ export const ReceiptEditorAuthProvider: React.FC<{ children: React.ReactNode }> 
       sessionStorage.removeItem('receiptEditorSession');
     };
 
+    // Clear session when user navigates away from the portal
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        sessionStorage.removeItem('receiptEditorSession');
+        setIsAuthenticated(false);
+        setAdminName(null);
+      }
+    };
+
+    // Clear session when window loses focus
+    const handleBlur = () => {
+      sessionStorage.removeItem('receiptEditorSession');
+      setIsAuthenticated(false);
+      setAdminName(null);
+    };
+
+    // Clear session when user navigates to a different page
+    const handlePopState = () => {
+      sessionStorage.removeItem('receiptEditorSession');
+      setIsAuthenticated(false);
+      setAdminName(null);
+    };
+
     window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleBlur);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleBlur);
+      window.removeEventListener('popstate', handlePopState);
+    };
   }, []);
 
   const signIn = async (name: string, password: string) => {
@@ -59,10 +91,10 @@ export const ReceiptEditorAuthProvider: React.FC<{ children: React.ReactNode }> 
       setIsAuthenticated(true);
       setAdminName(name);
       
-      // Store session with expiration (expires when tab is closed)
+      // Store session with short expiration (only for page refresh protection)
       const session = {
         adminName: name,
-        expires: Date.now() + (24 * 60 * 60 * 1000) // 24 hours max
+        expires: Date.now() + (5 * 60 * 1000) // 5 minutes only for refresh protection
       };
       sessionStorage.setItem('receiptEditorSession', JSON.stringify(session));
       

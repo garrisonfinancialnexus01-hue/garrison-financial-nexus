@@ -160,17 +160,14 @@ const AdminEmailPortal = () => {
 
                 <div className="flex items-center gap-2 text-xs text-amber-600">
                   <Clock className="h-3 w-3" />
-                  <span>Link expires in 24 hours and is single-use</span>
+                  <span>Link expires when session ends and is single-use</span>
                 </div>
               </div>
             )}
 
-            <div className="text-center space-y-2">
+            <div className="text-center">
               <div className="text-xs text-gray-500">
                 Security Notice: Access links are encrypted and time-limited
-              </div>
-              <div className="text-xs text-gray-400">
-                Authorized Email: {AUTHORIZED_EMAIL}
               </div>
             </div>
           </CardContent>
