@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -80,14 +79,12 @@ export const LoanRepaymentReceiptEditor: React.FC = () => {
   };
 
   const handlePrint = useReactToPrint({
-    content: () => receiptRef.current,
+    contentRef: receiptRef,
     documentTitle: `Loan_Repayment_Receipt_${formData.receiptNo}`,
   });
 
   const downloadReceipt = () => {
-    if (receiptRef.current) {
-      handlePrint();
-    }
+    handlePrint();
   };
 
   const handleSignOut = () => {
