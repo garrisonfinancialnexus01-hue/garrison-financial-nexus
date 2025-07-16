@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -102,10 +101,19 @@ export const DailyTransactionsTable = () => {
 
     setIsSaving(true);
     try {
+      // Create receipt data as a plain object that conforms to Json type
       const receiptData = {
         company_name: "Garrison Financial Nexus",
         motto: "Your Gateway To Financial Prosperity",
-        transaction_details: transaction,
+        transaction_details: {
+          record_number: transaction.record_number,
+          account_number: transaction.account_number,
+          amount_deposited: transaction.amount_deposited,
+          amount_withdrawn: transaction.amount_withdrawn,
+          account_balance: transaction.account_balance,
+          transaction_date: transaction.transaction_date,
+          transaction_time: transaction.transaction_time
+        },
         generated_at: new Date().toISOString()
       };
 

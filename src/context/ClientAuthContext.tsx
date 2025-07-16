@@ -10,7 +10,7 @@ interface ClientAccount {
   phone: string;
   nin: string;
   account_balance: number;
-  status: 'pending' | 'active' | 'suspended';
+  status: 'pending' | 'active' | 'suspended' | 'inactive';
 }
 
 interface ClientAuthContextType {
@@ -79,14 +79,30 @@ export const ClientAuthProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         return { error: 'Account is pending activation. Please contact the manager.' };
       }
 
+      if (account.status === 'inactive') {
+        return { error: 'Account is inactive. Please contact the manager.' };
+      }
+
       // Verify password
       if (account.password_hash !== password) {
         return { error: 'Invalid password. Please check your password and try again.' };
       }
 
+      // Create client account object with proper typing
+      const clientAccount: ClientAccount = {
+        id: account.id,
+        account_number: account.account_number,
+        name: account.name,
+        email: account.email,
+        phone: account.phone,
+        nin: account.nin,
+        account_balance: account.account_balance,
+        status: account.status
+      };
+
       // Sign in successful
-      setCurrentClient(account);
-      localStorage.setItem('currentClient', JSON.stringify(account));
+      setCurrentClient(clientAccount);
+      localStorage.setItem('currentClient', JSON.stringify(clientAccount));
       return {};
       
     } catch (error) {
