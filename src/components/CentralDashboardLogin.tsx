@@ -6,12 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useCentralDashboardAuth } from '@/context/CentralDashboardAuthContext';
-import { Lock, Building2 } from 'lucide-react';
+import { Lock, Eye, EyeOff } from 'lucide-react';
 
 const CentralDashboardLogin: React.FC = () => {
   const [adminName, setAdminName] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useCentralDashboardAuth();
   const { toast } = useToast();
 
@@ -42,9 +43,11 @@ const CentralDashboardLogin: React.FC = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
-              <Building2 className="w-8 h-8 text-white" />
-            </div>
+            <img 
+              src="/lovable-uploads/f6733858-0fa4-418e-be92-3ad591579599.png" 
+              alt="Garrison Financial Nexus Logo" 
+              className="w-16 h-16 object-contain" 
+            />
           </div>
           <CardTitle className="text-2xl font-bold">Central Dashboard</CardTitle>
           <CardDescription>
@@ -66,14 +69,30 @@ const CentralDashboardLogin: React.FC = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pr-10"
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </Button>
+              </div>
             </div>
             <Button 
               type="submit" 

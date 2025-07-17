@@ -4,6 +4,10 @@ import { CentralDashboardAuthProvider, useCentralDashboardAuth } from '@/context
 import CentralDashboardLogin from '@/components/CentralDashboardLogin';
 import DashboardOverview from '@/components/DashboardOverview';
 import LendingOperations from '@/components/LendingOperations';
+import StaffManagement from '@/components/StaffManagement';
+import SavingOperations from '@/components/SavingOperations';
+import AdvisoryOperations from '@/components/AdvisoryOperations';
+import CommunicationLog from '@/components/CommunicationLog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
@@ -37,7 +41,11 @@ const DashboardContent: React.FC = () => {
       <header className="border-b bg-card">
         <div className="flex h-16 items-center px-6">
           <div className="flex items-center space-x-2">
-            <Building2 className="h-6 w-6" />
+            <img 
+              src="/lovable-uploads/f6733858-0fa4-418e-be92-3ad591579599.png" 
+              alt="Garrison Financial Nexus Logo" 
+              className="h-8 w-8 object-contain" 
+            />
             <h1 className="text-xl font-bold">Central Dashboard</h1>
           </div>
           
@@ -91,27 +99,19 @@ const DashboardContent: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="saving">
-            <div className="flex items-center justify-center h-64">
-              <p className="text-muted-foreground">Saving Operations - Coming Soon</p>
-            </div>
+            <SavingOperations />
           </TabsContent>
 
           <TabsContent value="advisory">
-            <div className="flex items-center justify-center h-64">
-              <p className="text-muted-foreground">Advisory Operations - Coming Soon</p>
-            </div>
+            <AdvisoryOperations />
           </TabsContent>
 
           <TabsContent value="staff">
-            <div className="flex items-center justify-center h-64">
-              <p className="text-muted-foreground">Staff Performance - Coming Soon</p>
-            </div>
+            <StaffManagement />
           </TabsContent>
 
           <TabsContent value="communication">
-            <div className="flex items-center justify-center h-64">
-              <p className="text-muted-foreground">Communication Log - Coming Soon</p>
-            </div>
+            <CommunicationLog />
           </TabsContent>
         </Tabs>
       </main>
