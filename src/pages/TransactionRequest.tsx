@@ -61,7 +61,7 @@ Please assist me with this ${transactionType}.`;
               onClick={handleContactManager}
               className="w-full bg-green-600 hover:bg-green-700"
             >
-              <img src="/lovable-uploads/cca0085d-a5e4-45a3-958c-e0e66dc68e16.png" alt="WhatsApp" className="h-4 w-4 mr-2" />
+              <img src="/lovable-uploads/662f6364-b595-4467-aa36-f09ffabd796b.png" alt="WhatsApp" className="h-4 w-4 mr-2" />
               Contact Manager on WhatsApp
             </Button>
           </CardContent>

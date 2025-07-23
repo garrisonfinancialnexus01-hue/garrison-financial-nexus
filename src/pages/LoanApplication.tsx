@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -166,7 +167,7 @@ const LoanApplication = () => {
                 onClick={openWhatsApp}
                 className="text-garrison-green border-garrison-green hover:bg-garrison-green hover:text-white"
               >
-                <MessageSquare className="mr-2 h-4 w-4" />
+                <img src="/lovable-uploads/662f6364-b595-4467-aa36-f09ffabd796b.png" alt="WhatsApp" className="mr-2 h-4 w-4" />
                 Contact Manager on WhatsApp
               </Button>
             </div>
