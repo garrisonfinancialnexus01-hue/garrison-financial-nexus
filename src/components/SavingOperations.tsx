@@ -124,25 +124,39 @@ const SavingOperations: React.FC = () => {
 
   const handleCreateAccount = async () => {
     try {
-      const accountNumber = `SAV${String(savingsAccounts.length + 1).padStart(3, '0')}`;
+      // Validate required fields
+      if (!newAccountForm.client_name || !newAccountForm.client_phone || !newAccountForm.initial_deposit) {
+        toast({
+          title: 'Error',
+          description: 'Please fill in all required fields',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      const accountNumber = `SAV${String(savingsAccounts.length + 1).padStart(4, '0')}`;
       
       const { error } = await supabase
         .from('saving_operations')
         .insert([{
           client_name: newAccountForm.client_name,
-          client_nin: newAccountForm.client_nin,
+          client_nin: newAccountForm.client_nin || null,
           client_phone: newAccountForm.client_phone,
-          client_email: newAccountForm.client_email,
+          client_email: newAccountForm.client_email || null,
           account_number: accountNumber,
           account_type: newAccountForm.account_type,
-          initial_deposit: Number(newAccountForm.initial_deposit),
-          current_balance: Number(newAccountForm.initial_deposit),
-          target_amount: Number(newAccountForm.target_amount) || null,
+          initial_deposit: parseFloat(newAccountForm.initial_deposit),
+          current_balance: parseFloat(newAccountForm.initial_deposit),
+          target_amount: newAccountForm.target_amount ? parseFloat(newAccountForm.target_amount) : null,
           target_date: newAccountForm.target_date || null,
-          interest_rate: Number(newAccountForm.interest_rate),
+          interest_rate: parseFloat(newAccountForm.interest_rate),
           saving_frequency: newAccountForm.saving_frequency,
-          total_deposited: Number(newAccountForm.initial_deposit),
-          status: 'active'
+          total_deposited: parseFloat(newAccountForm.initial_deposit),
+          total_withdrawn: 0,
+          interest_earned: 0,
+          missed_contributions: 0,
+          status: 'active',
+          last_deposit_date: new Date().toISOString().split('T')[0]
         }]);
 
       if (error) throw error;
@@ -169,7 +183,7 @@ const SavingOperations: React.FC = () => {
       console.error('Error creating account:', error);
       toast({
         title: 'Error',
-        description: 'Failed to create account',
+        description: 'Failed to create account. Please try again.',
         variant: 'destructive'
       });
     }
@@ -275,7 +289,7 @@ Generated on: ${new Date().toLocaleDateString()}
             </DialogHeader>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label>Client Name</Label>
+                <Label>Client Name *</Label>
                 <Input 
                   value={newAccountForm.client_name}
                   onChange={(e) => setNewAccountForm({...newAccountForm, client_name: e.target.value})}
@@ -291,7 +305,7 @@ Generated on: ${new Date().toLocaleDateString()}
                 />
               </div>
               <div>
-                <Label>Phone</Label>
+                <Label>Phone *</Label>
                 <Input 
                   value={newAccountForm.client_phone}
                   onChange={(e) => setNewAccountForm({...newAccountForm, client_phone: e.target.value})}
@@ -320,7 +334,7 @@ Generated on: ${new Date().toLocaleDateString()}
                 </Select>
               </div>
               <div>
-                <Label>Initial Deposit</Label>
+                <Label>Initial Deposit *</Label>
                 <Input 
                   type="number"
                   value={newAccountForm.initial_deposit}

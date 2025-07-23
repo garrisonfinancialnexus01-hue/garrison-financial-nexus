@@ -39,7 +39,7 @@ const ClientDashboard = () => {
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center">
               <img 
-                src="/lovable-uploads/8514a459-83a5-4a3a-9728-47047e5e465e.png" 
+                src="/lovable-uploads/423e1332-8a9b-447a-9c68-07b08166422d.png" 
                 alt="Garrison Financial Nexus Logo" 
                 className="h-8 w-auto mr-3" 
               />
