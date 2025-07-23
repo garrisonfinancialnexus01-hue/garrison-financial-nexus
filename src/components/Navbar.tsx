@@ -25,7 +25,7 @@ const Navbar = () => {
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center">
               <img 
-                src="/lovable-uploads/423e1332-8a9b-447a-9c68-07b08166422d.png" 
+                src="/lovable-uploads/8514a459-83a5-4a3a-9728-47047e5e465e.png" 
                 alt="Garrison Financial Nexus Logo" 
                 className="h-10 w-auto mr-2" 
               />
@@ -61,7 +61,7 @@ const Navbar = () => {
               className="flex items-center text-garrison-black hover:text-garrison-green font-medium"
             >
               <Users className="h-4 w-4 mr-1" />
-              Clients Accounts
+              Client's Accounts
             </Link>
             <Link to="/about" className="text-garrison-black hover:text-garrison-green font-medium">About</Link>
             <Link to="/contact" className="text-garrison-black hover:text-garrison-green font-medium">Contact</Link>
@@ -104,7 +104,7 @@ const Navbar = () => {
               className="flex items-center px-3 py-2 rounded-md text-base font-medium text-garrison-black hover:text-garrison-green"
             >
               <Users className="h-4 w-4 mr-2" />
-              Clients Accounts
+              Client's Accounts
             </Link>
             <Link to="/about" className="block px-3 py-2 rounded-md text-base font-medium text-garrison-black hover:text-garrison-green">About</Link>
             <Link to="/contact" className="block px-3 py-2 rounded-md text-base font-medium text-garrison-black hover:text-garrison-green">Contact</Link>

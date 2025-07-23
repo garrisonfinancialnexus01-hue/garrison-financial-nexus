@@ -44,7 +44,7 @@ const CentralDashboardLogin: React.FC = () => {
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <img 
-              src="/lovable-uploads/423e1332-8a9b-447a-9c68-07b08166422d.png" 
+              src="/lovable-uploads/f6733858-0fa4-418e-be92-3ad591579599.png" 
               alt="Garrison Financial Nexus Logo" 
               className="w-16 h-16 object-contain" 
             />
