@@ -17,56 +17,36 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 interface SavingsAccount {
   id: string;
   client_name: string;
-  client_nin: string;
+  client_nin: string | null;
   client_phone: string;
-  client_email: string;
-  account_number: string;
+  client_email: string | null;
   account_type: string;
-  status: 'active' | 'inactive';
+  status: string;
   initial_deposit: number;
   current_balance: number;
-  target_amount: number;
-  target_date: string;
+  target_amount: number | null;
+  target_date: string | null;
   interest_rate: number;
-  saving_frequency: string;
-  total_deposited: number;
-  total_withdrawn: number;
-  interest_earned: number;
-  missed_contributions: number;
-  last_deposit_date: string;
+  maturity_date: string | null;
+  withdrawal_frequency: string | null;
+  notes: string | null;
   created_at: string;
   updated_at: string;
-}
-
-interface SavingsTransaction {
-  id: string;
-  savings_account_id: string;
-  transaction_date: string;
-  transaction_type: 'deposit' | 'withdrawal';
-  amount: number;
-  balance_after: number;
-  payment_method: string;
-  reference: string;
-  notes: string;
+  // Migration added columns
+  account_number?: string | null;
+  last_deposit_date?: string | null;
+  saving_frequency?: string | null;
+  total_deposited?: number;
+  total_withdrawn?: number;
+  interest_earned?: number;
+  missed_contributions?: number;
 }
 
 const SavingOperations: React.FC = () => {
   const [savingsAccounts, setSavingsAccounts] = useState<SavingsAccount[]>([]);
-  const [transactions, setTransactions] = useState<SavingsTransaction[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<string>('');
   const [editingAccount, setEditingAccount] = useState<string | null>(null);
-  const [editingTransaction, setEditingTransaction] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<SavingsAccount>>({});
-  const [transactionForm, setTransactionForm] = useState<Partial<SavingsTransaction>>({});
-  const [newTransactionForm, setNewTransactionForm] = useState({
-    account_id: '',
-    transaction_type: 'deposit',
-    amount: '',
-    payment_method: 'Cash',
-    reference: '',
-    notes: '',
-    date: new Date().toISOString().split('T')[0]
-  });
   const [isNewAccountOpen, setIsNewAccountOpen] = useState(false);
   const [newAccountForm, setNewAccountForm] = useState({
     client_name: '',
@@ -85,14 +65,10 @@ const SavingOperations: React.FC = () => {
 
   const accountTypeOptions = ['Daily Savings', 'Fixed Deposit', 'Target Savings', 'Group Savings', 'Youth Savings'];
   const frequencyOptions = ['Daily', 'Weekly', 'Monthly', 'Quarterly', 'Annually'];
-  const paymentMethods = ['Cash', 'Mobile Money', 'Bank Transfer', 'Cheque'];
 
   useEffect(() => {
     fetchSavingsAccounts();
-    if (selectedAccount) {
-      fetchTransactions(selectedAccount);
-    }
-  }, [selectedAccount]);
+  }, []);
 
   const fetchSavingsAccounts = async () => {
     try {
@@ -112,26 +88,6 @@ const SavingOperations: React.FC = () => {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchTransactions = async (accountId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('savings_transactions')
-        .select('*')
-        .eq('savings_account_id', accountId)
-        .order('transaction_date', { ascending: false });
-
-      if (error) throw error;
-      setTransactions(data || []);
-    } catch (error) {
-      console.error('Error fetching transactions:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch transactions',
-        variant: 'destructive'
-      });
     }
   };
 
@@ -219,87 +175,6 @@ const SavingOperations: React.FC = () => {
     }
   };
 
-  const handleRecordTransaction = async () => {
-    if (!newTransactionForm.account_id || !newTransactionForm.amount) return;
-
-    try {
-      const account = savingsAccounts.find(acc => acc.id === newTransactionForm.account_id);
-      if (!account) return;
-
-      const amount = Number(newTransactionForm.amount);
-      const isDeposit = newTransactionForm.transaction_type === 'deposit';
-      const newBalance = isDeposit ? account.current_balance + amount : account.current_balance - amount;
-
-      if (!isDeposit && newBalance < 0) {
-        toast({
-          title: 'Error',
-          description: 'Insufficient balance for withdrawal',
-          variant: 'destructive'
-        });
-        return;
-      }
-
-      const { error: transactionError } = await supabase
-        .from('savings_transactions')
-        .insert([{
-          savings_account_id: newTransactionForm.account_id,
-          transaction_date: newTransactionForm.date,
-          transaction_type: newTransactionForm.transaction_type,
-          amount: amount,
-          balance_after: newBalance,
-          payment_method: newTransactionForm.payment_method,
-          reference: newTransactionForm.reference,
-          notes: newTransactionForm.notes
-        }]);
-
-      if (transactionError) throw transactionError;
-
-      const updateData: any = {
-        current_balance: newBalance,
-        updated_at: new Date().toISOString()
-      };
-
-      if (isDeposit) {
-        updateData.total_deposited = account.total_deposited + amount;
-        updateData.last_deposit_date = newTransactionForm.date;
-      } else {
-        updateData.total_withdrawn = account.total_withdrawn + amount;
-      }
-
-      const { error: accountError } = await supabase
-        .from('saving_operations')
-        .update(updateData)
-        .eq('id', newTransactionForm.account_id);
-
-      if (accountError) throw accountError;
-
-      await fetchSavingsAccounts();
-      await fetchTransactions(newTransactionForm.account_id);
-      
-      setNewTransactionForm({
-        account_id: '',
-        transaction_type: 'deposit',
-        amount: '',
-        payment_method: 'Cash',
-        reference: '',
-        notes: '',
-        date: new Date().toISOString().split('T')[0]
-      });
-
-      toast({
-        title: 'Success',
-        description: 'Transaction recorded successfully'
-      });
-    } catch (error) {
-      console.error('Error recording transaction:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to record transaction',
-        variant: 'destructive'
-      });
-    }
-  };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-UG', {
       style: 'currency',
@@ -308,7 +183,7 @@ const SavingOperations: React.FC = () => {
     }).format(amount);
   };
 
-  const calculateProgress = (current: number, goal?: number) => {
+  const calculateProgress = (current: number, goal?: number | null) => {
     if (!goal) return 0;
     return Math.min((current / goal) * 100, 100);
   };
@@ -341,14 +216,14 @@ const SavingOperations: React.FC = () => {
 
   const generateAccountReport = (account: SavingsAccount) => {
     const reportData = {
-      accountNumber: account.account_number,
+      accountNumber: account.account_number || 'N/A',
       clientName: account.client_name,
       currentBalance: formatCurrency(account.current_balance),
       targetAmount: account.target_amount ? formatCurrency(account.target_amount) : 'N/A',
       interestRate: `${account.interest_rate}%`,
-      totalDeposited: formatCurrency(account.total_deposited),
-      totalWithdrawn: formatCurrency(account.total_withdrawn),
-      interestEarned: formatCurrency(account.interest_earned)
+      totalDeposited: formatCurrency(account.total_deposited || 0),
+      totalWithdrawn: formatCurrency(account.total_withdrawn || 0),
+      interestEarned: formatCurrency(account.interest_earned || 0)
     };
 
     const reportContent = `
@@ -370,7 +245,7 @@ Generated on: ${new Date().toLocaleDateString()}
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `savings-report-${account.account_number}.txt`;
+    a.download = `savings-report-${account.account_number || account.id}.txt`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -505,7 +380,6 @@ Generated on: ${new Date().toLocaleDateString()}
         <TabsList>
           <TabsTrigger value="overview">Account Overview</TabsTrigger>
           <TabsTrigger value="details">Account Details</TabsTrigger>
-          <TabsTrigger value="transactions">Transactions</TabsTrigger>
           <TabsTrigger value="interest">Interest & Growth</TabsTrigger>
           <TabsTrigger value="plans">Savings Plans</TabsTrigger>
         </TabsList>
@@ -532,7 +406,7 @@ Generated on: ${new Date().toLocaleDateString()}
                   {savingsAccounts.map((account) => (
                     <TableRow key={account.id}>
                       <TableCell className="font-medium">{account.client_name}</TableCell>
-                      <TableCell className="font-mono">{account.account_number}</TableCell>
+                      <TableCell className="font-mono">{account.account_number || 'N/A'}</TableCell>
                       <TableCell>{account.account_type}</TableCell>
                       <TableCell className="font-mono">{formatCurrency(account.current_balance)}</TableCell>
                       <TableCell>{account.last_deposit_date || 'N/A'}</TableCell>
@@ -543,9 +417,6 @@ Generated on: ${new Date().toLocaleDateString()}
                       </TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
-                          <Button size="sm" variant="outline" onClick={() => setSelectedAccount(account.id)}>
-                            <DollarSign className="w-4 h-4" />
-                          </Button>
                           <Button size="sm" variant="outline" onClick={() => startEditing(account)}>
                             <Edit className="w-4 h-4" />
                           </Button>
@@ -600,7 +471,7 @@ Generated on: ${new Date().toLocaleDateString()}
                           onChange={(e) => setEditForm({...editForm, account_number: e.target.value})}
                         />
                       ) : (
-                        <p className="font-mono font-medium">{account.account_number}</p>
+                        <p className="font-mono font-medium">{account.account_number || 'N/A'}</p>
                       )}
                     </div>
                     <div>
@@ -682,148 +553,6 @@ Generated on: ${new Date().toLocaleDateString()}
           </div>
         </TabsContent>
 
-        <TabsContent value="transactions">
-          <Card>
-            <CardHeader>
-              <CardTitle>Transaction History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-4">
-                <Label>Select Account</Label>
-                <Select value={selectedAccount} onValueChange={setSelectedAccount}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select account to view transactions" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {savingsAccounts.map(account => (
-                      <SelectItem key={account.id} value={account.id}>
-                        {account.client_name} - {account.account_number}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {selectedAccount && (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Balance After</TableHead>
-                      <TableHead>Payment Method</TableHead>
-                      <TableHead>Reference</TableHead>
-                      <TableHead>Notes</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {transactions.map((transaction) => (
-                      <TableRow key={transaction.id}>
-                        <TableCell>{transaction.transaction_date}</TableCell>
-                        <TableCell>
-                          <Badge variant={transaction.transaction_type === 'deposit' ? 'default' : 'secondary'}>
-                            {transaction.transaction_type}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-mono">
-                          {transaction.transaction_type === 'deposit' ? '+' : '-'}{formatCurrency(transaction.amount)}
-                        </TableCell>
-                        <TableCell className="font-mono">{formatCurrency(transaction.balance_after)}</TableCell>
-                        <TableCell>{transaction.payment_method}</TableCell>
-                        <TableCell>{transaction.reference}</TableCell>
-                        <TableCell>{transaction.notes}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-
-              <div className="mt-6 border rounded-lg p-4 bg-gray-50">
-                <h4 className="font-medium mb-4">Record New Transaction</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div>
-                    <Label>Client Account</Label>
-                    <Select value={newTransactionForm.account_id} onValueChange={(value) => setNewTransactionForm({...newTransactionForm, account_id: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select account" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {savingsAccounts.map(account => (
-                          <SelectItem key={account.id} value={account.id}>
-                            {account.client_name} - {account.account_number}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Transaction Type</Label>
-                    <Select value={newTransactionForm.transaction_type} onValueChange={(value) => setNewTransactionForm({...newTransactionForm, transaction_type: value})}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="deposit">Deposit</SelectItem>
-                        <SelectItem value="withdrawal">Withdrawal</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Amount</Label>
-                    <Input 
-                      type="number" 
-                      value={newTransactionForm.amount}
-                      onChange={(e) => setNewTransactionForm({...newTransactionForm, amount: e.target.value})}
-                      placeholder="Enter amount" 
-                    />
-                  </div>
-                  <div>
-                    <Label>Payment Method</Label>
-                    <Select value={newTransactionForm.payment_method} onValueChange={(value) => setNewTransactionForm({...newTransactionForm, payment_method: value})}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {paymentMethods.map(method => (
-                          <SelectItem key={method} value={method}>{method}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Reference</Label>
-                    <Input 
-                      value={newTransactionForm.reference}
-                      onChange={(e) => setNewTransactionForm({...newTransactionForm, reference: e.target.value})}
-                      placeholder="Transaction reference" 
-                    />
-                  </div>
-                  <div>
-                    <Label>Date</Label>
-                    <Input 
-                      type="date" 
-                      value={newTransactionForm.date}
-                      onChange={(e) => setNewTransactionForm({...newTransactionForm, date: e.target.value})}
-                    />
-                  </div>
-                  <div className="md:col-span-2 lg:col-span-3">
-                    <Label>Notes</Label>
-                    <Textarea 
-                      value={newTransactionForm.notes}
-                      onChange={(e) => setNewTransactionForm({...newTransactionForm, notes: e.target.value})}
-                      placeholder="Transaction notes..." 
-                    />
-                  </div>
-                </div>
-                <Button className="mt-4" onClick={handleRecordTransaction}>
-                  Record Transaction
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         <TabsContent value="interest">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {savingsAccounts.map((account) => (
@@ -841,36 +570,14 @@ Generated on: ${new Date().toLocaleDateString()}
                       <div className="text-sm text-gray-600">Interest Rate</div>
                     </div>
                     <div className="text-center p-4 bg-blue-50 rounded-lg">
-                      <div className="text-lg font-bold text-blue-600">{formatCurrency(account.interest_earned)}</div>
+                      <div className="text-lg font-bold text-blue-600">{formatCurrency(account.interest_earned || 0)}</div>
                       <div className="text-sm text-gray-600">Interest Earned</div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <div>
-                      <Label>Update Interest Rate (%)</Label>
-                      <Input 
-                        type="number"
-                        placeholder="Enter new interest rate"
-                        onChange={(e) => setEditForm({...editForm, interest_rate: Number(e.target.value)})}
-                      />
-                    </div>
-                    <div>
-                      <Label>Update Interest Earned</Label>
-                      <Input 
-                        type="number"
-                        placeholder="Enter interest earned"
-                        onChange={(e) => setEditForm({...editForm, interest_earned: Number(e.target.value)})}
-                      />
                     </div>
                   </div>
                   
                   <Button 
                     className="w-full"
-                    onClick={() => {
-                      setEditingAccount(account.id);
-                      handleSaveAccount();
-                    }}
+                    onClick={() => startEditing(account)}
                   >
                     Update Interest Settings
                   </Button>
@@ -905,11 +612,11 @@ Generated on: ${new Date().toLocaleDateString()}
                       <div className="text-sm text-gray-600">Progress to Goal</div>
                     </div>
                     <div className="text-center p-4 bg-orange-50 rounded-lg">
-                      <div className="text-lg font-bold text-orange-600">{account.missed_contributions}</div>
+                      <div className="text-lg font-bold text-orange-600">{account.missed_contributions || 0}</div>
                       <div className="text-sm text-gray-600">Missed Contributions</div>
                     </div>
                     <div className="text-center p-4 bg-purple-50 rounded-lg">
-                      <div className="text-lg font-bold text-purple-600">{account.saving_frequency}</div>
+                      <div className="text-lg font-bold text-purple-600">{account.saving_frequency || 'N/A'}</div>
                       <div className="text-sm text-gray-600">Frequency</div>
                     </div>
                   </div>
