@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      advisory_clients: {
+        Row: {
+          client_id: string
+          client_name: string
+          contact_info: string
+          created_at: string
+          email: string | null
+          financial_stage: string
+          id: string
+          investment_preference: string
+          knowledge_level: string
+          last_session_date: string | null
+          occupation: string
+          risk_tolerance: string
+          status: string
+          total_sessions: number | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          client_name: string
+          contact_info: string
+          created_at?: string
+          email?: string | null
+          financial_stage: string
+          id?: string
+          investment_preference?: string
+          knowledge_level?: string
+          last_session_date?: string | null
+          occupation: string
+          risk_tolerance?: string
+          status?: string
+          total_sessions?: number | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          client_name?: string
+          contact_info?: string
+          created_at?: string
+          email?: string | null
+          financial_stage?: string
+          id?: string
+          investment_preference?: string
+          knowledge_level?: string
+          last_session_date?: string | null
+          occupation?: string
+          risk_tolerance?: string
+          status?: string
+          total_sessions?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       advisory_operations: {
         Row: {
           advisor_name: string
@@ -76,6 +130,62 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      advisory_sessions: {
+        Row: {
+          action_plan: string | null
+          advice_given: string | null
+          advisor_name: string
+          advisory_type: string
+          client_id: string | null
+          created_at: string
+          follow_up_date: string | null
+          id: string
+          notes: string | null
+          session_date: string
+          status: string
+          supporting_materials: string | null
+          updated_at: string
+        }
+        Insert: {
+          action_plan?: string | null
+          advice_given?: string | null
+          advisor_name: string
+          advisory_type: string
+          client_id?: string | null
+          created_at?: string
+          follow_up_date?: string | null
+          id?: string
+          notes?: string | null
+          session_date: string
+          status?: string
+          supporting_materials?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action_plan?: string | null
+          advice_given?: string | null
+          advisor_name?: string
+          advisory_type?: string
+          client_id?: string | null
+          created_at?: string
+          follow_up_date?: string | null
+          id?: string
+          notes?: string | null
+          session_date?: string
+          status?: string
+          supporting_materials?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advisory_sessions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "advisory_clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       central_dashboard_overview: {
         Row: {
@@ -274,6 +384,91 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      financial_goals: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          goal_amount: number
+          goal_type: string
+          id: string
+          progress: number | null
+          status: string
+          target_date: string
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          goal_amount: number
+          goal_type: string
+          id?: string
+          progress?: number | null
+          status?: string
+          target_date: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          goal_amount?: number
+          goal_type?: string
+          id?: string
+          progress?: number | null
+          status?: string
+          target_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_goals_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "advisory_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      follow_up_records: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          follow_up_date: string
+          id: string
+          outcome_notes: string | null
+          purpose: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          follow_up_date: string
+          id?: string
+          outcome_notes?: string | null
+          purpose: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          follow_up_date?: string
+          id?: string
+          outcome_notes?: string | null
+          purpose?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follow_up_records_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "advisory_clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lending_operations: {
         Row: {
@@ -502,6 +697,195 @@ export type Database = {
         }
         Relationships: []
       }
+      savings_accounts: {
+        Row: {
+          account_number: string
+          account_type: string
+          client_id: string
+          client_name: string
+          contact_details: string
+          created_at: string
+          current_balance: number | null
+          id: string
+          initial_deposit: number | null
+          interest_earned: number | null
+          interest_rate: number
+          maturity_date: string | null
+          saving_frequency: string
+          savings_goal: number | null
+          start_date: string
+          status: string
+          total_deposited: number | null
+          total_withdrawn: number | null
+          updated_at: string
+        }
+        Insert: {
+          account_number: string
+          account_type: string
+          client_id: string
+          client_name: string
+          contact_details: string
+          created_at?: string
+          current_balance?: number | null
+          id?: string
+          initial_deposit?: number | null
+          interest_earned?: number | null
+          interest_rate?: number
+          maturity_date?: string | null
+          saving_frequency: string
+          savings_goal?: number | null
+          start_date: string
+          status?: string
+          total_deposited?: number | null
+          total_withdrawn?: number | null
+          updated_at?: string
+        }
+        Update: {
+          account_number?: string
+          account_type?: string
+          client_id?: string
+          client_name?: string
+          contact_details?: string
+          created_at?: string
+          current_balance?: number | null
+          id?: string
+          initial_deposit?: number | null
+          interest_earned?: number | null
+          interest_rate?: number
+          maturity_date?: string | null
+          saving_frequency?: string
+          savings_goal?: number | null
+          start_date?: string
+          status?: string
+          total_deposited?: number | null
+          total_withdrawn?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      savings_interest_settings: {
+        Row: {
+          account_id: string
+          admin_notes: string | null
+          calculation_method: string
+          created_at: string
+          id: string
+          interest_period: string
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          admin_notes?: string | null
+          calculation_method?: string
+          created_at?: string
+          id?: string
+          interest_period?: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          admin_notes?: string | null
+          calculation_method?: string
+          created_at?: string
+          id?: string
+          interest_period?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "savings_interest_settings_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "savings_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      savings_plans: {
+        Row: {
+          account_id: string
+          advisory_suggestions: string | null
+          created_at: string
+          id: string
+          missed_contributions: number | null
+          next_deposit_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          advisory_suggestions?: string | null
+          created_at?: string
+          id?: string
+          missed_contributions?: number | null
+          next_deposit_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          advisory_suggestions?: string | null
+          created_at?: string
+          id?: string
+          missed_contributions?: number | null
+          next_deposit_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "savings_plans_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "savings_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      savings_transactions: {
+        Row: {
+          account_id: string
+          amount: number
+          balance_after: number
+          created_at: string
+          id: string
+          notes: string | null
+          payment_method: string
+          reference_number: string | null
+          transaction_date: string
+          transaction_type: string
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          balance_after: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_method: string
+          reference_number?: string | null
+          transaction_date: string
+          transaction_type: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string
+          reference_number?: string | null
+          transaction_date?: string
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "savings_transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "savings_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       staff_performance: {
         Row: {
           advisory_sessions: number | null
@@ -673,6 +1057,10 @@ export type Database = {
     }
     Functions: {
       generate_receipt_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_savings_account_number: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
