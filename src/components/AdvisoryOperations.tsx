@@ -21,12 +21,12 @@ interface AdvisoryClient {
   email?: string;
   occupation: string;
   financial_stage: string;
-  risk_tolerance: 'low' | 'moderate' | 'high';
-  investment_preference: 'safe' | 'balanced' | 'aggressive';
-  knowledge_level: 'beginner' | 'intermediate' | 'advanced';
+  risk_tolerance: string;
+  investment_preference: string;
+  knowledge_level: string;
   total_sessions: number;
   last_session_date: string;
-  status: 'active' | 'pending' | 'completed';
+  status: string;
   credit_behavior_notes?: string;
   last_risk_assessment_date?: string;
 }
@@ -42,7 +42,7 @@ interface AdvisorySession {
   supporting_materials?: string;
   notes: string;
   follow_up_date?: string;
-  status: 'scheduled' | 'completed' | 'cancelled';
+  status: string;
 }
 
 interface FinancialGoal {
@@ -52,7 +52,7 @@ interface FinancialGoal {
   goal_amount: number;
   target_date: string;
   progress: number;
-  status: 'active' | 'achieved' | 'paused';
+  status: string;
 }
 
 interface FollowUpRecord {
@@ -60,7 +60,7 @@ interface FollowUpRecord {
   client_id: string;
   follow_up_date: string;
   purpose: string;
-  status: 'pending' | 'completed' | 'cancelled';
+  status: string;
   outcome_notes?: string;
 }
 
@@ -97,10 +97,10 @@ const AdvisoryOperations: React.FC = () => {
       if (goalsRes.error) throw goalsRes.error;
       if (followUpsRes.error) throw followUpsRes.error;
 
-      setClients(clientsRes.data || []);
-      setSessions(sessionsRes.data || []);
-      setGoals(goalsRes.data || []);
-      setFollowUps(followUpsRes.data || []);
+      setClients(clientsRes.data as AdvisoryClient[] || []);
+      setSessions(sessionsRes.data as AdvisorySession[] || []);
+      setGoals(goalsRes.data as FinancialGoal[] || []);
+      setFollowUps(followUpsRes.data as FollowUpRecord[] || []);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast({
@@ -172,7 +172,7 @@ const AdvisoryOperations: React.FC = () => {
       const { error: updateError } = await supabase
         .from('advisory_clients')
         .update({
-          total_sessions: supabase.raw('total_sessions + 1'),
+          total_sessions: clients.find(c => c.id === sessionData.client_id)?.total_sessions + 1 || 1,
           last_session_date: sessionData.session_date
         })
         .eq('id', sessionData.client_id);
@@ -942,10 +942,13 @@ const AdvisoryOperations: React.FC = () => {
                   <div>
                     <Label>Most Popular Advisory Type</Label>
                     <p className="text-lg font-medium">
-                      {sessions.reduce((acc, session) => {
-                        acc[session.advisory_type] = (acc[session.advisory_type] || 0) + 1;
-                        return acc;
-                      }, {} as Record<string, number>).toString().split(',')[0] || 'N/A'}
+                      {sessions.length > 0 ? 
+                        Object.entries(sessions.reduce((acc, session) => {
+                          acc[session.advisory_type] = (acc[session.advisory_type] || 0) + 1;
+                          return acc;
+                        }, {} as Record<string, number>)).sort(([,a], [,b]) => b - a)[0]?.[0] || 'N/A'
+                        : 'N/A'
+                      }
                     </p>
                   </div>
                   <div>
