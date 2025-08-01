@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ClientAuthProvider } from "./context/ClientAuthContext";
 import Layout from "./components/Layout";
 import Index from "./pages/Index";
 import About from "./pages/About";
@@ -40,36 +41,38 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/central-dashboard" element={<CentralDashboard />} />
-          <Route element={<Layout />}>
-            <Route path="/" element={<Index />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/money-lending" element={<MoneyLending />} />
-            <Route path="/money-saving" element={<MoneySaving />} />
-            <Route path="/financial-advisory" element={<FinancialAdvisory />} />
-            <Route path="/wealth-management" element={<WealthManagement />} />
-            <Route path="/loan-application" element={<LoanApplication />} />
-            <Route path="/loan-details" element={<LoanDetails />} />
-            <Route path="/client-auth" element={<ClientAuth />} />
-            <Route path="/client-signup" element={<ClientSignup />} />
-            <Route path="/signup-success" element={<SignupSuccess />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/password-reset-success" element={<PasswordResetSuccess />} />
-            <Route path="/client-dashboard" element={<ClientDashboard />} />
-            <Route path="/account-activation" element={<AccountActivation />} />
-            <Route path="/verify-mobile-otp" element={<VerifyMobileOtp />} />
-            <Route path="/verify-reset-code" element={<VerifyResetCode />} />
-            <Route path="/transaction-request" element={<TransactionRequest />} />
-            <Route path="/repay-loan" element={<RepayLoan />} />
-            <Route path="/settle-your-debt" element={<SettleYourDebt />} />
-            <Route path="/admin-balance-editor" element={<AdminBalanceEditor />} />
-            <Route path="/loan-repayment-receipt-portal" element={<LoanRepaymentReceiptPortal />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
+        <ClientAuthProvider>
+          <Routes>
+            <Route path="/central-dashboard" element={<CentralDashboard />} />
+            <Route element={<Layout />}>
+              <Route path="/" element={<Index />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/money-lending" element={<MoneyLending />} />
+              <Route path="/money-saving" element={<MoneySaving />} />
+              <Route path="/financial-advisory" element={<FinancialAdvisory />} />
+              <Route path="/wealth-management" element={<WealthManagement />} />
+              <Route path="/loan-application" element={<LoanApplication />} />
+              <Route path="/loan-details" element={<LoanDetails />} />
+              <Route path="/client-auth" element={<ClientAuth />} />
+              <Route path="/client-signup" element={<ClientSignup />} />
+              <Route path="/signup-success" element={<SignupSuccess />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/password-reset-success" element={<PasswordResetSuccess />} />
+              <Route path="/client-dashboard" element={<ClientDashboard />} />
+              <Route path="/account-activation" element={<AccountActivation />} />
+              <Route path="/verify-mobile-otp" element={<VerifyMobileOtp />} />
+              <Route path="/verify-reset-code" element={<VerifyResetCode />} />
+              <Route path="/transaction-request" element={<TransactionRequest />} />
+              <Route path="/repay-loan" element={<RepayLoan />} />
+              <Route path="/settle-your-debt" element={<SettleYourDebt />} />
+              <Route path="/admin-balance-editor" element={<AdminBalanceEditor />} />
+              <Route path="/loan-repayment-receipt-portal" element={<LoanRepaymentReceiptPortal />} />
+              <Route path="*" element={<NotFound />} />
+            </Route>
+          </Routes>
+        </ClientAuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
