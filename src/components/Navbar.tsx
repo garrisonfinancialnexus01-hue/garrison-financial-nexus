@@ -10,6 +10,10 @@ const Navbar = () => {
     setIsOpen(!isOpen);
   };
 
+  const closeMenu = () => {
+    setIsOpen(false);
+  };
+
   return (
     <nav className="bg-white shadow-md">
       <div className="marquee-container bg-primary text-white py-2 overflow-hidden">
@@ -43,19 +47,16 @@ const Navbar = () => {
                   <Link to="/money-saving" className="block px-4 py-2 text-sm text-gray-700 hover:bg-garrison-light hover:text-garrison-green" role="menuitem">Money Saving</Link>
                   <Link to="/financial-advisory" className="block px-4 py-2 text-sm text-gray-700 hover:bg-garrison-light hover:text-garrison-green" role="menuitem">Financial Advisory</Link>
                   <Link to="/wealth-management" className="block px-4 py-2 text-sm text-gray-700 hover:bg-garrison-light hover:text-garrison-green" role="menuitem">Wealth Management</Link>
-                  <Link 
-                    to="/repay-loan"
-                    className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-garrison-light hover:text-garrison-green" 
-                    role="menuitem"
-                  >
-                    <span className="flex items-center">
-                      <MessageSquare className="h-4 w-4 mr-2" />
-                      Repay Your Loan
-                    </span>
-                  </Link>
                 </div>
               </div>
             </div>
+            <Link 
+              to="/repay-loan"
+              className="flex items-center text-garrison-black hover:text-garrison-green font-medium"
+            >
+              <MessageSquare className="h-4 w-4 mr-1" />
+              Repay Your Loan
+            </Link>
             <Link 
               to="/client-auth" 
               className="flex items-center text-garrison-black hover:text-garrison-green font-medium"
@@ -82,32 +83,76 @@ const Navbar = () => {
       {isOpen && (
         <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <Link to="/" className="block px-3 py-2 rounded-md text-base font-medium text-garrison-black hover:text-garrison-green">Home</Link>
+            <Link 
+              to="/" 
+              className="block px-3 py-2 rounded-md text-base font-medium text-garrison-black hover:text-garrison-green"
+              onClick={closeMenu}
+            >
+              Home
+            </Link>
             <div className="block px-3 py-2 rounded-md text-base font-medium text-garrison-black">
               <span>Services</span>
               <div className="pl-4 mt-2 space-y-2">
-                <Link to="/money-lending" className="block px-3 py-2 rounded-md text-sm text-garrison-black hover:text-garrison-green">Money Lending</Link>
-                <Link to="/money-saving" className="block px-3 py-2 rounded-md text-sm text-garrison-black hover:text-garrison-green">Money Saving</Link>
-                <Link to="/financial-advisory" className="block px-3 py-2 rounded-md text-sm text-garrison-black hover:text-garrison-green">Financial Advisory</Link>
-                <Link to="/wealth-management" className="block px-3 py-2 rounded-md text-sm text-garrison-black hover:text-garrison-green">Wealth Management</Link>
                 <Link 
-                  to="/repay-loan"
-                  className="flex items-center px-3 py-2 rounded-md text-sm text-garrison-black hover:text-garrison-green"
+                  to="/money-lending" 
+                  className="block px-3 py-2 rounded-md text-sm text-garrison-black hover:text-garrison-green"
+                  onClick={closeMenu}
                 >
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  Repay Your Loan
+                  Money Lending
+                </Link>
+                <Link 
+                  to="/money-saving" 
+                  className="block px-3 py-2 rounded-md text-sm text-garrison-black hover:text-garrison-green"
+                  onClick={closeMenu}
+                >
+                  Money Saving
+                </Link>
+                <Link 
+                  to="/financial-advisory" 
+                  className="block px-3 py-2 rounded-md text-sm text-garrison-black hover:text-garrison-green"
+                  onClick={closeMenu}
+                >
+                  Financial Advisory
+                </Link>
+                <Link 
+                  to="/wealth-management" 
+                  className="block px-3 py-2 rounded-md text-sm text-garrison-black hover:text-garrison-green"
+                  onClick={closeMenu}
+                >
+                  Wealth Management
                 </Link>
               </div>
             </div>
             <Link 
+              to="/repay-loan"
+              className="flex items-center px-3 py-2 rounded-md text-base font-medium text-garrison-black hover:text-garrison-green"
+              onClick={closeMenu}
+            >
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Repay Your Loan
+            </Link>
+            <Link 
               to="/client-auth" 
               className="flex items-center px-3 py-2 rounded-md text-base font-medium text-garrison-black hover:text-garrison-green"
+              onClick={closeMenu}
             >
               <Users className="h-4 w-4 mr-2" />
               Clients Accounts
             </Link>
-            <Link to="/about" className="block px-3 py-2 rounded-md text-base font-medium text-garrison-black hover:text-garrison-green">About</Link>
-            <Link to="/contact" className="block px-3 py-2 rounded-md text-base font-medium text-garrison-black hover:text-garrison-green">Contact</Link>
+            <Link 
+              to="/about" 
+              className="block px-3 py-2 rounded-md text-base font-medium text-garrison-black hover:text-garrison-green"
+              onClick={closeMenu}
+            >
+              About
+            </Link>
+            <Link 
+              to="/contact" 
+              className="block px-3 py-2 rounded-md text-base font-medium text-garrison-black hover:text-garrison-green"
+              onClick={closeMenu}
+            >
+              Contact
+            </Link>
           </div>
         </div>
       )}

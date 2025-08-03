@@ -3,6 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, TrendingUp, Wallet, Building, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { NeonButton } from '@/components/ui/neon-button';
 
 const Index = () => {
   const openWhatsApp = () => {
@@ -43,9 +44,9 @@ const Index = () => {
                 <p className="text-gray-600 mb-4">Estimate your potential savings or loan payments.</p>
                 <div className="flex justify-center">
                   <Link to="/loan-application">
-                    <Button className="bg-garrison-green text-white hover:bg-green-700">
+                    <NeonButton>
                       Calculate Now
-                    </Button>
+                    </NeonButton>
                   </Link>
                 </div>
               </div>

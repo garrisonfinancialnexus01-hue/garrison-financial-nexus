@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Phone, Mail, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -23,7 +22,7 @@ const Contact = () => {
                 <MapPin className="h-6 w-6 text-garrison-green mr-4" />
                 <div>
                   <h3 className="font-semibold">Office Location</h3>
-                  <p className="text-gray-600">Kisaasi, Kampala, Uganda</p>
+                  <p className="text-gray-600">Mattuga, Uganda</p>
                 </div>
               </div>
               

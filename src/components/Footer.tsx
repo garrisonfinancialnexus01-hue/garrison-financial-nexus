@@ -37,7 +37,7 @@ const Footer = () => {
             <div className="space-y-2">
               <p className="flex items-center text-sm">
                 <Home className="mr-2 h-5 w-5" />
-                Kisaasi, Kampala, Uganda
+                Mattuga, Uganda
               </p>
               <p className="flex items-center text-sm">
                 <Phone className="mr-2 h-5 w-5" />
