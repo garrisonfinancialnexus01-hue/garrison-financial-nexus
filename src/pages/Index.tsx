@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, TrendingUp, Wallet, Building, Users } from 'lucide-react';
@@ -47,21 +46,6 @@ const Index = () => {
                 At <span className="font-bold text-white">Garrison Financial Nexus</span>, we provide comprehensive financial services 
                 to help you achieve your financial goals and secure your future.
               </p>
-              
-              <div className="flex flex-col sm:flex-row justify-center md:justify-start space-y-4 sm:space-y-0 sm:space-x-4">
-                <Button asChild className="bg-white text-garrison-green hover:bg-gray-100 border-2 border-white transition-all duration-300 hover:scale-105">
-                  <Link to="/loan-application" className="flex items-center justify-center">
-                    Calculate Now
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
-                <Button asChild className="bg-white text-garrison-green hover:bg-gray-100 border-2 border-white transition-all duration-300 hover:scale-105">
-                  <Link to="/client-auth" className="flex items-center justify-center">
-                    Clients Accounts
-                    <Users className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
-              </div>
             </div>
             
             {/* Right side with Financial Calculator Card */}

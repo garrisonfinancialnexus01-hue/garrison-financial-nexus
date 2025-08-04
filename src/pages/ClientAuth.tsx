@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useClientAuth } from '@/context/ClientAuthContext';
+import { useSignInSound } from '@/hooks/useSignInSound';
 import { toast } from '@/hooks/use-toast';
 import { ArrowLeft, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
@@ -15,6 +16,7 @@ const ClientAuth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { signIn } = useClientAuth();
+  const { playSignInSound } = useSignInSound();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -51,6 +53,9 @@ const ClientAuth = () => {
         variant: "destructive",
       });
     } else {
+      // Play success sound
+      playSignInSound();
+      
       toast({
         title: "Welcome back!",
         description: "You have successfully signed in.",
