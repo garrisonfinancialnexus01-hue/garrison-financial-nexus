@@ -16,14 +16,6 @@ const Navbar = () => {
 
   return (
     <nav className="bg-white shadow-md">
-      <div className="marquee-container bg-primary text-white py-2 overflow-hidden">
-        <div className="animate-marquee whitespace-nowrap">
-          <p className="inline-block animate-marquee">
-            Welcome to Garrison Financial Nexus, we offer mainly four services which include; Money Lending, Money Saving, Financial Advisory and Wealth Management. We offer the best services anyone could wish to get. Thank you!
-          </p>
-        </div>
-      </div>
-      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
@@ -156,18 +148,6 @@ const Navbar = () => {
           </div>
         </div>
       )}
-
-      <style>
-        {`
-        .animate-marquee {
-          animation: marquee 60s linear infinite;
-        }
-        @keyframes marquee {
-          0% { transform: translateX(100%); }
-          100% { transform: translateX(-100%); }
-        }
-        `}
-      </style>
     </nav>
   );
 };
