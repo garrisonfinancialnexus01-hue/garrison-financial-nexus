@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useClientAuth } from '@/context/ClientAuthContext';
 import { useSignInSound } from '@/hooks/useSignInSound';
+import { useErrorSound } from '@/hooks/useErrorSound';
 import { toast } from '@/hooks/use-toast';
 import { ArrowLeft, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
@@ -17,6 +18,7 @@ const ClientAuth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { signIn } = useClientAuth();
   const { playSignInSound } = useSignInSound();
+  const { playErrorSound } = useErrorSound();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -34,6 +36,9 @@ const ClientAuth = () => {
     e.preventDefault();
     
     if (!accountNumber.trim() || !password.trim()) {
+      // Play error sound for missing information
+      playErrorSound();
+      
       toast({
         title: "Missing Information",
         description: "Please enter both account number and password.",
@@ -47,6 +52,9 @@ const ClientAuth = () => {
     const { error } = await signIn(accountNumber.trim(), password);
     
     if (error) {
+      // Play error sound for sign-in failure
+      playErrorSound();
+      
       toast({
         title: "Sign In Failed",
         description: error,

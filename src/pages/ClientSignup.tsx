@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
+import { useSignupSound } from '@/hooks/useSignupSound';
 import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { isValidUgandanNIN } from '@/utils/ninValidation';
 import { generateNextAccountNumber } from '@/utils/accountNumberGenerator';
@@ -22,6 +24,7 @@ const ClientSignup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { playSignupSound } = useSignupSound();
   const navigate = useNavigate();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -136,6 +139,9 @@ const ClientSignup = () => {
       } catch (emailError) {
         console.error('Failed to send notification email:', emailError);
       }
+
+      // Play signup success sound
+      playSignupSound();
 
       toast({
         title: "Account Created Successfully!",
