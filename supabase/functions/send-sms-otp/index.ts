@@ -106,7 +106,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Name:', name);
     console.log('OTP Code:', otpCode);
 
-    // Send SMS via NotificationAPI
+    // Send SMS via NotificationAPI with correct authentication
     console.log('=== SENDING SMS VIA NOTIFICATIONAPI ===');
     
     try {
@@ -114,7 +114,8 @@ const handler = async (req: Request): Promise<Response> => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Basic ${btoa(`${clientId}:${clientSecret}`)}`
+          'clientId': clientId,
+          'clientSecret': clientSecret
         },
         body: JSON.stringify({
           notificationId: 'password_reset_sms',
