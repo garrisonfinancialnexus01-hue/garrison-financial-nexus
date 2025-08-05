@@ -106,16 +106,19 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Name:', name);
     console.log('OTP Code:', otpCode);
 
-    // Send SMS via NotificationAPI with correct authentication
+    // Send SMS via NotificationAPI with Basic Authentication
     console.log('=== SENDING SMS VIA NOTIFICATIONAPI ===');
     
     try {
+      // Create Basic Auth token
+      const basicAuthToken = btoa(`${clientId}:${clientSecret}`);
+      console.log('Basic Auth token created successfully');
+
       const notificationResponse = await fetch('https://api.notificationapi.com/notifications', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'clientId': clientId,
-          'clientSecret': clientSecret
+          'Authorization': `Basic ${basicAuthToken}`
         },
         body: JSON.stringify({
           notificationId: 'password_reset_sms',
