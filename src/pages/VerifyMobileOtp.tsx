@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { ArrowLeft, Timer, RefreshCw } from 'lucide-react';
 import { verifyMobileOtpCode, storeMobileOtpCode, generateOtp } from '@/utils/mobileOtpCodes';
+import { supabase } from '@/integrations/supabase/client';
 
 const VerifyMobileOtp = () => {
   const [code, setCode] = useState('');
@@ -106,15 +107,50 @@ const VerifyMobileOtp = () => {
     setIsLoading(true);
     
     try {
-      console.log('Resending OTP for mobile:', mobile);
+      console.log('Resending SMS OTP for mobile:', mobile);
+      
+      // Get user name for SMS
+      const { data: account } = await supabase
+        .from('client_accounts')
+        .select('name')
+        .eq('phone', mobile)
+        .maybeSingle();
+
+      if (!account) {
+        toast({
+          title: "Error",
+          description: "Unable to find account. Please start over.",
+          variant: "destructive",
+        });
+        return;
+      }
       
       // Generate and store new OTP
       const newOtp = generateOtp();
       storeMobileOtpCode(mobile, newOtp);
 
+      // Send new SMS OTP
+      const { data: smsResponse, error: smsError } = await supabase.functions.invoke('send-sms-otp', {
+        body: {
+          mobile: mobile,
+          name: account.name,
+          otpCode: newOtp
+        }
+      });
+
+      if (smsError || !smsResponse?.success) {
+        console.error('Failed to resend SMS:', smsError || smsResponse);
+        toast({
+          title: "Failed to Resend",
+          description: "Could not send new SMS OTP. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       toast({
-        title: "New OTP Sent! ✅",
-        description: `A new verification code has been sent to ${mobile}. (For demo: ${newOtp})`,
+        title: "New OTP Sent! 📱",
+        description: `A new verification code has been sent to ${mobile} via SMS.`,
       });
 
       // Reset timer to exactly 3 minutes
@@ -125,7 +161,7 @@ const VerifyMobileOtp = () => {
       console.error('Resend error:', error);
       toast({
         title: "Failed to Resend",
-        description: "Could not send new OTP. Please try again.",
+        description: "Could not send new SMS OTP. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -150,7 +186,7 @@ const VerifyMobileOtp = () => {
             </div>
             <CardTitle className="text-2xl text-center">Enter Verification Code</CardTitle>
             <CardDescription className="text-center">
-              We've sent a 6-digit OTP to {mobile}
+              We've sent a 6-digit OTP to {mobile} via SMS
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -202,11 +238,11 @@ const VerifyMobileOtp = () => {
                   className="text-garrison-green hover:text-garrison-black"
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
-                  Send New OTP
+                  Send New SMS OTP
                 </Button>
               ) : (
                 <p className="text-sm text-gray-600">
-                  Didn't receive the OTP? You can request a new one when the timer expires.
+                  Didn't receive the SMS? You can request a new one when the timer expires.
                 </p>
               )}
             </div>
@@ -214,7 +250,7 @@ const VerifyMobileOtp = () => {
             {timeLeft <= 0 && (
               <div className="p-4 bg-red-50 rounded-lg border border-red-200">
                 <p className="text-sm text-red-800 text-center">
-                  <strong>OTP Expired:</strong> The 3-minute verification period has ended. Please request a new OTP to continue.
+                  <strong>OTP Expired:</strong> The 3-minute verification period has ended. Please request a new SMS OTP to continue.
                 </p>
               </div>
             )}
