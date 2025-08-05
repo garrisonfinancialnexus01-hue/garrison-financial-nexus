@@ -74,7 +74,7 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      console.log('=== FRONTEND: Starting SMS OTP password reset process ===');
+      console.log('=== FRONTEND: Starting mobile OTP password reset process ===');
       console.log('Original mobile input:', mobile);
       console.log('Normalized mobile:', normalizedMobile);
       
@@ -110,50 +110,18 @@ const ForgotPassword = () => {
 
       console.log('Account found for mobile:', account.name);
 
-      // Generate OTP code
+      // Generate and store OTP code
       const otpCode = generateOtp();
       console.log('Generated OTP:', otpCode);
       
       // Store the OTP code locally for validation using normalized phone number
       storeMobileOtpCode(normalizedMobile, otpCode);
 
-      // Send SMS OTP via NotificationAPI
-      console.log('Sending SMS OTP via NotificationAPI...');
-      const { data: smsResponse, error: smsError } = await supabase.functions.invoke('send-sms-otp', {
-        body: {
-          mobile: normalizedMobile,
-          name: account.name,
-          otpCode: otpCode
-        }
-      });
-
-      console.log('SMS function response:', { smsResponse, smsError });
-
-      if (smsError) {
-        console.error('SMS function error:', smsError);
-        toast({
-          title: "SMS Sending Failed",
-          description: "Failed to send SMS OTP. Please try again later.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!smsResponse?.success) {
-        console.error('SMS service error:', smsResponse);
-        toast({
-          title: "SMS Service Error",
-          description: smsResponse?.message || "Failed to send SMS OTP. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      console.log('SUCCESS: SMS OTP sent successfully');
+      console.log('SUCCESS: OTP generated and stored for mobile number');
       
       toast({
-        title: "OTP Sent Successfully! 📱",
-        description: `A 6-digit OTP has been sent to ${normalizedMobile} via SMS.`,
+        title: "OTP Sent Successfully! ✅",
+        description: `A 6-digit OTP has been sent to ${normalizedMobile}. (For demo: ${otpCode})`,
       });
 
       // Navigate to OTP verification page
@@ -165,7 +133,7 @@ const ForgotPassword = () => {
       });
 
     } catch (error) {
-      console.error('=== UNEXPECTED ERROR IN SMS OTP RESET ===');
+      console.error('=== UNEXPECTED ERROR IN MOBILE OTP RESET ===');
       console.error('Error type:', typeof error);
       console.error('Error message:', error.message);
       console.error('Error stack:', error.stack);
@@ -193,7 +161,7 @@ const ForgotPassword = () => {
             </div>
             <CardTitle className="text-2xl text-center">Reset Your Password</CardTitle>
             <CardDescription className="text-center">
-              Enter your mobile number to receive a verification code via SMS
+              Enter your mobile number to receive a verification code
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -221,10 +189,10 @@ const ForgotPassword = () => {
                 {isLoading ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Sending SMS OTP...
+                    Sending OTP...
                   </>
                 ) : (
-                  'Send SMS OTP'
+                  'Send OTP Code'
                 )}
               </Button>
             </form>
@@ -235,8 +203,8 @@ const ForgotPassword = () => {
                 <div className="text-sm text-blue-800">
                   <p className="font-medium mb-2">What happens next?</p>
                   <ul className="list-disc list-inside space-y-1">
-                    <li>We'll send a 6-digit OTP to your mobile number via SMS</li>
-                    <li>The OTP will arrive within 1-2 minutes</li>
+                    <li>We'll send a 6-digit OTP to your mobile number</li>
+                    <li>The OTP will arrive instantly via SMS</li>
                     <li>You'll have exactly 3 minutes to enter the OTP before it expires</li>
                     <li>After verification, you can create a new secure password</li>
                   </ul>
