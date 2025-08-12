@@ -239,9 +239,6 @@ const ClientSignup = () => {
                   maxLength={14}
                   required
                 />
-                <p className="text-xs text-gray-500">
-                  Must be 14 characters starting with CM or CF. Valid: 8 numbers + 6 letters, 9 numbers + 5 letters, or 10 numbers + 4 letters
-                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
