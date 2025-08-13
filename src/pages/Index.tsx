@@ -4,6 +4,14 @@ import { ArrowRight, TrendingUp, Wallet, Building, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NeonButton } from '@/components/ui/neon-button';
 import TypewriterAnimation from '@/components/TypewriterAnimation';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
+
+// Import hero images
+import loanApplicationHero from '@/assets/loan-application-hero.jpg';
+import accountCreationHero from '@/assets/account-creation-hero.jpg';
+import financialAdvisoryHero from '@/assets/financial-advisory-hero.jpg';
+import wealthManagementHero from '@/assets/wealth-management-hero.jpg';
 
 const Index = () => {
   const openWhatsApp = () => {
@@ -63,6 +71,101 @@ const Index = () => {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Hero Carousel Section */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 animate-fade-in">
+            <h2 className="text-4xl font-bold text-garrison-black mb-4 font-inter">See Our Services in Action</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Discover how Garrison Financial Nexus empowers Ugandans to achieve their financial goals
+            </p>
+          </div>
+          
+          <Carousel
+            plugins={[
+              Autoplay({
+                delay: 4000,
+                stopOnInteraction: false,
+                stopOnMouseEnter: true,
+              }),
+            ]}
+            className="w-full max-w-5xl mx-auto"
+            opts={{
+              align: "start",
+              loop: true,
+            }}
+          >
+            <CarouselContent>
+              <CarouselItem>
+                <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+                  <img 
+                    src={loanApplicationHero} 
+                    alt="Ugandan woman applying for a loan with Garrison Financial Nexus" 
+                    className="w-full h-96 object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex items-end">
+                    <div className="p-8 text-white">
+                      <h3 className="text-2xl font-bold mb-2">Quick & Easy Loan Applications</h3>
+                      <p className="text-lg opacity-90">Apply for loans from 10,000 UGX to 200,000 UGX with our simple online process</p>
+                    </div>
+                  </div>
+                </div>
+              </CarouselItem>
+              
+              <CarouselItem>
+                <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+                  <img 
+                    src={accountCreationHero} 
+                    alt="Ugandan man creating account with Garrison Financial Nexus" 
+                    className="w-full h-96 object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex items-end">
+                    <div className="p-8 text-white">
+                      <h3 className="text-2xl font-bold mb-2">Simple Account Creation</h3>
+                      <p className="text-lg opacity-90">Join thousands of satisfied clients with our quick and secure registration process</p>
+                    </div>
+                  </div>
+                </div>
+              </CarouselItem>
+              
+              <CarouselItem>
+                <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+                  <img 
+                    src={financialAdvisoryHero} 
+                    alt="Ugandan woman using financial advisory service at Garrison Financial Nexus" 
+                    className="w-full h-96 object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex items-end">
+                    <div className="p-8 text-white">
+                      <h3 className="text-2xl font-bold mb-2">Expert Financial Advisory</h3>
+                      <p className="text-lg opacity-90">Get professional guidance to make informed financial decisions and plan for your future</p>
+                    </div>
+                  </div>
+                </div>
+              </CarouselItem>
+              
+              <CarouselItem>
+                <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+                  <img 
+                    src={wealthManagementHero} 
+                    alt="Ugandan man using wealth management service at Garrison Financial Nexus" 
+                    className="w-full h-96 object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex items-end">
+                    <div className="p-8 text-white">
+                      <h3 className="text-2xl font-bold mb-2">Comprehensive Wealth Management</h3>
+                      <p className="text-lg opacity-90">Grow and preserve your assets with our strategic investment and wealth planning services</p>
+                    </div>
+                  </div>
+                </div>
+              </CarouselItem>
+            </CarouselContent>
+            <CarouselPrevious className="hidden md:flex" />
+            <CarouselNext className="hidden md:flex" />
+          </Carousel>
         </div>
       </section>
 
