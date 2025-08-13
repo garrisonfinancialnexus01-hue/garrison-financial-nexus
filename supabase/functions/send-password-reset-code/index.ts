@@ -11,6 +11,7 @@ const corsHeaders = {
 interface PasswordResetRequest {
   email: string;
   name: string;
+  code: string;
 }
 
 // Generate a secure random 6-digit code
@@ -74,15 +75,15 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    const { email, name }: PasswordResetRequest = requestBody;
+    const { email, name, code }: PasswordResetRequest = requestBody;
 
     // Validate required fields
-    if (!email || !name) {
-      console.error('Missing required fields:', { email: !!email, name: !!name });
+    if (!email || !name || !code) {
+      console.error('Missing required fields:', { email: !!email, name: !!name, code: !!code });
       return new Response(JSON.stringify({ 
         error: 'Missing required fields',
         success: false,
-        message: 'Both email and name are required',
+        message: 'Email, name, and code are required',
         errorCode: 'MISSING_FIELDS'
       }), {
         status: 400,
@@ -131,9 +132,8 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Generate verification code
-    const verificationCode = generateVerificationCode();
-    console.log('Generated verification code:', verificationCode);
+    // Use the code provided from the frontend
+    console.log('Using verification code:', code);
 
     // Send email
     console.log('=== SENDING EMAIL ===');
@@ -152,7 +152,7 @@ const handler = async (req: Request): Promise<Response> => {
             <p>We received a request to reset your password for your Garrison Financial Nexus account.</p>
             <div style="text-align: center; margin: 30px 0;">
               <div style="background: #f0f0f0; padding: 20px; border-radius: 8px; font-size: 32px; font-weight: bold; letter-spacing: 8px;">
-                ${verificationCode}
+                ${code}
               </div>
             </div>
             <p><strong>Important:</strong></p>
@@ -209,7 +209,7 @@ const handler = async (req: Request): Promise<Response> => {
         success: true, 
         emailId: emailResponse.data.id,
         message: 'Verification code sent successfully',
-        code: verificationCode,
+        code: code,
         timestamp: Date.now()
       }), {
         status: 200,

@@ -17,7 +17,7 @@ const ResetPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { mobile, verifiedOtp } = location.state || {};
+  const { email, verifiedCode } = location.state || {};
 
   // Password validation state
   const [passwordValidation, setPasswordValidation] = useState({
@@ -27,9 +27,9 @@ const ResetPassword = () => {
     special: false
   });
 
-  // Redirect if no mobile or verified OTP provided
+  // Redirect if no email or verified code provided
   useEffect(() => {
-    if (!mobile || !verifiedOtp) {
+    if (!email || !verifiedCode) {
       toast({
         title: "Access Denied",
         description: "Please start the password reset process from the beginning.",
@@ -38,7 +38,7 @@ const ResetPassword = () => {
       navigate('/forgot-password');
       return;
     }
-  }, [mobile, verifiedOtp, navigate]);
+  }, [email, verifiedCode, navigate]);
 
   // Real-time password validation
   useEffect(() => {
@@ -88,16 +88,16 @@ const ResetPassword = () => {
     setIsLoading(true);
 
     try {
-      console.log('Updating password for mobile:', mobile);
+      console.log('Updating password for email:', email);
       
-      // Update password in database using mobile number
+      // Update password in database using email address
       const { error } = await supabase
         .from('client_accounts')
         .update({ 
           password_hash: password,
           updated_at: new Date().toISOString()
         })
-        .eq('phone', mobile);
+        .eq('email', email);
 
       if (error) {
         console.error('Password update error:', error);
@@ -131,7 +131,7 @@ const ResetPassword = () => {
     }
   };
 
-  if (!mobile || !verifiedOtp) {
+  if (!email || !verifiedCode) {
     return null;
   }
 
@@ -154,14 +154,14 @@ const ResetPassword = () => {
         <Card>
           <CardHeader className="space-y-1">
             <div className="flex items-center mb-4">
-              <Link to="/verify-mobile-otp" state={{ mobile }} className="flex items-center text-garrison-green hover:text-garrison-black">
+              <Link to="/verify-reset-code" state={{ email }} className="flex items-center text-garrison-green hover:text-garrison-black">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back
               </Link>
             </div>
             <CardTitle className="text-2xl text-center">Create New Password</CardTitle>
             <CardDescription className="text-center">
-              Set a new secure password for {mobile}
+              Set a new secure password for {email}
             </CardDescription>
           </CardHeader>
           <CardContent>
