@@ -11,7 +11,7 @@ const corsHeaders = {
 interface PasswordResetRequest {
   email: string;
   name: string;
-  code: string;
+  code?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -42,13 +42,16 @@ const handler = async (req: Request): Promise<Response> => {
     const requestBody = await req.json();
     const { email, name, code }: PasswordResetRequest = requestBody;
 
+    // Generate 6-digit OTP if not provided
+    const verificationCode = code || Math.floor(100000 + Math.random() * 900000).toString();
+
     // Validate required fields
-    if (!email || !name || !code) {
-      console.error('Missing required fields:', { email: !!email, name: !!name, code: !!code });
+    if (!email || !name) {
+      console.error('Missing required fields:', { email: !!email, name: !!name });
       return new Response(JSON.stringify({ 
         error: 'Missing required fields',
         success: false,
-        message: 'Email, name, and code are required'
+        message: 'Email and name are required'
       }), {
         status: 400,
         headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -69,43 +72,44 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    console.log('Sending email to:', email);
+    console.log('Generating and sending 6-digit OTP to:', email);
+    console.log('Generated OTP:', verificationCode);
 
     // Initialize Resend
     const resend = new Resend(resendApiKey);
 
-    // Send email with comprehensive error handling
+    // Send email with the 6-digit OTP
     const emailResponse = await resend.emails.send({
       from: "Garrison Financial Nexus <onboarding@resend.dev>",
       to: [email.trim().toLowerCase()],
-      subject: "🔐 Password Reset Code - Garrison Financial Nexus",
+      subject: "🔐 Your 6-Digit Password Reset Code - Garrison Financial Nexus",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
           <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
             <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #2d5016; margin: 0; font-size: 24px;">Garrison Financial Nexus</h1>
+              <h1 style="color: #2d5016; margin: 0; font-size: 24px;">🏦 Garrison Financial Nexus</h1>
               <p style="color: #666; margin: 5px 0 0 0;">Secure Password Reset</p>
             </div>
             
-            <h2 style="color: #333; text-align: center; margin-bottom: 20px;">Password Reset Request</h2>
+            <h2 style="color: #333; text-align: center; margin-bottom: 20px;">Your 6-Digit Verification Code</h2>
             
             <p style="color: #333; font-size: 16px;">Hello <strong>${name}</strong>,</p>
             
             <p style="color: #333; font-size: 16px; line-height: 1.6;">
               We received a request to reset your password for your Garrison Financial Nexus account. 
-              Use the verification code below to continue with your password reset:
+              Use the 6-digit verification code below to continue:
             </p>
             
             <div style="text-align: center; margin: 30px 0;">
-              <div style="background: linear-gradient(135deg, #2d5016, #4a7c23); color: white; padding: 20px; border-radius: 10px; font-size: 32px; font-weight: bold; letter-spacing: 8px; display: inline-block;">
-                ${code}
+              <div style="background: linear-gradient(135deg, #2d5016, #4a7c23); color: white; padding: 25px; border-radius: 15px; font-size: 36px; font-weight: bold; letter-spacing: 12px; display: inline-block; font-family: 'Courier New', monospace;">
+                ${verificationCode}
               </div>
             </div>
             
-            <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <p style="color: #856404; margin: 0; font-weight: bold;">⚠️ Important Security Information:</p>
-              <ul style="color: #856404; margin: 10px 0 0 0; padding-left: 20px;">
-                <li>This code expires in exactly <strong>3 minutes</strong></li>
+            <div style="background-color: #fff3cd; border: 2px solid #ffeaa7; padding: 20px; border-radius: 10px; margin: 25px 0;">
+              <p style="color: #856404; margin: 0; font-weight: bold; font-size: 16px;">⚠️ Important Security Information:</p>
+              <ul style="color: #856404; margin: 15px 0 0 0; padding-left: 20px; font-size: 14px;">
+                <li><strong>This code expires in exactly 3 minutes</strong></li>
                 <li>Never share this code with anyone</li>
                 <li>If you didn't request this reset, please ignore this email</li>
                 <li>Contact us immediately if you suspect unauthorized access</li>
@@ -116,9 +120,9 @@ const handler = async (req: Request): Promise<Response> => {
               <p style="color: #666; font-size: 14px; margin: 0;">
                 Need help? Contact us at <strong>+256 761 281 222</strong>
               </p>
-              <p style="color: #666; font-size: 14px; margin: 10px 0 0 0;">
+              <p style="color: #666; font-size: 14px; margin: 15px 0 0 0;">
                 Best regards,<br>
-                <strong>Garrison Financial Nexus Team</strong>
+                <strong style="color: #2d5016;">The Garrison Financial Nexus Team</strong>
               </p>
             </div>
           </div>
@@ -128,6 +132,20 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (emailResponse.error) {
       console.error('Resend API error:', emailResponse.error);
+      
+      // Check if it's the domain verification error
+      if (emailResponse.error.message && emailResponse.error.message.includes('verify a domain')) {
+        return new Response(JSON.stringify({ 
+          error: 'Domain not verified',
+          success: false,
+          message: 'Please verify your domain at resend.com/domains to send emails to all recipients.',
+          details: 'Currently in testing mode - can only send to verified email address'
+        }), {
+          status: 403,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+      
       return new Response(JSON.stringify({ 
         error: 'Email delivery failed',
         success: false,
@@ -151,14 +169,16 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    console.log('Email sent successfully with ID:', emailResponse.data.id);
+    console.log('✅ 6-digit OTP email sent successfully with ID:', emailResponse.data.id);
+    console.log('✅ OTP Code:', verificationCode, 'sent to:', email);
 
     return new Response(JSON.stringify({ 
       success: true, 
       emailId: emailResponse.data.id,
-      message: 'Verification code sent successfully',
-      code: code,
-      timestamp: Date.now()
+      message: '6-digit verification code sent successfully to your email',
+      code: verificationCode,
+      timestamp: Date.now(),
+      expiresIn: '3 minutes'
     }), {
       status: 200,
       headers: {
