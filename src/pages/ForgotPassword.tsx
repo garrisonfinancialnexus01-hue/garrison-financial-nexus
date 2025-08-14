@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { ArrowLeft, Mail, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { storeVerificationCode } from '@/utils/passwordResetCodes';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -19,10 +18,6 @@ const ForgotPassword = () => {
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
-  };
-
-  const generateVerificationCode = (): string => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
   };
 
   const handleSendOtp = async (e: React.FormEvent) => {
@@ -51,9 +46,9 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      console.log('Starting password reset process for:', emailAddress);
+      console.log('Starting secure OTP system for:', emailAddress);
       
-      // Check if account exists with this email
+      // Check if account exists with this email first
       const { data: account, error: fetchError } = await supabase
         .from('client_accounts')
         .select('email, name')
@@ -81,26 +76,21 @@ const ForgotPassword = () => {
         return;
       }
 
-      // Generate verification code
-      const verificationCode = generateVerificationCode();
-      console.log('Generated verification code for email sending');
-      
-      // Store the verification code locally
-      storeVerificationCode(emailAddress, verificationCode);
+      console.log('Account found, sending secure OTP via edge function');
 
-      // Send email via Supabase edge function with retry logic
+      // Send OTP via secure edge function with retry logic
       let emailSent = false;
       let lastError = null;
       
       for (let attempt = 1; attempt <= 3; attempt++) {
         try {
-          console.log(`Email send attempt ${attempt} of 3`);
+          console.log(`Secure OTP send attempt ${attempt} of 3`);
           
           const { data, error: emailError } = await supabase.functions.invoke('send-password-reset-code', {
             body: {
               email: emailAddress,
               name: account.name || 'User',
-              code: verificationCode
+              userIp: 'web-client' // Could be enhanced to get actual IP
             }
           });
 
@@ -108,17 +98,31 @@ const ForgotPassword = () => {
             console.error(`Attempt ${attempt} failed:`, emailError);
             lastError = emailError;
             if (attempt < 3) {
-              // Wait 2 seconds before retrying
               await new Promise(resolve => setTimeout(resolve, 2000));
               continue;
             }
           } else if (data?.success) {
-            console.log(`Email sent successfully on attempt ${attempt}`);
+            console.log(`Secure OTP sent successfully on attempt ${attempt}`);
+            console.log('OTP details:', {
+              expiresAt: data.expiresAt,
+              attemptsAllowed: data.attemptsAllowed
+            });
             emailSent = true;
             break;
           } else {
-            console.error(`Attempt ${attempt} failed: No success response`);
+            console.error(`Attempt ${attempt} failed:`, data?.message || 'Unknown error');
             lastError = new Error(data?.message || 'Unknown error');
+            
+            // Handle rate limiting specifically
+            if (data?.error === 'Rate limited') {
+              toast({
+                title: "Too Many Requests",
+                description: data.message || "You've reached the maximum number of OTP requests per hour. Please try again later.",
+                variant: "destructive",
+              });
+              return;
+            }
+            
             if (attempt < 3) {
               await new Promise(resolve => setTimeout(resolve, 2000));
               continue;
@@ -135,35 +139,36 @@ const ForgotPassword = () => {
       }
 
       if (!emailSent) {
-        console.error('All email send attempts failed:', lastError);
+        console.error('All secure OTP send attempts failed:', lastError);
         setRetryCount(prev => prev + 1);
         
         toast({
-          title: "Email Send Failed",
+          title: "OTP Send Failed",
           description: `Failed to send verification code after 3 attempts. ${retryCount < 2 ? 'Please try again.' : 'Please check your internet connection and try again later.'}`,
           variant: "destructive",
         });
         return;
       }
 
-      console.log('Verification code sent successfully');
-      setRetryCount(0); // Reset retry count on success
+      console.log('Secure OTP sent successfully');
+      setRetryCount(0);
       
       toast({
         title: "Verification Code Sent! ✅",
-        description: `A 6-digit verification code has been sent to ${emailAddress}. Please check your inbox and spam folder.`,
+        description: `A 6-digit verification code has been sent to ${emailAddress}. You have exactly 3 minutes and 3 attempts to enter it correctly.`,
       });
 
       // Navigate to verification page
       navigate('/verify-reset-code', { 
         state: { 
           email: emailAddress,
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          secureOtpSystem: true
         } 
       });
 
     } catch (error: any) {
-      console.error('Unexpected error in password reset:', error);
+      console.error('Unexpected error in secure OTP system:', error);
       
       toast({
         title: "System Error",
@@ -188,7 +193,7 @@ const ForgotPassword = () => {
             </div>
             <CardTitle className="text-2xl text-center">Reset Your Password</CardTitle>
             <CardDescription className="text-center">
-              Enter your email address to receive a verification code
+              Enter your email address to receive a secure 6-digit verification code
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -217,7 +222,7 @@ const ForgotPassword = () => {
                 {isLoading ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Sending Code...
+                    Sending Secure Code...
                   </>
                 ) : (
                   <>
@@ -238,12 +243,13 @@ const ForgotPassword = () => {
               <div className="flex items-start space-x-2">
                 <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-blue-800">
-                  <p className="font-medium mb-2">What happens next?</p>
+                  <p className="font-medium mb-2">🔒 Enhanced Security System:</p>
                   <ul className="list-disc list-inside space-y-1">
-                    <li>We'll send a 6-digit verification code to your email</li>
-                    <li>Check both your inbox and spam/junk folder</li>
-                    <li>You'll have exactly 3 minutes to enter the code</li>
-                    <li>After verification, you can create a new secure password</li>
+                    <li>6-digit verification code sent to your email</li>
+                    <li>Code expires in exactly 3 minutes</li>
+                    <li>Maximum 3 attempts to enter the correct code</li>
+                    <li>Rate limited to 3 requests per hour for security</li>
+                    <li>Check both inbox and spam/junk folder</li>
                   </ul>
                 </div>
               </div>
@@ -257,7 +263,8 @@ const ForgotPassword = () => {
                   <ul className="list-disc list-inside space-y-1">
                     <li>Check your spam/junk folder</li>
                     <li>Ensure your email address is correct</li>
-                    <li>Wait a few minutes and try again</li>
+                    <li>Wait a few minutes before retrying</li>
+                    <li>Maximum 3 OTP requests per hour</li>
                     <li>Contact support if the problem persists</li>
                   </ul>
                 </div>

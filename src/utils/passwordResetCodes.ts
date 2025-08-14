@@ -1,6 +1,9 @@
+// This file is now deprecated - using secure database-backed OTP system
+// All OTP operations are now handled through Supabase database functions
 
-// Simple in-memory storage for verification codes
-// In production, you'd use a database with proper expiry
+// Legacy functions kept for backward compatibility during transition
+// These will be removed in a future update once all components are migrated
+
 interface VerificationCode {
   code: string;
   email: string;
@@ -11,6 +14,7 @@ interface VerificationCode {
 const verificationCodes: VerificationCode[] = [];
 
 export const storeVerificationCode = (email: string, code: string): void => {
+  console.warn('DEPRECATED: storeVerificationCode - Use secure database OTP system instead');
   // Remove any existing codes for this email
   const index = verificationCodes.findIndex(vc => vc.email === email);
   if (index !== -1) {
@@ -29,6 +33,7 @@ export const storeVerificationCode = (email: string, code: string): void => {
 };
 
 export const verifyPasswordResetCode = (email: string, code: string): boolean => {
+  console.warn('DEPRECATED: verifyPasswordResetCode - Use secure database OTP system instead');
   const storedCode = verificationCodes.find(
     vc => vc.email === email && vc.code === code && !vc.used
   );
@@ -52,6 +57,7 @@ export const verifyPasswordResetCode = (email: string, code: string): boolean =>
 };
 
 export const isCodeExpired = (email: string): boolean => {
+  console.warn('DEPRECATED: isCodeExpired - Use secure database OTP system instead');
   const storedCode = verificationCodes.find(vc => vc.email === email && !vc.used);
   if (!storedCode) return true;
   

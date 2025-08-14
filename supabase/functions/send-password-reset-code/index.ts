@@ -1,5 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import { Resend } from "npm:resend@2.0.0";
 
 const corsHeaders = {
@@ -11,7 +12,7 @@ const corsHeaders = {
 interface PasswordResetRequest {
   email: string;
   name: string;
-  code?: string;
+  userIp?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -20,10 +21,15 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  console.log('=== PASSWORD RESET FUNCTION STARTED ===');
+  console.log('=== SECURE OTP SYSTEM - PASSWORD RESET STARTED ===');
   
   try {
-    // Check environment variables first
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Check environment variables
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     
     if (!resendApiKey) {
@@ -40,10 +46,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Parse request body
     const requestBody = await req.json();
-    const { email, name, code }: PasswordResetRequest = requestBody;
-
-    // Generate 6-digit OTP if not provided
-    const verificationCode = code || Math.floor(100000 + Math.random() * 900000).toString();
+    const { email, name, userIp }: PasswordResetRequest = requestBody;
 
     // Validate required fields
     if (!email || !name) {
@@ -72,17 +75,96 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    console.log('Generating and sending 6-digit OTP to:', email);
-    console.log('Generated OTP:', verificationCode);
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Check if account exists with this email
+    const { data: account, error: fetchError } = await supabase
+      .from('client_accounts')
+      .select('email, name')
+      .eq('email', cleanEmail)
+      .maybeSingle();
+
+    if (fetchError) {
+      console.error('Database error:', fetchError);
+      return new Response(JSON.stringify({ 
+        error: 'System error',
+        success: false,
+        message: 'Unable to verify email address. Please try again.'
+      }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    if (!account) {
+      return new Response(JSON.stringify({ 
+        error: 'Email not found',
+        success: false,
+        message: 'No account found with this email address. Please check your email or create a new account.'
+      }), {
+        status: 404,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    console.log('Account found, generating secure OTP for:', cleanEmail);
+
+    // Generate OTP using database function with rate limiting
+    const { data: otpResult, error: otpError } = await supabase
+      .rpc('generate_password_reset_otp', {
+        user_email: cleanEmail,
+        client_ip: userIp || req.headers.get('cf-connecting-ip') || req.headers.get('x-forwarded-for') || 'unknown'
+      });
+
+    if (otpError) {
+      console.error('OTP generation error:', otpError);
+      return new Response(JSON.stringify({ 
+        error: 'OTP generation failed',
+        success: false,
+        message: 'Failed to generate verification code. Please try again.'
+      }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    if (!otpResult || otpResult.length === 0) {
+      console.error('No OTP result returned');
+      return new Response(JSON.stringify({ 
+        error: 'OTP generation failed',
+        success: false,
+        message: 'Failed to generate verification code. Please try again.'
+      }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    const { otp_code, expires_at, success, message } = otpResult[0];
+
+    if (!success) {
+      console.log('OTP generation refused:', message);
+      return new Response(JSON.stringify({ 
+        error: 'Rate limited',
+        success: false,
+        message: message || 'Too many requests. Please try again later.'
+      }), {
+        status: 429,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    console.log('Secure OTP generated, sending email to:', cleanEmail);
+    console.log('OTP Code:', otp_code, 'Expires at:', expires_at);
 
     // Initialize Resend
     const resend = new Resend(resendApiKey);
 
-    // Send email with the 6-digit OTP
+    // Send professional email with the 6-digit OTP
     const emailResponse = await resend.emails.send({
       from: "Garrison Financial Nexus <onboarding@resend.dev>",
-      to: [email.trim().toLowerCase()],
-      subject: "🔐 Your 6-Digit Password Reset Code - Garrison Financial Nexus",
+      to: [cleanEmail],
+      subject: "🔐 Your Password Reset OTP - Garrison Financial Nexus",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
           <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
@@ -102,7 +184,7 @@ const handler = async (req: Request): Promise<Response> => {
             
             <div style="text-align: center; margin: 30px 0;">
               <div style="background: linear-gradient(135deg, #2d5016, #4a7c23); color: white; padding: 25px; border-radius: 15px; font-size: 36px; font-weight: bold; letter-spacing: 12px; display: inline-block; font-family: 'Courier New', monospace;">
-                ${verificationCode}
+                ${otp_code}
               </div>
             </div>
             
@@ -110,6 +192,7 @@ const handler = async (req: Request): Promise<Response> => {
               <p style="color: #856404; margin: 0; font-weight: bold; font-size: 16px;">⚠️ Important Security Information:</p>
               <ul style="color: #856404; margin: 15px 0 0 0; padding-left: 20px; font-size: 14px;">
                 <li><strong>This code expires in exactly 3 minutes</strong></li>
+                <li>You have 3 attempts to enter the correct code</li>
                 <li>Never share this code with anyone</li>
                 <li>If you didn't request this reset, please ignore this email</li>
                 <li>Contact us immediately if you suspect unauthorized access</li>
@@ -169,16 +252,16 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    console.log('✅ 6-digit OTP email sent successfully with ID:', emailResponse.data.id);
-    console.log('✅ OTP Code:', verificationCode, 'sent to:', email);
+    console.log('✅ Secure OTP email sent successfully with ID:', emailResponse.data.id);
+    console.log('✅ OTP stored in database with expiry:', expires_at);
 
     return new Response(JSON.stringify({ 
       success: true, 
       emailId: emailResponse.data.id,
       message: '6-digit verification code sent successfully to your email',
-      code: verificationCode,
-      timestamp: Date.now(),
-      expiresIn: '3 minutes'
+      expiresAt: expires_at,
+      expiresIn: '3 minutes',
+      attemptsAllowed: 3
     }), {
       status: 200,
       headers: {
@@ -188,7 +271,7 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
   } catch (error: any) {
-    console.error('Critical error in password reset function:', error);
+    console.error('Critical error in secure OTP system:', error);
     
     return new Response(JSON.stringify({ 
       error: 'Internal server error',
