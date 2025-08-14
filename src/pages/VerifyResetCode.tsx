@@ -5,19 +5,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
-import { ArrowLeft, Timer, RefreshCw, Shield } from 'lucide-react';
+import { ArrowLeft, Timer, RefreshCw } from 'lucide-react';
+import { verifyPasswordResetCode, storeVerificationCode } from '@/utils/passwordResetCodes';
 import { supabase } from '@/integrations/supabase/client';
 
 const VerifyResetCode = () => {
   const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(180); // 3 minutes
+  const [timeLeft, setTimeLeft] = useState(180); // Exactly 3 minutes in seconds
   const [canResend, setCanResend] = useState(false);
-  const [attemptsRemaining, setAttemptsRemaining] = useState(3);
   const navigate = useNavigate();
   const location = useLocation();
   const email = location.state?.email;
-  const secureOtpSystem = location.state?.secureOtpSystem;
 
   // Redirect if no email provided
   useEffect(() => {
@@ -27,7 +26,7 @@ const VerifyResetCode = () => {
     }
   }, [email, navigate]);
 
-  // 3-minute countdown timer
+  // Exact 3-minute countdown timer
   useEffect(() => {
     if (timeLeft > 0) {
       const timer = setTimeout(() => {
@@ -72,68 +71,25 @@ const VerifyResetCode = () => {
     setIsLoading(true);
 
     try {
-      console.log('Verifying secure OTP:', code, 'for email:', email);
+      console.log('Verifying code:', code, 'for email:', email);
       
-      // Use the secure database function to verify OTP
-      const { data: verificationResult, error: verifyError } = await supabase
-        .rpc('verify_password_reset_otp', {
-          user_email: email,
-          submitted_otp: code
-        });
-
-      if (verifyError) {
-        console.error('OTP verification error:', verifyError);
-        toast({
-          title: "Verification Error",
-          description: "Failed to verify code. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!verificationResult || verificationResult.length === 0) {
-        console.error('No verification result returned');
-        toast({
-          title: "Verification Error",
-          description: "Unable to verify code. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { valid, message, attempts_remaining } = verificationResult[0];
-
-      if (valid) {
-        console.log('Secure OTP verified successfully');
+      // Verify the code using our verification codes utility
+      const isValidCode = verifyPasswordResetCode(email, code);
+      
+      if (isValidCode) {
+        console.log('Code verified successfully');
         toast({
           title: "Code Verified Successfully! ✅",
           description: "You can now create your new password.",
         });
-        navigate('/reset-password', { 
-          state: { 
-            email, 
-            verifiedCode: code,
-            secureOtpVerified: true 
-          } 
-        });
+        navigate('/reset-password', { state: { email, verifiedCode: code } });
       } else {
-        console.log('OTP verification failed:', message);
-        setAttemptsRemaining(attempts_remaining);
-        
-        if (attempts_remaining <= 0) {
-          toast({
-            title: "Maximum Attempts Exceeded",
-            description: "You've used all 3 attempts. Please request a new verification code.",
-            variant: "destructive",
-          });
-          setCanResend(true);
-        } else {
-          toast({
-            title: "Invalid Code",
-            description: `${message} ${attempts_remaining} attempt${attempts_remaining !== 1 ? 's' : ''} remaining.`,
-            variant: "destructive",
-          });
-        }
+        console.log('Invalid or expired code');
+        toast({
+          title: "Invalid Code",
+          description: "The verification code is incorrect or has expired. Please try again.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error('Code verification error:', error);
@@ -151,7 +107,7 @@ const VerifyResetCode = () => {
     setIsLoading(true);
     
     try {
-      console.log('Resending secure OTP for email:', email);
+      console.log('Resending code for email:', email);
       
       // Get account info
       const { data: account } = await supabase
@@ -160,37 +116,32 @@ const VerifyResetCode = () => {
         .eq('email', email)
         .maybeSingle();
 
-      // Send new OTP via secure system
+      // Send new code
       const { data, error } = await supabase.functions.invoke('send-password-reset-code', {
         body: {
           email: email,
-          name: account?.name || 'User',
-          userIp: 'web-client-resend'
+          name: account?.name || 'User'
         }
       });
 
       if (error || !data?.success) {
-        if (data?.error === 'Rate limited') {
-          toast({
-            title: "Rate Limit Exceeded",
-            description: data.message || "You've reached the maximum number of OTP requests per hour. Please try again later.",
-            variant: "destructive",
-          });
-          return;
-        }
         throw error || new Error('Failed to send code');
+      }
+
+      // Store the new verification code
+      if (data.code) {
+        storeVerificationCode(email, data.code);
       }
 
       toast({
         title: "New Code Sent! ✅",
-        description: "A new 6-digit verification code has been sent to your email. You have 3 minutes and 3 attempts.",
+        description: "A new verification code has been sent to your email from Garrison Financial Nexus.",
       });
 
-      // Reset timer and attempts
+      // Reset timer to exactly 3 minutes
       setTimeLeft(180);
       setCanResend(false);
       setCode('');
-      setAttemptsRemaining(3);
     } catch (error) {
       console.error('Resend error:', error);
       toast({
@@ -220,17 +171,11 @@ const VerifyResetCode = () => {
             </div>
             <CardTitle className="text-2xl text-center">Enter Verification Code</CardTitle>
             <CardDescription className="text-center">
-              We've sent a secure 6-digit code to {email}
+              We've sent a 6-digit code to {email} from Garrison Financial Nexus
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Security indicator */}
-            <div className="flex items-center justify-center space-x-2 p-3 bg-green-50 rounded-lg border border-green-200">
-              <Shield className="h-5 w-5 text-green-600" />
-              <span className="text-sm font-medium text-green-800">Secure OTP System Active</span>
-            </div>
-
-            {/* Timer with enhanced styling */}
+            {/* Exact 3-minute countdown timer */}
             <div className="flex items-center justify-center space-x-2 p-4 bg-blue-50 rounded-lg border border-blue-200">
               <Timer className={`h-5 w-5 ${timeLeft <= 60 ? 'text-red-600' : 'text-blue-600'}`} />
               <span className={`font-mono text-lg font-bold ${timeLeft <= 60 ? 'text-red-600' : timeLeft <= 120 ? 'text-amber-600' : 'text-blue-600'}`}>
@@ -239,15 +184,6 @@ const VerifyResetCode = () => {
               <span className="text-sm text-gray-600">remaining</span>
             </div>
 
-            {/* Attempts remaining indicator */}
-            {attemptsRemaining < 3 && (
-              <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
-                <p className="text-sm text-amber-800 text-center">
-                  <strong>{attemptsRemaining} attempt{attemptsRemaining !== 1 ? 's' : ''} remaining</strong>
-                </p>
-              </div>
-            )}
-
             {/* 6-digit OTP Input */}
             <div className="space-y-4">
               <div className="flex justify-center">
@@ -255,7 +191,7 @@ const VerifyResetCode = () => {
                   maxLength={6}
                   value={code}
                   onChange={setCode}
-                  disabled={timeLeft <= 0 || isLoading || attemptsRemaining <= 0}
+                  disabled={timeLeft <= 0 || isLoading}
                 >
                   <InputOTPGroup>
                     <InputOTPSlot index={0} />
@@ -271,7 +207,7 @@ const VerifyResetCode = () => {
               <Button 
                 onClick={handleVerifyCode} 
                 className="w-full" 
-                disabled={code.length !== 6 || timeLeft <= 0 || isLoading || attemptsRemaining <= 0}
+                disabled={code.length !== 6 || timeLeft <= 0 || isLoading}
               >
                 {isLoading ? 'Verifying...' : 'Verify Code'}
               </Button>
@@ -279,7 +215,7 @@ const VerifyResetCode = () => {
 
             {/* Resend Section */}
             <div className="text-center space-y-2">
-              {canResend || attemptsRemaining <= 0 ? (
+              {canResend ? (
                 <Button
                   variant="ghost"
                   onClick={handleResendCode}
@@ -296,7 +232,6 @@ const VerifyResetCode = () => {
               )}
             </div>
 
-            {/* Expired state */}
             {timeLeft <= 0 && (
               <div className="p-4 bg-red-50 rounded-lg border border-red-200">
                 <p className="text-sm text-red-800 text-center">
@@ -304,20 +239,6 @@ const VerifyResetCode = () => {
                 </p>
               </div>
             )}
-
-            {/* Security information */}
-            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="text-sm text-gray-700">
-                <p className="font-medium mb-2">🔒 Security Features:</p>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>6-digit code stored securely in database</li>
-                  <li>Automatic expiry after 3 minutes</li>
-                  <li>Maximum 3 verification attempts</li>
-                  <li>Rate limited to prevent abuse</li>
-                  <li>Code is invalidated after successful use</li>
-                </ul>
-              </div>
-            </div>
           </CardContent>
         </Card>
       </div>

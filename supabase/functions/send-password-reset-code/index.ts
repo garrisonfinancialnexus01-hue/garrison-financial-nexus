@@ -1,6 +1,5 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import { Resend } from "npm:resend@2.0.0";
 
 const corsHeaders = {
@@ -12,8 +11,14 @@ const corsHeaders = {
 interface PasswordResetRequest {
   email: string;
   name: string;
-  userIp?: string;
 }
+
+// Generate a secure random 6-digit code
+const generateVerificationCode = (): string => {
+  const min = 100000;
+  const max = 999999;
+  return Math.floor(Math.random() * (max - min + 1) + min).toString();
+};
 
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
@@ -21,23 +26,25 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  console.log('=== SECURE OTP SYSTEM - PASSWORD RESET STARTED ===');
+  console.log('=== PASSWORD RESET FUNCTION STARTED ===');
+  console.log('Request method:', req.method);
   
   try {
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Check environment variables
+    // Check environment variables first
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    
+    console.log('=== ENVIRONMENT CHECK ===');
+    console.log('RESEND_API_KEY exists:', !!resendApiKey);
+    console.log('RESEND_API_KEY length:', resendApiKey?.length || 0);
+    console.log('RESEND_API_KEY starts with re_:', resendApiKey?.startsWith('re_') || false);
     
     if (!resendApiKey) {
       console.error('CRITICAL: RESEND_API_KEY is missing');
       return new Response(JSON.stringify({ 
         error: 'Email service not configured',
         success: false,
-        message: 'Email service configuration error'
+        message: 'RESEND_API_KEY environment variable is missing',
+        errorCode: 'MISSING_API_KEY'
       }), {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -45,8 +52,29 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Parse request body
-    const requestBody = await req.json();
-    const { email, name, userIp }: PasswordResetRequest = requestBody;
+    let requestBody;
+    try {
+      const rawBody = await req.text();
+      console.log('Raw request body length:', rawBody.length);
+      requestBody = JSON.parse(rawBody);
+      console.log('Request body parsed successfully:', {
+        hasEmail: !!requestBody.email,
+        hasName: !!requestBody.name
+      });
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      return new Response(JSON.stringify({ 
+        error: 'Invalid JSON in request body',
+        success: false,
+        message: 'Request body is not valid JSON',
+        errorCode: 'INVALID_JSON'
+      }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    const { email, name }: PasswordResetRequest = requestBody;
 
     // Validate required fields
     if (!email || !name) {
@@ -54,7 +82,8 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response(JSON.stringify({ 
         error: 'Missing required fields',
         success: false,
-        message: 'Email and name are required'
+        message: 'Both email and name are required',
+        errorCode: 'MISSING_FIELDS'
       }), {
         status: 400,
         headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -63,225 +92,177 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) {
-      console.error('Invalid email format:', email);
+    const trimmedEmail = email.trim().toLowerCase();
+    
+    if (!emailRegex.test(trimmedEmail)) {
+      console.error('Invalid email format:', trimmedEmail);
       return new Response(JSON.stringify({ 
         error: 'Invalid email format',
         success: false,
-        message: 'Please provide a valid email address'
+        message: 'Please provide a valid email address',
+        errorCode: 'INVALID_EMAIL'
       }), {
         status: 400,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    const cleanEmail = email.trim().toLowerCase();
-
-    // Check if account exists with this email
-    const { data: account, error: fetchError } = await supabase
-      .from('client_accounts')
-      .select('email, name')
-      .eq('email', cleanEmail)
-      .maybeSingle();
-
-    if (fetchError) {
-      console.error('Database error:', fetchError);
-      return new Response(JSON.stringify({ 
-        error: 'System error',
-        success: false,
-        message: 'Unable to verify email address. Please try again.'
-      }), {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
-    }
-
-    if (!account) {
-      return new Response(JSON.stringify({ 
-        error: 'Email not found',
-        success: false,
-        message: 'No account found with this email address. Please check your email or create a new account.'
-      }), {
-        status: 404,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
-    }
-
-    console.log('Account found, generating secure OTP for:', cleanEmail);
-
-    // Generate OTP using database function with rate limiting
-    const { data: otpResult, error: otpError } = await supabase
-      .rpc('generate_password_reset_otp', {
-        user_email: cleanEmail,
-        client_ip: userIp || req.headers.get('cf-connecting-ip') || req.headers.get('x-forwarded-for') || 'unknown'
-      });
-
-    if (otpError) {
-      console.error('OTP generation error:', otpError);
-      return new Response(JSON.stringify({ 
-        error: 'OTP generation failed',
-        success: false,
-        message: 'Failed to generate verification code. Please try again.'
-      }), {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
-    }
-
-    if (!otpResult || otpResult.length === 0) {
-      console.error('No OTP result returned');
-      return new Response(JSON.stringify({ 
-        error: 'OTP generation failed',
-        success: false,
-        message: 'Failed to generate verification code. Please try again.'
-      }), {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
-    }
-
-    const { otp_code, expires_at, success, message } = otpResult[0];
-
-    if (!success) {
-      console.log('OTP generation refused:', message);
-      return new Response(JSON.stringify({ 
-        error: 'Rate limited',
-        success: false,
-        message: message || 'Too many requests. Please try again later.'
-      }), {
-        status: 429,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
-    }
-
-    console.log('Secure OTP generated, sending email to:', cleanEmail);
-    console.log('OTP Code:', otp_code, 'Expires at:', expires_at);
+    console.log('=== VALIDATION PASSED ===');
+    console.log('Email:', trimmedEmail);
+    console.log('Name:', name);
 
     // Initialize Resend
-    const resend = new Resend(resendApiKey);
+    console.log('=== INITIALIZING RESEND ===');
+    let resend;
+    try {
+      resend = new Resend(resendApiKey);
+      console.log('Resend client initialized successfully');
+    } catch (resendInitError) {
+      console.error('Resend initialization failed:', resendInitError);
+      return new Response(JSON.stringify({ 
+        error: 'Email service initialization failed',
+        success: false,
+        message: 'Could not connect to email service',
+        errorCode: 'RESEND_INIT_ERROR',
+        details: resendInitError.message
+      }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
 
-    // Send professional email with the 6-digit OTP
-    const emailResponse = await resend.emails.send({
-      from: "Garrison Financial Nexus <onboarding@resend.dev>",
-      to: [cleanEmail],
-      subject: "🔐 Your Password Reset OTP - Garrison Financial Nexus",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f8f9fa;">
-          <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-            <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #2d5016; margin: 0; font-size: 24px;">🏦 Garrison Financial Nexus</h1>
-              <p style="color: #666; margin: 5px 0 0 0;">Secure Password Reset</p>
-            </div>
-            
-            <h2 style="color: #333; text-align: center; margin-bottom: 20px;">Your 6-Digit Verification Code</h2>
-            
-            <p style="color: #333; font-size: 16px;">Hello <strong>${name}</strong>,</p>
-            
-            <p style="color: #333; font-size: 16px; line-height: 1.6;">
-              We received a request to reset your password for your Garrison Financial Nexus account. 
-              Use the 6-digit verification code below to continue:
-            </p>
-            
+    // Generate verification code
+    const verificationCode = generateVerificationCode();
+    console.log('Generated verification code:', verificationCode);
+
+    // Send email
+    console.log('=== SENDING EMAIL ===');
+    console.log('From: onboarding@resend.dev');
+    console.log('To:', trimmedEmail);
+    
+    try {
+      const emailResponse = await resend.emails.send({
+        from: "Garrison Financial Nexus <onboarding@resend.dev>",
+        to: [trimmedEmail],
+        subject: "🔐 Password Reset Code - Garrison Financial Nexus",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h1 style="color: #333; text-align: center;">Password Reset Request</h1>
+            <p>Hello <strong>${name}</strong>,</p>
+            <p>We received a request to reset your password for your Garrison Financial Nexus account.</p>
             <div style="text-align: center; margin: 30px 0;">
-              <div style="background: linear-gradient(135deg, #2d5016, #4a7c23); color: white; padding: 25px; border-radius: 15px; font-size: 36px; font-weight: bold; letter-spacing: 12px; display: inline-block; font-family: 'Courier New', monospace;">
-                ${otp_code}
+              <div style="background: #f0f0f0; padding: 20px; border-radius: 8px; font-size: 32px; font-weight: bold; letter-spacing: 8px;">
+                ${verificationCode}
               </div>
             </div>
-            
-            <div style="background-color: #fff3cd; border: 2px solid #ffeaa7; padding: 20px; border-radius: 10px; margin: 25px 0;">
-              <p style="color: #856404; margin: 0; font-weight: bold; font-size: 16px;">⚠️ Important Security Information:</p>
-              <ul style="color: #856404; margin: 15px 0 0 0; padding-left: 20px; font-size: 14px;">
-                <li><strong>This code expires in exactly 3 minutes</strong></li>
-                <li>You have 3 attempts to enter the correct code</li>
-                <li>Never share this code with anyone</li>
-                <li>If you didn't request this reset, please ignore this email</li>
-                <li>Contact us immediately if you suspect unauthorized access</li>
-              </ul>
-            </div>
-            
-            <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
-              <p style="color: #666; font-size: 14px; margin: 0;">
-                Need help? Contact us at <strong>+256 761 281 222</strong>
-              </p>
-              <p style="color: #666; font-size: 14px; margin: 15px 0 0 0;">
-                Best regards,<br>
-                <strong style="color: #2d5016;">The Garrison Financial Nexus Team</strong>
-              </p>
-            </div>
+            <p><strong>Important:</strong></p>
+            <ul>
+              <li>This code expires in exactly 3 minutes</li>
+              <li>Never share this code with anyone</li>
+              <li>If you didn't request this reset, please ignore this email</li>
+            </ul>
+            <p>Need help? Contact us at +256 761 281 222</p>
+            <p>Best regards,<br>Garrison Financial Nexus Team</p>
           </div>
-        </div>
-      `,
-    });
+        `,
+      });
 
-    if (emailResponse.error) {
-      console.error('Resend API error:', emailResponse.error);
-      
-      // Check if it's the domain verification error
-      if (emailResponse.error.message && emailResponse.error.message.includes('verify a domain')) {
+      console.log('=== EMAIL SEND RESULT ===');
+      console.log('Email response:', {
+        hasData: !!emailResponse.data,
+        hasError: !!emailResponse.error,
+        dataId: emailResponse.data?.id,
+        errorMessage: emailResponse.error?.message
+      });
+
+      if (emailResponse.error) {
+        console.error('Resend API error:', emailResponse.error);
         return new Response(JSON.stringify({ 
-          error: 'Domain not verified',
+          error: 'Email delivery failed',
           success: false,
-          message: 'Please verify your domain at resend.com/domains to send emails to all recipients.',
-          details: 'Currently in testing mode - can only send to verified email address'
+          message: `Email service error: ${emailResponse.error.message}`,
+          errorCode: 'EMAIL_SEND_ERROR',
+          details: emailResponse.error
         }), {
-          status: 403,
+          status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         });
       }
+
+      if (!emailResponse.data) {
+        console.error('No data returned from Resend API');
+        return new Response(JSON.stringify({ 
+          error: 'Email service returned no data',
+          success: false,
+          message: 'Email service did not return confirmation',
+          errorCode: 'NO_EMAIL_DATA'
+        }), {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
+
+      console.log('=== SUCCESS ===');
+      console.log('Email sent successfully with ID:', emailResponse.data.id);
+
+      return new Response(JSON.stringify({ 
+        success: true, 
+        emailId: emailResponse.data.id,
+        message: 'Verification code sent successfully',
+        code: verificationCode,
+        timestamp: Date.now()
+      }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders,
+        },
+      });
+
+    } catch (emailError: any) {
+      console.error('=== EMAIL SENDING ERROR ===');
+      console.error('Error message:', emailError.message);
+      console.error('Error name:', emailError.name);
+      console.error('Error stack:', emailError.stack);
+      console.error('Full error:', JSON.stringify(emailError, null, 2));
       
       return new Response(JSON.stringify({ 
-        error: 'Email delivery failed',
+        error: 'Email service network error',
         success: false,
-        message: 'Failed to send verification code. Please try again.',
-        details: emailResponse.error.message
+        message: `Failed to send email: ${emailError.message}`,
+        errorCode: 'NETWORK_ERROR',
+        details: {
+          errorType: emailError.name,
+          errorMessage: emailError.message
+        }
       }), {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    if (!emailResponse.data) {
-      console.error('No data returned from Resend API');
-      return new Response(JSON.stringify({ 
-        error: 'Email service error',
-        success: false,
-        message: 'Email service did not return confirmation'
-      }), {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
-    }
-
-    console.log('✅ Secure OTP email sent successfully with ID:', emailResponse.data.id);
-    console.log('✅ OTP stored in database with expiry:', expires_at);
-
-    return new Response(JSON.stringify({ 
-      success: true, 
-      emailId: emailResponse.data.id,
-      message: '6-digit verification code sent successfully to your email',
-      expiresAt: expires_at,
-      expiresIn: '3 minutes',
-      attemptsAllowed: 3
-    }), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders,
-      },
-    });
-
-  } catch (error: any) {
-    console.error('Critical error in secure OTP system:', error);
+  } catch (criticalError: any) {
+    console.error('=== CRITICAL ERROR ===');
+    console.error('Critical error message:', criticalError.message);
+    console.error('Critical error name:', criticalError.name);
+    console.error('Critical error stack:', criticalError.stack);
     
-    return new Response(JSON.stringify({ 
-      error: 'Internal server error',
-      success: false,
-      message: 'System error occurred. Please try again.',
-      details: error.message
-    }), {
-      status: 500,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
-    });
+    return new Response(
+      JSON.stringify({ 
+        error: 'Internal server error',
+        success: false,
+        message: `System error: ${criticalError.message}`,
+        errorCode: 'INTERNAL_ERROR',
+        details: {
+          errorType: criticalError.name,
+          errorMessage: criticalError.message
+        }
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
   }
 };
 

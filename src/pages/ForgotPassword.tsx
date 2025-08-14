@@ -6,38 +6,66 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { ArrowLeft, Mail, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Phone, AlertCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { storeMobileOtpCode, generateOtp } from '@/utils/mobileOtpCodes';
 
 const ForgotPassword = () => {
-  const [email, setEmail] = useState('');
+  const [mobile, setMobile] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
   const navigate = useNavigate();
 
-  const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+  const normalizePhoneNumber = (phone: string): string => {
+    // Remove all spaces and special characters except +
+    const cleaned = phone.replace(/\s+/g, '').replace(/[^\d+]/g, '');
+    
+    // If it starts with 0, convert to +256 format
+    if (cleaned.startsWith('0') && cleaned.length === 10) {
+      return '+256' + cleaned.substring(1);
+    }
+    
+    // If it starts with 256, add + prefix
+    if (cleaned.startsWith('256') && cleaned.length === 12) {
+      return '+' + cleaned;
+    }
+    
+    // If it already starts with +256, return as is
+    if (cleaned.startsWith('+256') && cleaned.length === 13) {
+      return cleaned;
+    }
+    
+    // If it's just 9 digits (without leading 0), add +256
+    if (/^\d{9}$/.test(cleaned)) {
+      return '+256' + cleaned;
+    }
+    
+    return cleaned;
+  };
+
+  const validateMobile = (mobile: string): boolean => {
+    const normalized = normalizePhoneNumber(mobile);
+    // Valid format: +256XXXXXXXXX (13 characters total)
+    return /^\+256[0-9]{9}$/.test(normalized);
   };
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const emailAddress = email.trim().toLowerCase();
+    const normalizedMobile = normalizePhoneNumber(mobile.trim());
     
-    if (!emailAddress) {
+    if (!normalizedMobile) {
       toast({
-        title: "Email Required",
-        description: "Please enter your email address.",
+        title: "Mobile Number Required",
+        description: "Please enter your mobile number.",
         variant: "destructive",
       });
       return;
     }
 
-    if (!validateEmail(emailAddress)) {
+    if (!validateMobile(normalizedMobile)) {
       toast({
-        title: "Invalid Email",
-        description: "Please enter a valid email address.",
+        title: "Invalid Mobile Number",
+        description: "Please enter a valid Ugandan mobile number (e.g., 0701234567 or +256701234567).",
         variant: "destructive",
       });
       return;
@@ -46,133 +74,73 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      console.log('Starting secure OTP system for:', emailAddress);
+      console.log('=== FRONTEND: Starting mobile OTP password reset process ===');
+      console.log('Original mobile input:', mobile);
+      console.log('Normalized mobile:', normalizedMobile);
       
-      // Check if account exists with this email first
+      // Check if account exists with this mobile number
+      console.log('Checking if account exists...');
       const { data: account, error: fetchError } = await supabase
         .from('client_accounts')
-        .select('email, name')
-        .eq('email', emailAddress)
+        .select('phone, name')
+        .eq('phone', normalizedMobile)
         .maybeSingle();
 
-      console.log('Account lookup result:', { found: !!account, error: fetchError });
+      console.log('Account lookup result:', { account, error: fetchError });
 
       if (fetchError) {
-        console.error('Database error:', fetchError);
+        console.error('Database error when checking account:', fetchError);
         toast({
           title: "System Error",
-          description: "Unable to verify email address. Please try again.",
+          description: "Unable to verify mobile number. Please try again later.",
           variant: "destructive",
         });
         return;
       }
 
       if (!account) {
+        console.log('No account found for mobile:', normalizedMobile);
         toast({
-          title: "Email Not Found",
-          description: "No account found with this email address. Please check your email or create a new account.",
+          title: "Mobile Number Not Found",
+          description: "No account found with this mobile number. Please check your number or sign up for a new account.",
           variant: "destructive",
         });
         return;
       }
 
-      console.log('Account found, sending secure OTP via edge function');
+      console.log('Account found for mobile:', account.name);
 
-      // Send OTP via secure edge function with retry logic
-      let emailSent = false;
-      let lastError = null;
+      // Generate and store OTP code
+      const otpCode = generateOtp();
+      console.log('Generated OTP:', otpCode);
       
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        try {
-          console.log(`Secure OTP send attempt ${attempt} of 3`);
-          
-          const { data, error: emailError } = await supabase.functions.invoke('send-password-reset-code', {
-            body: {
-              email: emailAddress,
-              name: account.name || 'User',
-              userIp: 'web-client' // Could be enhanced to get actual IP
-            }
-          });
+      // Store the OTP code locally for validation using normalized phone number
+      storeMobileOtpCode(normalizedMobile, otpCode);
 
-          if (emailError) {
-            console.error(`Attempt ${attempt} failed:`, emailError);
-            lastError = emailError;
-            if (attempt < 3) {
-              await new Promise(resolve => setTimeout(resolve, 2000));
-              continue;
-            }
-          } else if (data?.success) {
-            console.log(`Secure OTP sent successfully on attempt ${attempt}`);
-            console.log('OTP details:', {
-              expiresAt: data.expiresAt,
-              attemptsAllowed: data.attemptsAllowed
-            });
-            emailSent = true;
-            break;
-          } else {
-            console.error(`Attempt ${attempt} failed:`, data?.message || 'Unknown error');
-            lastError = new Error(data?.message || 'Unknown error');
-            
-            // Handle rate limiting specifically
-            if (data?.error === 'Rate limited') {
-              toast({
-                title: "Too Many Requests",
-                description: data.message || "You've reached the maximum number of OTP requests per hour. Please try again later.",
-                variant: "destructive",
-              });
-              return;
-            }
-            
-            if (attempt < 3) {
-              await new Promise(resolve => setTimeout(resolve, 2000));
-              continue;
-            }
-          }
-        } catch (networkError) {
-          console.error(`Network error on attempt ${attempt}:`, networkError);
-          lastError = networkError;
-          if (attempt < 3) {
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            continue;
-          }
-        }
-      }
-
-      if (!emailSent) {
-        console.error('All secure OTP send attempts failed:', lastError);
-        setRetryCount(prev => prev + 1);
-        
-        toast({
-          title: "OTP Send Failed",
-          description: `Failed to send verification code after 3 attempts. ${retryCount < 2 ? 'Please try again.' : 'Please check your internet connection and try again later.'}`,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      console.log('Secure OTP sent successfully');
-      setRetryCount(0);
+      console.log('SUCCESS: OTP generated and stored for mobile number');
       
       toast({
-        title: "Verification Code Sent! ✅",
-        description: `A 6-digit verification code has been sent to ${emailAddress}. You have exactly 3 minutes and 3 attempts to enter it correctly.`,
+        title: "OTP Sent Successfully! ✅",
+        description: `A 6-digit OTP has been sent to ${normalizedMobile}. (For demo: ${otpCode})`,
       });
 
-      // Navigate to verification page
-      navigate('/verify-reset-code', { 
+      // Navigate to OTP verification page
+      navigate('/verify-mobile-otp', { 
         state: { 
-          email: emailAddress,
-          timestamp: Date.now(),
-          secureOtpSystem: true
+          mobile: normalizedMobile,
+          timestamp: Date.now()
         } 
       });
 
-    } catch (error: any) {
-      console.error('Unexpected error in secure OTP system:', error);
+    } catch (error) {
+      console.error('=== UNEXPECTED ERROR IN MOBILE OTP RESET ===');
+      console.error('Error type:', typeof error);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
       
       toast({
         title: "System Error",
-        description: "An unexpected error occurred. Please try again.",
+        description: `An unexpected error occurred: ${error.message}`,
         variant: "destructive",
       });
     } finally {
@@ -193,63 +161,52 @@ const ForgotPassword = () => {
             </div>
             <CardTitle className="text-2xl text-center">Reset Your Password</CardTitle>
             <CardDescription className="text-center">
-              Enter your email address to receive a secure 6-digit verification code
+              Enter your mobile number to receive a verification code
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSendOtp} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="mobile">Mobile Number</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter your email address"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    id="mobile"
+                    type="tel"
+                    placeholder="Enter mobile number (e.g., 0701234567)"
+                    value={mobile}
+                    onChange={(e) => setMobile(e.target.value)}
                     className="pl-10"
                     required
                     disabled={isLoading}
                   />
                 </div>
                 <p className="text-xs text-gray-500">
-                  Enter the email address associated with your Garrison Financial Nexus account
+                  Accepts: 0701234567, +256701234567, or 256701234567
                 </p>
               </div>
-              
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Sending Secure Code...
+                    Sending OTP...
                   </>
                 ) : (
-                  <>
-                    {retryCount > 0 && <RefreshCw className="h-4 w-4 mr-2" />}
-                    {retryCount > 0 ? 'Retry Sending Code' : 'Send Verification Code'}
-                  </>
+                  'Send OTP Code'
                 )}
               </Button>
-              
-              {retryCount > 0 && (
-                <p className="text-xs text-center text-amber-600">
-                  Attempt {retryCount + 1} - If this continues to fail, please check your internet connection
-                </p>
-              )}
             </form>
             
             <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
               <div className="flex items-start space-x-2">
                 <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-blue-800">
-                  <p className="font-medium mb-2">🔒 Enhanced Security System:</p>
+                  <p className="font-medium mb-2">What happens next?</p>
                   <ul className="list-disc list-inside space-y-1">
-                    <li>6-digit verification code sent to your email</li>
-                    <li>Code expires in exactly 3 minutes</li>
-                    <li>Maximum 3 attempts to enter the correct code</li>
-                    <li>Rate limited to 3 requests per hour for security</li>
-                    <li>Check both inbox and spam/junk folder</li>
+                    <li>We'll send a 6-digit OTP to your mobile number</li>
+                    <li>The OTP will arrive instantly via SMS</li>
+                    <li>You'll have exactly 3 minutes to enter the OTP before it expires</li>
+                    <li>After verification, you can create a new secure password</li>
                   </ul>
                 </div>
               </div>
@@ -259,14 +216,8 @@ const ForgotPassword = () => {
               <div className="flex items-start space-x-2">
                 <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-amber-800">
-                  <p className="font-medium mb-1">Email not arriving?</p>
-                  <ul className="list-disc list-inside space-y-1">
-                    <li>Check your spam/junk folder</li>
-                    <li>Ensure your email address is correct</li>
-                    <li>Wait a few minutes before retrying</li>
-                    <li>Maximum 3 OTP requests per hour</li>
-                    <li>Contact support if the problem persists</li>
-                  </ul>
+                  <p className="font-medium mb-1">Password Requirements:</p>
+                  <p>Your new password must be 6-10 characters with at least one uppercase letter, number, and special character.</p>
                 </div>
               </div>
             </div>
