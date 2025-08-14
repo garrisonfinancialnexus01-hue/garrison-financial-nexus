@@ -6,13 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { ArrowLeft, Mail, AlertCircle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Mail, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { storeVerificationCode } from '@/utils/passwordResetCodes';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const navigate = useNavigate();
 
   const validateEmail = (email: string): boolean => {
@@ -50,72 +51,107 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      console.log('=== FRONTEND: Starting email OTP password reset process ===');
-      console.log('Email input:', emailAddress);
+      console.log('Starting password reset process for:', emailAddress);
       
       // Check if account exists with this email
-      console.log('Checking if account exists...');
       const { data: account, error: fetchError } = await supabase
         .from('client_accounts')
         .select('email, name')
         .eq('email', emailAddress)
         .maybeSingle();
 
-      console.log('Account lookup result:', { account, error: fetchError });
+      console.log('Account lookup result:', { found: !!account, error: fetchError });
 
       if (fetchError) {
-        console.error('Database error when checking account:', fetchError);
+        console.error('Database error:', fetchError);
         toast({
           title: "System Error",
-          description: "Unable to verify email address. Please try again later.",
+          description: "Unable to verify email address. Please try again.",
           variant: "destructive",
         });
         return;
       }
 
       if (!account) {
-        console.log('No account found for email:', emailAddress);
         toast({
           title: "Email Not Found",
-          description: "No account found with this email address. Please check your email or sign up for a new account.",
+          description: "No account found with this email address. Please check your email or create a new account.",
           variant: "destructive",
         });
         return;
       }
 
-      console.log('Account found for email:', account.name);
-
-      // Generate and store verification code
+      // Generate verification code
       const verificationCode = generateVerificationCode();
-      console.log('Generated verification code:', verificationCode);
+      console.log('Generated verification code for email sending');
       
-      // Store the verification code locally for validation
+      // Store the verification code locally
       storeVerificationCode(emailAddress, verificationCode);
 
-      // Send email via Supabase edge function
-      const { error: emailError } = await supabase.functions.invoke('send-password-reset-code', {
-        body: {
-          email: emailAddress,
-          name: account.name,
-          code: verificationCode
-        }
-      });
+      // Send email via Supabase edge function with retry logic
+      let emailSent = false;
+      let lastError = null;
+      
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          console.log(`Email send attempt ${attempt} of 3`);
+          
+          const { data, error: emailError } = await supabase.functions.invoke('send-password-reset-code', {
+            body: {
+              email: emailAddress,
+              name: account.name || 'User',
+              code: verificationCode
+            }
+          });
 
-      if (emailError) {
-        console.error('Error sending email:', emailError);
+          if (emailError) {
+            console.error(`Attempt ${attempt} failed:`, emailError);
+            lastError = emailError;
+            if (attempt < 3) {
+              // Wait 2 seconds before retrying
+              await new Promise(resolve => setTimeout(resolve, 2000));
+              continue;
+            }
+          } else if (data?.success) {
+            console.log(`Email sent successfully on attempt ${attempt}`);
+            emailSent = true;
+            break;
+          } else {
+            console.error(`Attempt ${attempt} failed: No success response`);
+            lastError = new Error(data?.message || 'Unknown error');
+            if (attempt < 3) {
+              await new Promise(resolve => setTimeout(resolve, 2000));
+              continue;
+            }
+          }
+        } catch (networkError) {
+          console.error(`Network error on attempt ${attempt}:`, networkError);
+          lastError = networkError;
+          if (attempt < 3) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            continue;
+          }
+        }
+      }
+
+      if (!emailSent) {
+        console.error('All email send attempts failed:', lastError);
+        setRetryCount(prev => prev + 1);
+        
         toast({
           title: "Email Send Failed",
-          description: "Failed to send verification code. Please try again.",
+          description: `Failed to send verification code after 3 attempts. ${retryCount < 2 ? 'Please try again.' : 'Please check your internet connection and try again later.'}`,
           variant: "destructive",
         });
         return;
       }
 
-      console.log('SUCCESS: Verification code sent to email');
+      console.log('Verification code sent successfully');
+      setRetryCount(0); // Reset retry count on success
       
       toast({
         title: "Verification Code Sent! ✅",
-        description: `A 6-digit verification code has been sent to ${emailAddress}`,
+        description: `A 6-digit verification code has been sent to ${emailAddress}. Please check your inbox and spam folder.`,
       });
 
       // Navigate to verification page
@@ -126,15 +162,12 @@ const ForgotPassword = () => {
         } 
       });
 
-    } catch (error) {
-      console.error('=== UNEXPECTED ERROR IN EMAIL OTP RESET ===');
-      console.error('Error type:', typeof error);
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
+    } catch (error: any) {
+      console.error('Unexpected error in password reset:', error);
       
       toast({
         title: "System Error",
-        description: `An unexpected error occurred: ${error.message}`,
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -176,9 +209,10 @@ const ForgotPassword = () => {
                   />
                 </div>
                 <p className="text-xs text-gray-500">
-                  Enter the email address associated with your account
+                  Enter the email address associated with your Garrison Financial Nexus account
                 </p>
               </div>
+              
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <>
@@ -186,9 +220,18 @@ const ForgotPassword = () => {
                     Sending Code...
                   </>
                 ) : (
-                  'Send Verification Code'
+                  <>
+                    {retryCount > 0 && <RefreshCw className="h-4 w-4 mr-2" />}
+                    {retryCount > 0 ? 'Retry Sending Code' : 'Send Verification Code'}
+                  </>
                 )}
               </Button>
+              
+              {retryCount > 0 && (
+                <p className="text-xs text-center text-amber-600">
+                  Attempt {retryCount + 1} - If this continues to fail, please check your internet connection
+                </p>
+              )}
             </form>
             
             <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
@@ -198,8 +241,8 @@ const ForgotPassword = () => {
                   <p className="font-medium mb-2">What happens next?</p>
                   <ul className="list-disc list-inside space-y-1">
                     <li>We'll send a 6-digit verification code to your email</li>
-                    <li>The code will arrive in your inbox within seconds</li>
-                    <li>You'll have exactly 3 minutes to enter the code before it expires</li>
+                    <li>Check both your inbox and spam/junk folder</li>
+                    <li>You'll have exactly 3 minutes to enter the code</li>
                     <li>After verification, you can create a new secure password</li>
                   </ul>
                 </div>
@@ -210,8 +253,13 @@ const ForgotPassword = () => {
               <div className="flex items-start space-x-2">
                 <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-amber-800">
-                  <p className="font-medium mb-1">Password Requirements:</p>
-                  <p>Your new password must be 6-10 characters with at least one uppercase letter, number, and special character.</p>
+                  <p className="font-medium mb-1">Email not arriving?</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Check your spam/junk folder</li>
+                    <li>Ensure your email address is correct</li>
+                    <li>Wait a few minutes and try again</li>
+                    <li>Contact support if the problem persists</li>
+                  </ul>
                 </div>
               </div>
             </div>
