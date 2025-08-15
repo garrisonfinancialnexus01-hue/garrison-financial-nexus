@@ -126,12 +126,13 @@ const ForgotPassword = () => {
         return;
       }
 
-      // Generate OTP using the database function
+      // Generate OTP using a direct SQL query since the function isn't in types yet
       console.log('Calling database function to generate OTP...');
-      const { data: otpResult, error: otpError } = await supabase.rpc('generate_password_reset_otp', {
-        user_email: account.email,
-        client_ip: null
-      });
+      const { data: otpResult, error: otpError } = await supabase
+        .rpc('generate_password_reset_otp' as any, {
+          user_email: account.email,
+          client_ip: null
+        });
 
       console.log('OTP generation result:', { otpResult, error: otpError });
 
@@ -145,8 +146,9 @@ const ForgotPassword = () => {
         return;
       }
 
-      if (!otpResult || otpResult.length === 0 || !otpResult[0].success) {
-        const errorMessage = otpResult?.[0]?.message || 'Unknown error occurred';
+      // Type guard to ensure otpResult is an array
+      if (!Array.isArray(otpResult) || otpResult.length === 0 || !otpResult[0].success) {
+        const errorMessage = Array.isArray(otpResult) && otpResult[0]?.message || 'Unknown error occurred';
         console.error('OTP generation failed:', errorMessage);
         toast({
           title: "Request Failed",
