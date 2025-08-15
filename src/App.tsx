@@ -31,6 +31,7 @@ import SettleYourDebt from "./pages/SettleYourDebt";
 import AdminBalanceEditor from "./pages/AdminBalanceEditor";
 import LoanRepaymentReceiptPortal from "./pages/LoanRepaymentReceiptPortal";
 import CentralDashboard from "./pages/CentralDashboard";
+import AdminEmailPortal from "./components/AdminEmailPortal";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,7 @@ const App = () => (
         <ClientAuthProvider>
           <Routes>
             <Route path="/central-dashboard" element={<CentralDashboard />} />
+            <Route path="/admin-email-portal" element={<AdminEmailPortal />} />
             <Route element={<Layout />}>
               <Route path="/" element={<Index />} />
               <Route path="/about" element={<About />} />
