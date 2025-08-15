@@ -11,7 +11,6 @@ const corsHeaders = {
 interface PasswordResetRequest {
   email: string;
   name: string;
-  code?: string; // Optional: if provided, use this code instead of generating one
 }
 
 // Generate a secure random 6-digit code
@@ -60,8 +59,7 @@ const handler = async (req: Request): Promise<Response> => {
       requestBody = JSON.parse(rawBody);
       console.log('Request body parsed successfully:', {
         hasEmail: !!requestBody.email,
-        hasName: !!requestBody.name,
-        hasCode: !!requestBody.code
+        hasName: !!requestBody.name
       });
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
@@ -76,7 +74,7 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    const { email, name, code }: PasswordResetRequest = requestBody;
+    const { email, name }: PasswordResetRequest = requestBody;
 
     // Validate required fields
     if (!email || !name) {
@@ -133,74 +131,38 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Use provided code or generate new one
-    const verificationCode = code || generateVerificationCode();
-    console.log('Using verification code:', verificationCode);
+    // Generate verification code
+    const verificationCode = generateVerificationCode();
+    console.log('Generated verification code:', verificationCode);
 
     // Send email
     console.log('=== SENDING EMAIL ===');
-    console.log('From: garrisonfinancialnexus01@gmail.com');
+    console.log('From: onboarding@resend.dev');
     console.log('To:', trimmedEmail);
     
     try {
       const emailResponse = await resend.emails.send({
-        from: "Garrison Financial Nexus <garrisonfinancialnexus01@gmail.com>",
+        from: "Garrison Financial Nexus <onboarding@resend.dev>",
         to: [trimmedEmail],
-        subject: "🔐 Your Password Reset Code - Garrison Financial Nexus",
+        subject: "🔐 Password Reset Code - Garrison Financial Nexus",
         html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
-            <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-              <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="color: #2c3e50; margin: 0; font-size: 28px;">🔐 Password Reset Request</h1>
-              </div>
-              
-              <p style="color: #34495e; font-size: 16px; line-height: 1.6;">Hello <strong>${name}</strong>,</p>
-              
-              <p style="color: #34495e; font-size: 16px; line-height: 1.6;">
-                We received a request to reset your password for your Garrison Financial Nexus account.
-              </p>
-              
-              <div style="text-align: center; margin: 40px 0;">
-                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 15px; display: inline-block;">
-                  <p style="margin: 0 0 10px 0; font-size: 14px; opacity: 0.9;">Your Verification Code</p>
-                  <div style="font-size: 42px; font-weight: bold; letter-spacing: 8px; font-family: 'Courier New', monospace;">
-                    ${verificationCode}
-                  </div>
-                </div>
-              </div>
-              
-              <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin: 30px 0;">
-                <h3 style="color: #856404; margin: 0 0 15px 0; display: flex; align-items: center;">
-                  <span style="margin-right: 10px;">⚠️</span>
-                  Important Security Information:
-                </h3>
-                <ul style="color: #856404; margin: 0; padding-left: 20px; line-height: 1.8;">
-                  <li><strong>This code expires in exactly 3 minutes</strong></li>
-                  <li>Never share this code with anyone</li>
-                  <li>Our staff will never ask for this code</li>
-                  <li>If you didn't request this reset, please ignore this email</li>
-                </ul>
-              </div>
-              
-              <div style="border-top: 2px solid #ecf0f1; padding-top: 25px; margin-top: 30px;">
-                <p style="color: #7f8c8d; font-size: 14px; line-height: 1.6;">
-                  <strong>Need help?</strong><br>
-                  📞 Contact us at <strong>+256 761 281 222</strong><br>
-                  📧 Email us at <strong>garrisonfinancialnexus01@gmail.com</strong>
-                </p>
-                
-                <p style="color: #7f8c8d; font-size: 14px; margin-top: 20px;">
-                  Best regards,<br>
-                  <strong>Garrison Financial Nexus Team</strong>
-                </p>
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h1 style="color: #333; text-align: center;">Password Reset Request</h1>
+            <p>Hello <strong>${name}</strong>,</p>
+            <p>We received a request to reset your password for your Garrison Financial Nexus account.</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <div style="background: #f0f0f0; padding: 20px; border-radius: 8px; font-size: 32px; font-weight: bold; letter-spacing: 8px;">
+                ${verificationCode}
               </div>
             </div>
-            
-            <div style="text-align: center; margin-top: 20px;">
-              <p style="color: #95a5a6; font-size: 12px;">
-                This email was sent from a secure system. Please do not reply to this email.
-              </p>
-            </div>
+            <p><strong>Important:</strong></p>
+            <ul>
+              <li>This code expires in exactly 3 minutes</li>
+              <li>Never share this code with anyone</li>
+              <li>If you didn't request this reset, please ignore this email</li>
+            </ul>
+            <p>Need help? Contact us at +256 761 281 222</p>
+            <p>Best regards,<br>Garrison Financial Nexus Team</p>
           </div>
         `,
       });
@@ -247,7 +209,7 @@ const handler = async (req: Request): Promise<Response> => {
         success: true, 
         emailId: emailResponse.data.id,
         message: 'Verification code sent successfully',
-        code: verificationCode, // Include for debugging (remove in production)
+        code: verificationCode,
         timestamp: Date.now()
       }), {
         status: 200,

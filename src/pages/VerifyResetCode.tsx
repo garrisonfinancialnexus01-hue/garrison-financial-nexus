@@ -6,8 +6,8 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { ArrowLeft, Timer, RefreshCw } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { verifyPasswordResetCode, storeVerificationCode } from '@/utils/passwordResetCodes';
+import { supabase } from '@/integrations/supabase/client';
 
 const VerifyResetCode = () => {
   const [code, setCode] = useState('');
@@ -73,25 +73,24 @@ const VerifyResetCode = () => {
     try {
       console.log('Verifying code:', code, 'for email:', email);
       
-      // Use existing in-memory verification utility
-      const isValid = verifyPasswordResetCode(email, code);
-
-      if (!isValid) {
+      // Verify the code using our verification codes utility
+      const isValidCode = verifyPasswordResetCode(email, code);
+      
+      if (isValidCode) {
+        console.log('Code verified successfully');
+        toast({
+          title: "Code Verified Successfully! ✅",
+          description: "You can now create your new password.",
+        });
+        navigate('/reset-password', { state: { email, verifiedCode: code } });
+      } else {
+        console.log('Invalid or expired code');
         toast({
           title: "Invalid Code",
           description: "The verification code is incorrect or has expired. Please try again.",
           variant: "destructive",
         });
-        return;
       }
-
-      console.log('Code verified successfully');
-      toast({
-        title: "Code Verified Successfully! ✅",
-        description: "You can now create your new password.",
-      });
-      navigate('/reset-password', { state: { email, verifiedCode: code } });
-      
     } catch (error) {
       console.error('Code verification error:', error);
       toast({
@@ -117,23 +116,21 @@ const VerifyResetCode = () => {
         .eq('email', email)
         .maybeSingle();
 
-      // Generate new OTP
-      const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-      
-      // Store new OTP in memory
-      storeVerificationCode(email, otpCode);
-
       // Send new code
       const { data, error } = await supabase.functions.invoke('send-password-reset-code', {
         body: {
           email: email,
-          name: account?.name || 'User',
-          code: otpCode
+          name: account?.name || 'User'
         }
       });
 
       if (error || !data?.success) {
         throw error || new Error('Failed to send code');
+      }
+
+      // Store the new verification code
+      if (data.code) {
+        storeVerificationCode(email, data.code);
       }
 
       toast({

@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { ArrowLeft, Phone, AlertCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { storeVerificationCode } from '@/utils/passwordResetCodes';
+import { storeMobileOtpCode, generateOtp } from '@/utils/mobileOtpCodes';
 
 const ForgotPassword = () => {
   const [mobile, setMobile] = useState('');
@@ -16,21 +16,21 @@ const ForgotPassword = () => {
   const navigate = useNavigate();
 
   const normalizePhoneNumber = (phone: string): string => {
-    // Remove all spaces, hyphens, and special characters except +
+    // Remove all spaces and special characters except +
     const cleaned = phone.replace(/\s+/g, '').replace(/[^\d+]/g, '');
     
     // If it starts with 0, convert to +256 format
-    if (cleaned.startsWith('0') && cleaned.length >= 10) {
+    if (cleaned.startsWith('0') && cleaned.length === 10) {
       return '+256' + cleaned.substring(1);
     }
     
     // If it starts with 256, add + prefix
-    if (cleaned.startsWith('256') && cleaned.length >= 12) {
+    if (cleaned.startsWith('256') && cleaned.length === 12) {
       return '+' + cleaned;
     }
     
     // If it already starts with +256, return as is
-    if (cleaned.startsWith('+256')) {
+    if (cleaned.startsWith('+256') && cleaned.length === 13) {
       return cleaned;
     }
     
@@ -46,11 +46,6 @@ const ForgotPassword = () => {
     const normalized = normalizePhoneNumber(mobile);
     // Valid format: +256XXXXXXXXX (13 characters total)
     return /^\+256[0-9]{9}$/.test(normalized);
-  };
-
-  // Generate a simple 6-digit OTP
-  const generateOTP = (): string => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
   };
 
   const handleSendOtp = async (e: React.FormEvent) => {
@@ -79,26 +74,19 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      console.log('=== MOBILE PASSWORD RESET: Starting process ===');
+      console.log('=== FRONTEND: Starting mobile OTP password reset process ===');
       console.log('Original mobile input:', mobile);
       console.log('Normalized mobile:', normalizedMobile);
       
       // Check if account exists with this mobile number
-      // Try multiple phone number formats to ensure we find the account
-      const phoneFormats = [
-        normalizedMobile,
-        normalizedMobile.replace('+256', '0'), // Convert +256701234567 to 0701234567
-        normalizedMobile.replace('+', ''), // Convert +256701234567 to 256701234567
-      ];
-
-      console.log('Searching for account with phone formats:', phoneFormats);
-
-      const { data: accounts, error: fetchError } = await supabase
+      console.log('Checking if account exists...');
+      const { data: account, error: fetchError } = await supabase
         .from('client_accounts')
-        .select('phone, name, email')
-        .in('phone', phoneFormats);
+        .select('phone, name')
+        .eq('phone', normalizedMobile)
+        .maybeSingle();
 
-      console.log('Account lookup result:', { accounts, error: fetchError });
+      console.log('Account lookup result:', { account, error: fetchError });
 
       if (fetchError) {
         console.error('Database error when checking account:', fetchError);
@@ -110,8 +98,8 @@ const ForgotPassword = () => {
         return;
       }
 
-      if (!accounts || accounts.length === 0) {
-        console.log('No account found for any mobile format:', phoneFormats);
+      if (!account) {
+        console.log('No account found for mobile:', normalizedMobile);
         toast({
           title: "Mobile Number Not Found",
           description: "No account found with this mobile number. Please check your number or sign up for a new account.",
@@ -120,78 +108,32 @@ const ForgotPassword = () => {
         return;
       }
 
-      const account = accounts[0]; // Take the first matching account
-      console.log('Account found:', account.name, 'with phone:', account.phone);
+      console.log('Account found for mobile:', account.name);
 
-      if (!account.email) {
-        toast({
-          title: "Email Not Found",
-          description: "Your account doesn't have an email address associated. Please contact support.",
-          variant: "destructive",
-        });
-        return;
-      }
+      // Generate and store OTP code
+      const otpCode = generateOtp();
+      console.log('Generated OTP:', otpCode);
+      
+      // Store the OTP code locally for validation using normalized phone number
+      storeMobileOtpCode(normalizedMobile, otpCode);
 
-      // Generate OTP code directly
-      const otpCode = generateOTP();
-      console.log('Generated OTP code:', otpCode);
-
-      // Store OTP in memory using existing utility
-      storeVerificationCode(account.email, otpCode);
-      console.log('OTP stored in memory successfully');
-
-      console.log('Calling email service...');
-
-      // Send OTP via email
-      const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-password-reset-code', {
-        body: {
-          email: account.email,
-          name: account.name,
-          code: otpCode
-        }
-      });
-
-      console.log('Email service result:', { emailResult, error: emailError });
-
-      if (emailError) {
-        console.error('Email service error:', emailError);
-        toast({
-          title: "Email Send Failed",
-          description: "Failed to send verification code to your email. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!emailResult?.success) {
-        console.error('Email send failed:', emailResult);
-        toast({
-          title: "Email Send Failed",
-          description: emailResult?.message || "Failed to send verification code. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      console.log('SUCCESS: Password reset OTP sent via email');
+      console.log('SUCCESS: OTP generated and stored for mobile number');
       
       toast({
-        title: "Verification Code Sent! ✅",
-        description: `A 6-digit verification code has been sent to ${account.email}`,
+        title: "OTP Sent Successfully! ✅",
+        description: `A 6-digit OTP has been sent to ${normalizedMobile}. (For demo: ${otpCode})`,
       });
 
       // Navigate to OTP verification page
-      navigate('/verify-reset-code', { 
+      navigate('/verify-mobile-otp', { 
         state: { 
-          email: account.email,
           mobile: normalizedMobile,
-          name: account.name,
           timestamp: Date.now()
         } 
       });
 
     } catch (error) {
-      console.error('=== UNEXPECTED ERROR IN MOBILE PASSWORD RESET ===');
+      console.error('=== UNEXPECTED ERROR IN MOBILE OTP RESET ===');
       console.error('Error type:', typeof error);
       console.error('Error message:', error.message);
       console.error('Error stack:', error.stack);
@@ -219,7 +161,7 @@ const ForgotPassword = () => {
             </div>
             <CardTitle className="text-2xl text-center">Reset Your Password</CardTitle>
             <CardDescription className="text-center">
-              Enter your mobile number to receive a verification code via email
+              Enter your mobile number to receive a verification code
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -247,10 +189,10 @@ const ForgotPassword = () => {
                 {isLoading ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Sending Verification Code...
+                    Sending OTP...
                   </>
                 ) : (
-                  'Send Verification Code'
+                  'Send OTP Code'
                 )}
               </Button>
             </form>
@@ -261,9 +203,9 @@ const ForgotPassword = () => {
                 <div className="text-sm text-blue-800">
                   <p className="font-medium mb-2">What happens next?</p>
                   <ul className="list-disc list-inside space-y-1">
-                    <li>We'll look up your account using your mobile number</li>
-                    <li>A 6-digit verification code will be sent to your registered email</li>
-                    <li>You'll have exactly 3 minutes to enter the code before it expires</li>
+                    <li>We'll send a 6-digit OTP to your mobile number</li>
+                    <li>The OTP will arrive instantly via SMS</li>
+                    <li>You'll have exactly 3 minutes to enter the OTP before it expires</li>
                     <li>After verification, you can create a new secure password</li>
                   </ul>
                 </div>
