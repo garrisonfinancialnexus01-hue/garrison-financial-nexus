@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -72,7 +73,7 @@ const ClientSignup = () => {
       if (!isValidNIN) {
         toast({
           title: "Invalid NIN",
-          description: "NIN must be 14 characters starting with CM or CF. Valid compositions: 8 numbers + 6 letters, 9 numbers + 5 letters, or 10 numbers + 4 letters",
+          description: "NIN must be 14 characters starting with CM or CF, with either 8 numbers + 6 letters or 9 numbers + 5 letters",
           variant: "destructive",
         });
         return;
@@ -239,6 +240,9 @@ const ClientSignup = () => {
                   maxLength={14}
                   required
                 />
+                <p className="text-xs text-gray-500">
+                  Must be 14 characters starting with CM or CF
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>

@@ -29,7 +29,6 @@ import TransactionRequest from "./pages/TransactionRequest";
 import RepayLoan from "./pages/RepayLoan";
 import SettleYourDebt from "./pages/SettleYourDebt";
 import AdminBalanceEditor from "./pages/AdminBalanceEditor";
-import AdminEmailPortal from "./components/AdminEmailPortal";
 import LoanRepaymentReceiptPortal from "./pages/LoanRepaymentReceiptPortal";
 import CentralDashboard from "./pages/CentralDashboard";
 import NotFound from "./pages/NotFound";
@@ -69,7 +68,6 @@ const App = () => (
               <Route path="/repay-loan" element={<RepayLoan />} />
               <Route path="/settle-your-debt" element={<SettleYourDebt />} />
               <Route path="/admin-balance-editor" element={<AdminBalanceEditor />} />
-              <Route path="/admin-email-portal" element={<AdminEmailPortal />} />
               <Route path="/loan-repayment-receipt-portal" element={<LoanRepaymentReceiptPortal />} />
               <Route path="*" element={<NotFound />} />
             </Route>

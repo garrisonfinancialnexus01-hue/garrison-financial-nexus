@@ -15,45 +15,18 @@ const ForgotPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const normalizePhoneNumber = (phone: string): string => {
-    // Remove all spaces and special characters except +
-    const cleaned = phone.replace(/\s+/g, '').replace(/[^\d+]/g, '');
-    
-    // If it starts with 0, convert to +256 format
-    if (cleaned.startsWith('0') && cleaned.length === 10) {
-      return '+256' + cleaned.substring(1);
-    }
-    
-    // If it starts with 256, add + prefix
-    if (cleaned.startsWith('256') && cleaned.length === 12) {
-      return '+' + cleaned;
-    }
-    
-    // If it already starts with +256, return as is
-    if (cleaned.startsWith('+256') && cleaned.length === 13) {
-      return cleaned;
-    }
-    
-    // If it's just 9 digits (without leading 0), add +256
-    if (/^\d{9}$/.test(cleaned)) {
-      return '+256' + cleaned;
-    }
-    
-    return cleaned;
-  };
-
   const validateMobile = (mobile: string): boolean => {
-    const normalized = normalizePhoneNumber(mobile);
-    // Valid format: +256XXXXXXXXX (13 characters total)
-    return /^\+256[0-9]{9}$/.test(normalized);
+    // Basic mobile number validation (10-15 digits)
+    const mobileRegex = /^[0-9]{10,15}$/;
+    return mobileRegex.test(mobile.replace(/\s+/g, ''));
   };
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const normalizedMobile = normalizePhoneNumber(mobile.trim());
+    const trimmedMobile = mobile.trim().replace(/\s+/g, '');
     
-    if (!normalizedMobile) {
+    if (!trimmedMobile) {
       toast({
         title: "Mobile Number Required",
         description: "Please enter your mobile number.",
@@ -62,10 +35,10 @@ const ForgotPassword = () => {
       return;
     }
 
-    if (!validateMobile(normalizedMobile)) {
+    if (!validateMobile(trimmedMobile)) {
       toast({
         title: "Invalid Mobile Number",
-        description: "Please enter a valid Ugandan mobile number (e.g., 0701234567 or +256701234567).",
+        description: "Please enter a valid mobile number (10-15 digits).",
         variant: "destructive",
       });
       return;
@@ -75,15 +48,14 @@ const ForgotPassword = () => {
 
     try {
       console.log('=== FRONTEND: Starting mobile OTP password reset process ===');
-      console.log('Original mobile input:', mobile);
-      console.log('Normalized mobile:', normalizedMobile);
+      console.log('Mobile:', trimmedMobile);
       
       // Check if account exists with this mobile number
       console.log('Checking if account exists...');
       const { data: account, error: fetchError } = await supabase
         .from('client_accounts')
         .select('phone, name')
-        .eq('phone', normalizedMobile)
+        .eq('phone', trimmedMobile)
         .maybeSingle();
 
       console.log('Account lookup result:', { account, error: fetchError });
@@ -99,7 +71,7 @@ const ForgotPassword = () => {
       }
 
       if (!account) {
-        console.log('No account found for mobile:', normalizedMobile);
+        console.log('No account found for mobile:', trimmedMobile);
         toast({
           title: "Mobile Number Not Found",
           description: "No account found with this mobile number. Please check your number or sign up for a new account.",
@@ -114,20 +86,20 @@ const ForgotPassword = () => {
       const otpCode = generateOtp();
       console.log('Generated OTP:', otpCode);
       
-      // Store the OTP code locally for validation using normalized phone number
-      storeMobileOtpCode(normalizedMobile, otpCode);
+      // Store the OTP code locally for validation
+      storeMobileOtpCode(trimmedMobile, otpCode);
 
       console.log('SUCCESS: OTP generated and stored for mobile number');
       
       toast({
         title: "OTP Sent Successfully! ✅",
-        description: `A 6-digit OTP has been sent to ${normalizedMobile}. (For demo: ${otpCode})`,
+        description: `A 6-digit OTP has been sent to ${trimmedMobile}. (For demo: ${otpCode})`,
       });
 
       // Navigate to OTP verification page
       navigate('/verify-mobile-otp', { 
         state: { 
-          mobile: normalizedMobile,
+          mobile: trimmedMobile,
           timestamp: Date.now()
         } 
       });
@@ -173,7 +145,7 @@ const ForgotPassword = () => {
                   <Input
                     id="mobile"
                     type="tel"
-                    placeholder="Enter mobile number (e.g., 0701234567)"
+                    placeholder="Enter your mobile number"
                     value={mobile}
                     onChange={(e) => setMobile(e.target.value)}
                     className="pl-10"
@@ -181,9 +153,6 @@ const ForgotPassword = () => {
                     disabled={isLoading}
                   />
                 </div>
-                <p className="text-xs text-gray-500">
-                  Accepts: 0701234567, +256701234567, or 256701234567
-                </p>
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
