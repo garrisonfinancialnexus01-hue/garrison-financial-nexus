@@ -47,6 +47,11 @@ const ForgotPassword = () => {
     return /^\+256[0-9]{9}$/.test(normalized);
   };
 
+  // Generate a simple 6-digit OTP
+  const generateOTP = (): string => {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  };
+
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -126,18 +131,31 @@ const ForgotPassword = () => {
         return;
       }
 
-      // Generate OTP using a direct SQL query since the function isn't in types yet
-      console.log('Calling database function to generate OTP...');
-      const { data: otpResult, error: otpError } = await supabase
-        .rpc('generate_password_reset_otp' as any, {
-          user_email: account.email,
-          client_ip: null
-        });
+      // Generate OTP code directly
+      const otpCode = generateOTP();
+      console.log('Generated OTP code:', otpCode);
 
-      console.log('OTP generation result:', { otpResult, error: otpError });
+      // Store OTP in database using a simple insert
+      const expiresAt = new Date(Date.now() + 3 * 60 * 1000); // 3 minutes from now
+      
+      console.log('Storing OTP in database...');
+      const { data: otpData, error: otpError } = await supabase
+        .from('password_reset_otps')
+        .insert({
+          email: account.email,
+          otp_code: otpCode,
+          expires_at: expiresAt.toISOString(),
+          is_used: false,
+          attempts: 0,
+          max_attempts: 3
+        })
+        .select()
+        .single();
+
+      console.log('OTP storage result:', { otpData, error: otpError });
 
       if (otpError) {
-        console.error('OTP generation error:', otpError);
+        console.error('OTP storage error:', otpError);
         toast({
           title: "System Error",
           description: "Failed to generate verification code. Please try again.",
@@ -146,27 +164,14 @@ const ForgotPassword = () => {
         return;
       }
 
-      // Type guard to ensure otpResult is an array
-      if (!Array.isArray(otpResult) || otpResult.length === 0 || !otpResult[0].success) {
-        const errorMessage = Array.isArray(otpResult) && otpResult[0]?.message || 'Unknown error occurred';
-        console.error('OTP generation failed:', errorMessage);
-        toast({
-          title: "Request Failed",
-          description: errorMessage,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const otpData = otpResult[0];
-      console.log('OTP generated successfully, calling email service...');
+      console.log('OTP stored successfully, calling email service...');
 
       // Send OTP via email
       const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-password-reset-code', {
         body: {
           email: account.email,
           name: account.name,
-          code: otpData.otp_code
+          code: otpCode
         }
       });
 

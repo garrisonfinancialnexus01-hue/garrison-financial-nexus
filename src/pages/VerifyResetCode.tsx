@@ -6,7 +6,6 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { ArrowLeft, Timer, RefreshCw } from 'lucide-react';
-import { verifyPasswordResetCode, storeVerificationCode } from '@/utils/passwordResetCodes';
 import { supabase } from '@/integrations/supabase/client';
 
 const VerifyResetCode = () => {
@@ -73,24 +72,65 @@ const VerifyResetCode = () => {
     try {
       console.log('Verifying code:', code, 'for email:', email);
       
-      // Verify the code using our verification codes utility
-      const isValidCode = verifyPasswordResetCode(email, code);
-      
-      if (isValidCode) {
-        console.log('Code verified successfully');
+      // Check if code exists and is valid in database
+      const { data: otpRecord, error: otpError } = await supabase
+        .from('password_reset_otps')
+        .select('*')
+        .eq('email', email)
+        .eq('otp_code', code)
+        .eq('is_used', false)
+        .gt('expires_at', new Date().toISOString())
+        .lt('attempts', 3)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      console.log('OTP verification result:', { otpRecord, error: otpError });
+
+      if (otpError) {
+        console.error('OTP verification error:', otpError);
         toast({
-          title: "Code Verified Successfully! ✅",
-          description: "You can now create your new password.",
+          title: "Verification Error",
+          description: "Failed to verify code. Please try again.",
+          variant: "destructive",
         });
-        navigate('/reset-password', { state: { email, verifiedCode: code } });
-      } else {
-        console.log('Invalid or expired code');
+        return;
+      }
+
+      if (!otpRecord) {
+        // Increment attempts for any existing non-expired OTP
+        await supabase
+          .from('password_reset_otps')
+          .update({ attempts: supabase.raw('attempts + 1') })
+          .eq('email', email)
+          .eq('is_used', false)
+          .gt('expires_at', new Date().toISOString());
+
         toast({
           title: "Invalid Code",
           description: "The verification code is incorrect or has expired. Please try again.",
           variant: "destructive",
         });
+        return;
       }
+
+      // Mark OTP as used
+      const { error: updateError } = await supabase
+        .from('password_reset_otps')
+        .update({ is_used: true })
+        .eq('id', otpRecord.id);
+
+      if (updateError) {
+        console.error('Error marking OTP as used:', updateError);
+      }
+
+      console.log('Code verified successfully');
+      toast({
+        title: "Code Verified Successfully! ✅",
+        description: "You can now create your new password.",
+      });
+      navigate('/reset-password', { state: { email, verifiedCode: code } });
+      
     } catch (error) {
       console.error('Code verification error:', error);
       toast({
@@ -116,21 +156,37 @@ const VerifyResetCode = () => {
         .eq('email', email)
         .maybeSingle();
 
+      // Generate new OTP
+      const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiresAt = new Date(Date.now() + 3 * 60 * 1000); // 3 minutes from now
+      
+      // Store new OTP in database
+      const { error: otpError } = await supabase
+        .from('password_reset_otps')
+        .insert({
+          email: email,
+          otp_code: otpCode,
+          expires_at: expiresAt.toISOString(),
+          is_used: false,
+          attempts: 0,
+          max_attempts: 3
+        });
+
+      if (otpError) {
+        throw otpError;
+      }
+
       // Send new code
       const { data, error } = await supabase.functions.invoke('send-password-reset-code', {
         body: {
           email: email,
-          name: account?.name || 'User'
+          name: account?.name || 'User',
+          code: otpCode
         }
       });
 
       if (error || !data?.success) {
         throw error || new Error('Failed to send code');
-      }
-
-      // Store the new verification code
-      if (data.code) {
-        storeVerificationCode(email, data.code);
       }
 
       toast({
