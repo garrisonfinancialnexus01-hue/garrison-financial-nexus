@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { ArrowLeft, Phone, AlertCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { storeVerificationCode } from '@/utils/passwordResetCodes';
 
 const ForgotPassword = () => {
   const [mobile, setMobile] = useState('');
@@ -135,36 +136,11 @@ const ForgotPassword = () => {
       const otpCode = generateOTP();
       console.log('Generated OTP code:', otpCode);
 
-      // Store OTP in database using a simple insert
-      const expiresAt = new Date(Date.now() + 3 * 60 * 1000); // 3 minutes from now
-      
-      console.log('Storing OTP in database...');
-      const { data: otpData, error: otpError } = await supabase
-        .from('password_reset_otps')
-        .insert({
-          email: account.email,
-          otp_code: otpCode,
-          expires_at: expiresAt.toISOString(),
-          is_used: false,
-          attempts: 0,
-          max_attempts: 3
-        })
-        .select()
-        .single();
+      // Store OTP in memory using existing utility
+      storeVerificationCode(account.email, otpCode);
+      console.log('OTP stored in memory successfully');
 
-      console.log('OTP storage result:', { otpData, error: otpError });
-
-      if (otpError) {
-        console.error('OTP storage error:', otpError);
-        toast({
-          title: "System Error",
-          description: "Failed to generate verification code. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      console.log('OTP stored successfully, calling email service...');
+      console.log('Calling email service...');
 
       // Send OTP via email
       const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-password-reset-code', {

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { ArrowLeft, Timer, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { verifyPasswordResetCode, storeVerificationCode } from '@/utils/passwordResetCodes';
 
 const VerifyResetCode = () => {
   const [code, setCode] = useState('');
@@ -72,56 +73,16 @@ const VerifyResetCode = () => {
     try {
       console.log('Verifying code:', code, 'for email:', email);
       
-      // Check if code exists and is valid in database
-      const { data: otpRecord, error: otpError } = await supabase
-        .from('password_reset_otps')
-        .select('*')
-        .eq('email', email)
-        .eq('otp_code', code)
-        .eq('is_used', false)
-        .gt('expires_at', new Date().toISOString())
-        .lt('attempts', 3)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      // Use existing in-memory verification utility
+      const isValid = verifyPasswordResetCode(email, code);
 
-      console.log('OTP verification result:', { otpRecord, error: otpError });
-
-      if (otpError) {
-        console.error('OTP verification error:', otpError);
-        toast({
-          title: "Verification Error",
-          description: "Failed to verify code. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!otpRecord) {
-        // Increment attempts for any existing non-expired OTP
-        await supabase
-          .from('password_reset_otps')
-          .update({ attempts: supabase.raw('attempts + 1') })
-          .eq('email', email)
-          .eq('is_used', false)
-          .gt('expires_at', new Date().toISOString());
-
+      if (!isValid) {
         toast({
           title: "Invalid Code",
           description: "The verification code is incorrect or has expired. Please try again.",
           variant: "destructive",
         });
         return;
-      }
-
-      // Mark OTP as used
-      const { error: updateError } = await supabase
-        .from('password_reset_otps')
-        .update({ is_used: true })
-        .eq('id', otpRecord.id);
-
-      if (updateError) {
-        console.error('Error marking OTP as used:', updateError);
       }
 
       console.log('Code verified successfully');
@@ -158,23 +119,9 @@ const VerifyResetCode = () => {
 
       // Generate new OTP
       const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-      const expiresAt = new Date(Date.now() + 3 * 60 * 1000); // 3 minutes from now
       
-      // Store new OTP in database
-      const { error: otpError } = await supabase
-        .from('password_reset_otps')
-        .insert({
-          email: email,
-          otp_code: otpCode,
-          expires_at: expiresAt.toISOString(),
-          is_used: false,
-          attempts: 0,
-          max_attempts: 3
-        });
-
-      if (otpError) {
-        throw otpError;
-      }
+      // Store new OTP in memory
+      storeVerificationCode(email, otpCode);
 
       // Send new code
       const { data, error } = await supabase.functions.invoke('send-password-reset-code', {
