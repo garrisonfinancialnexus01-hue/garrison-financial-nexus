@@ -57,7 +57,7 @@ const Index = () => {
                 <div className="flex justify-center">
                   <Link to="/loan-application">
                     <button
-                      className="relative px-4 sm:px-6 md:px-8 py-3 sm:py-4 text-sm sm:text-base md:text-lg font-semibold text-[#399B53] rounded-full bg-[#000000] transition-all duration-300 hover:scale-105"
+                      className="relative px-4 sm:px-6 md:px-8 py-3 sm:py-4 text-sm sm:text-base md:text-lg font-semibold text-[#399B53] rounded-full bg-[#FFFFFF] transition-all duration-300 hover:scale-105"
                       style={{
                         boxShadow: '0 0 20px #399B53, 0 0 40px #399B53, 0 0 60px #399B53',
                         animation: 'pulse 2s ease-in-out infinite alternate',
