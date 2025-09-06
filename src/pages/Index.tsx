@@ -57,22 +57,19 @@ const Index = () => {
                 <div className="flex justify-center">
                   <Link to="/loan-application">
                     <div className="relative inline-block">
-                      <button
-                        className="relative px-4 sm:px-6 md:px-8 py-3 sm:py-4 text-sm sm:text-base md:text-lg font-semibold text-white rounded-full bg-[#399B53] transition-all duration-300 hover:scale-105 overflow-hidden z-10"
+                      <div 
+                        className="absolute inset-0 rounded-full p-[2px] animate-spin"
                         style={{
-                          filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))',
+                          background: 'conic-gradient(from 0deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.7) 70%, rgba(0, 0, 0, 0) 100%)',
+                          animation: 'spin 2s linear infinite',
+                          filter: 'drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3))',
                         }}
                       >
-                        <div 
-                          className="absolute inset-0 rounded-full opacity-70 animate-spin"
-                          style={{
-                            background: 'conic-gradient(from 0deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0.7) 100%)',
-                            padding: '2px',
-                            animation: 'spin 3s linear infinite',
-                          }}
-                        >
-                          <div className="w-full h-full rounded-full bg-[#399B53]"></div>
-                        </div>
+                        <div className="w-full h-full rounded-full bg-white"></div>
+                      </div>
+                      <button
+                        className="relative px-4 sm:px-6 md:px-8 py-3 sm:py-4 text-sm sm:text-base md:text-lg font-semibold text-white rounded-full bg-[#399B53] transition-all duration-300 hover:scale-105 z-10"
+                      >
                         <span className="relative z-20">Calculate Now</span>
                       </button>
                     </div>
