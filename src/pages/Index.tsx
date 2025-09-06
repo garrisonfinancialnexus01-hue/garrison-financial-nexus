@@ -56,9 +56,9 @@ const Index = () => {
                 <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base md:text-lg text-center leading-relaxed">Estimate your potential savings or loan payments with our smart calculator.</p>
                 <div className="flex justify-center">
                   <Link to="/loan-application">
-                    <NeonButton className="px-4 sm:px-6 md:px-8 py-3 sm:py-4 text-sm sm:text-base md:text-lg font-semibold">
+                    <button className="relative px-4 sm:px-6 md:px-8 py-3 sm:py-4 text-sm sm:text-base md:text-lg font-semibold text-white bg-black rounded-full transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-garrison-green shadow-[0_2px_8px_rgba(57,155,83,0.3)] before:absolute before:inset-0 before:rounded-full before:p-[2px] before:bg-gradient-to-r before:from-[rgba(57,155,83,0.7)] before:to-[rgba(57,155,83,0)] before:-z-10 before:content-[''] after:absolute after:inset-[2px] after:rounded-full after:bg-black after:z-[-1] after:content-['']">
                       Calculate Now
-                    </NeonButton>
+                    </button>
                   </Link>
                 </div>
               </div>
