@@ -56,23 +56,15 @@ const Index = () => {
                 <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base md:text-lg text-center leading-relaxed">Estimate your potential savings or loan payments with our smart calculator.</p>
                 <div className="flex justify-center">
                   <Link to="/loan-application">
-                    <div className="relative inline-block">
-                      <div 
-                        className="absolute inset-0 rounded-full p-[2px] animate-spin"
-                        style={{
-                          background: 'conic-gradient(from 0deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.7) 70%, rgba(0, 0, 0, 0) 100%)',
-                          animation: 'spin 2s linear infinite',
-                          filter: 'drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3))',
-                        }}
-                      >
-                        <div className="w-full h-full rounded-full bg-white"></div>
-                      </div>
-                      <button
-                        className="relative px-4 sm:px-6 md:px-8 py-3 sm:py-4 text-sm sm:text-base md:text-lg font-semibold text-white rounded-full bg-[#399B53] transition-all duration-300 hover:scale-105 z-10"
-                      >
-                        <span className="relative z-20">Calculate Now</span>
-                      </button>
-                    </div>
+                    <button
+                      className="relative px-4 sm:px-6 md:px-8 py-3 sm:py-4 text-sm sm:text-base md:text-lg font-semibold text-white rounded-full bg-[#399B53] transition-all duration-300 hover:scale-105"
+                      style={{
+                        boxShadow: '0 0 20px #000000, 0 0 40px #000000, 0 0 60px #000000',
+                        animation: 'pulse 2s ease-in-out infinite alternate',
+                      }}
+                    >
+                      Calculate Now
+                    </button>
                   </Link>
                 </div>
               </div>
