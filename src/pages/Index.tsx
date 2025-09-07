@@ -30,19 +30,30 @@ const Index = () => {
     <div className="min-h-screen">
       {/* Hero Section with Video Background */}
       <section className="relative text-white py-8 sm:py-12 md:py-16 lg:py-20 min-h-[70vh] sm:min-h-[75vh] md:min-h-[80vh] flex items-center overflow-hidden">
-        {/* Video Background */}
+        {/* Animated Financial Background */}
         <div className="absolute inset-0 z-0">
-          <video 
-            autoPlay 
-            muted 
-            loop 
-            playsInline
-            className="w-full h-full object-cover"
-            poster={financialVideoPoster}
+          {/* Animated gradient background that simulates video movement */}
+          <div 
+            className="w-full h-full"
+            style={{
+              background: `
+                linear-gradient(45deg, #399B53, #15803d, #166534, #399B53),
+                url(${financialVideoPoster})
+              `,
+              backgroundSize: '400% 400%, cover',
+              backgroundPosition: '0% 50%, center',
+              backgroundBlendMode: 'overlay',
+              animation: 'gradientShift 8s ease-in-out infinite'
+            }}
           >
-            {/* Placeholder for financial video - will be replaced with actual video */}
-            <source src="/placeholder-financial-video.mp4" type="video/mp4" />
-          </video>
+            {/* Floating financial elements animation */}
+            <div className="absolute inset-0 opacity-20">
+              <div className="absolute top-1/4 left-1/4 w-8 h-8 border-2 border-white/30 rounded-full animate-pulse"></div>
+              <div className="absolute top-1/3 right-1/3 w-6 h-6 border border-white/20 rounded animate-bounce animation-delay-1000"></div>
+              <div className="absolute bottom-1/4 left-1/3 w-4 h-4 bg-white/10 rounded-full animate-ping animation-delay-2000"></div>
+              <div className="absolute bottom-1/3 right-1/4 w-5 h-5 border border-white/25 animate-pulse animation-delay-3000"></div>
+            </div>
+          </div>
           {/* Dark overlay for text readability */}
           <div className="absolute inset-0 bg-black/45 z-10"></div>
         </div>

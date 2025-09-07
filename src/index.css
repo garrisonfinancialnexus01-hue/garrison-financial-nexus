@@ -185,6 +185,18 @@
   }
 }
 
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%, center;
+  }
+  50% {
+    background-position: 100% 50%, center;
+  }
+  100% {
+    background-position: 0% 50%, center;
+  }
+}
+
 /* Mobile-specific media queries */
 @media (max-width: 640px) {
   .container {
