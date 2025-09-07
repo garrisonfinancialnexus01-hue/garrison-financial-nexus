@@ -5,6 +5,7 @@ import { ArrowRight, TrendingUp, Wallet, Building, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NeonButton } from '@/components/ui/neon-button';
 import TypewriterAnimation from '@/components/TypewriterAnimation';
+import financialVideoPoster from '@/assets/financial-video-poster.jpg';
 
 const Index = () => {
   const openWhatsApp = () => {
@@ -27,9 +28,25 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section with Typewriter Animation */}
-      <section className="bg-gradient-to-r from-garrison-green to-green-700 text-white py-8 sm:py-12 md:py-16 lg:py-20 min-h-[70vh] sm:min-h-[75vh] md:min-h-[80vh] flex items-center">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 w-full">
+      {/* Hero Section with Video Background */}
+      <section className="relative text-white py-8 sm:py-12 md:py-16 lg:py-20 min-h-[70vh] sm:min-h-[75vh] md:min-h-[80vh] flex items-center overflow-hidden">
+        {/* Video Background */}
+        <div className="absolute inset-0 z-0">
+          <video 
+            autoPlay 
+            muted 
+            loop 
+            playsInline
+            className="w-full h-full object-cover"
+            poster={financialVideoPoster}
+          >
+            {/* Placeholder for financial video - will be replaced with actual video */}
+            <source src="/placeholder-financial-video.mp4" type="video/mp4" />
+          </video>
+          {/* Dark overlay for text readability */}
+          <div className="absolute inset-0 bg-black/45 z-10"></div>
+        </div>
+        <div className="relative z-20 max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 w-full">
           <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-8">
             {/* Left side with Typewriter Animation */}
             <div className="w-full lg:w-1/2 mb-6 sm:mb-8 lg:mb-0 animate-fade-in">
