@@ -15,17 +15,20 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-white shadow-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <Link to="/" className="flex-shrink-0 flex items-center">
+    <nav className="bg-white shadow-md sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
+        <div className="flex justify-between items-center h-14 sm:h-16">
+          <div className="flex items-center min-w-0 flex-1">
+            <Link to="/" className="flex items-center min-w-0">
               <img 
                 src="/lovable-uploads/604aab9b-7408-4586-8092-31a6a8e6642f.png" 
                 alt="Garrison Financial Nexus Logo" 
-                className="h-10 w-auto mr-2" 
+                className="h-8 sm:h-10 w-auto mr-1 sm:mr-2 flex-shrink-0" 
               />
-              <span className="text-xl font-bold text-garrison-black">Garrison Financial Nexus</span>
+              <span className="text-sm sm:text-lg lg:text-xl font-bold text-garrison-black truncate">
+                <span className="hidden sm:inline">Garrison Financial Nexus</span>
+                <span className="sm:hidden">GFN</span>
+              </span>
             </Link>
           </div>
           
