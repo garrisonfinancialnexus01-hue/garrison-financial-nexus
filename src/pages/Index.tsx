@@ -30,7 +30,7 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section with Video Background */}
-      <section className="relative text-white py-8 sm:py-12 md:py-16 lg:py-20 min-h-[70vh] sm:min-h-[75vh] md:min-h-[80vh] flex items-center overflow-hidden">
+      <section className="relative text-white py-4 sm:py-8 md:py-12 lg:py-16 min-h-[85vh] sm:min-h-[80vh] md:min-h-[85vh] flex items-center overflow-hidden">
         {/* Video Background */}
         <div className="absolute inset-0 z-0">
           <video 
@@ -60,37 +60,37 @@ const Index = () => {
           {/* Dark overlay for text readability */}
           <div className="absolute inset-0 bg-black/45 z-10"></div>
         </div>
-        <div className="relative z-20 max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 w-full">
-          <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-8">
+        <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+          <div className="flex flex-col lg:flex-row items-center gap-4 sm:gap-6 lg:gap-8">
             {/* Left side with Typewriter Animation */}
-            <div className="w-full lg:w-1/2 mb-6 sm:mb-8 lg:mb-0 animate-fade-in">
-              <div className="mb-6 sm:mb-8">
+            <div className="w-full lg:w-1/2 mb-4 sm:mb-6 lg:mb-0 animate-fade-in">
+              <div className="mb-4 sm:mb-6">
                 <TypewriterAnimation 
                   texts={typewriterTexts}
                   typeSpeed={60}
                   deleteSpeed={30}
                   delayBetweenTexts={2500}
-                  className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold mb-4 sm:mb-6 min-h-[2.5em] sm:min-h-[3em] flex items-center justify-center lg:justify-start text-center lg:text-left px-2 sm:px-0"
+                  className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold mb-3 sm:mb-4 min-h-[2em] sm:min-h-[2.5em] md:min-h-[3em] flex items-center justify-center lg:justify-start text-center lg:text-left px-2 sm:px-0"
                 />
               </div>
               
-              <p className="text-base sm:text-lg md:text-xl mb-6 sm:mb-8 max-w-2xl mx-auto lg:mx-0 text-center lg:text-left opacity-90 px-4 sm:px-2 lg:px-0 leading-relaxed">
+              <p className="text-sm sm:text-base md:text-lg lg:text-xl mb-4 sm:mb-6 max-w-2xl mx-auto lg:mx-0 text-center lg:text-left opacity-90 px-3 sm:px-2 lg:px-0 leading-relaxed">
                 At <span className="font-bold text-white">Garrison Financial Nexus</span>, we provide comprehensive financial services 
                 to help you achieve your financial goals and secure your future.
               </p>
             </div>
             
             {/* Right side with Financial Calculator Card */}
-            <div className="w-full lg:w-1/2 animate-fade-in animation-delay-300 px-4 sm:px-2 lg:px-0">
-              <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl p-4 sm:p-6 md:p-8 max-w-lg mx-auto transform hover:scale-105 transition-all duration-300">
-                <h2 className="text-garrison-green text-xl sm:text-2xl md:text-3xl font-bold mb-3 sm:mb-4 font-inter text-center">Financial Calculator</h2>
-                <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base md:text-lg text-center leading-relaxed">Estimate your potential savings or loan payments with our smart calculator.</p>
+            <div className="w-full lg:w-1/2 animate-fade-in animation-delay-300 px-3 sm:px-2 lg:px-0">
+              <div className="bg-white rounded-lg sm:rounded-xl shadow-2xl p-3 sm:p-4 md:p-6 max-w-md mx-auto transform hover:scale-105 transition-all duration-300">
+                <h2 className="text-garrison-green text-lg sm:text-xl md:text-2xl font-bold mb-2 sm:mb-3 font-inter text-center">Financial Calculator</h2>
+                <p className="text-gray-600 mb-3 sm:mb-4 text-xs sm:text-sm md:text-base text-center leading-relaxed">Estimate your potential savings or loan payments with our smart calculator.</p>
                 <div className="flex justify-center">
                   <Link to="/loan-application">
                     <button
-                      className="relative px-4 sm:px-6 md:px-8 py-3 sm:py-4 text-sm sm:text-base md:text-lg font-semibold text-[#399B53] rounded-full bg-[#FFFFFF] transition-all duration-300 hover:scale-105"
+                      className="relative px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-xs sm:text-sm md:text-base font-semibold text-[#399B53] rounded-full bg-[#FFFFFF] transition-all duration-300 hover:scale-105 w-full min-w-[140px]"
                       style={{
-                        boxShadow: '0 0 20px #399B53, 0 0 40px #399B53, 0 0 60px #399B53',
+                        boxShadow: '0 0 15px #399B53, 0 0 30px #399B53, 0 0 45px #399B53',
                         animation: 'pulse 2s ease-in-out infinite alternate',
                       }}
                     >
