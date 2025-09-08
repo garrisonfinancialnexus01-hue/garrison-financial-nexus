@@ -7,6 +7,7 @@ import { NeonButton } from '@/components/ui/neon-button';
 import TypewriterAnimation from '@/components/TypewriterAnimation';
 import financialVideoPoster from '@/assets/financial-video-poster.jpg';
 import financialHeroBackground from '@/assets/financial-hero-background.jpg';
+import financialCtaBackground from '@/assets/financial-cta-background.jpg';
 
 const Index = () => {
   const openWhatsApp = () => {
@@ -178,7 +179,15 @@ const Index = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-garrison-green py-12 sm:py-16 md:py-20 text-white">
+      <section 
+        className="relative py-12 sm:py-16 md:py-20 text-white"
+        style={{
+          background: `linear-gradient(rgba(57, 155, 83, 0.85), rgba(57, 155, 83, 0.85)), url(${financialCtaBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed'
+        }}
+      >
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 text-center">
           <div className="animate-fade-in px-2">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 font-inter">Ready to Start Your Financial Journey?</h2>
