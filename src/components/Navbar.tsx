@@ -23,11 +23,10 @@ const Navbar = () => {
               <img 
                 src="/lovable-uploads/604aab9b-7408-4586-8092-31a6a8e6642f.png" 
                 alt="Garrison Financial Nexus Logo" 
-                className="h-8 sm:h-10 w-auto mr-1 sm:mr-2 flex-shrink-0" 
+                className="h-10 sm:h-12 w-auto mr-2 sm:mr-3 flex-shrink-0" 
               />
-              <span className="text-sm sm:text-lg lg:text-xl font-bold text-garrison-black truncate">
-                <span className="hidden sm:inline">Garrison Financial Nexus</span>
-                <span className="sm:hidden">GFN</span>
+              <span className="text-base sm:text-lg lg:text-xl font-bold text-garrison-black truncate">
+                Garrison Financial Nexus
               </span>
             </Link>
           </div>
