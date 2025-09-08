@@ -11,6 +11,7 @@ const Footer = () => {
           <div>
             <h3 className="text-xl font-bold mb-4">Garrison Financial Nexus</h3>
             <p className="text-sm mb-4">"Your Gateway To Financial Prosperity"</p>
+            <p className="text-sm">Founded by Isiah Kasule, CEO</p>
           </div>
           
           <div>
