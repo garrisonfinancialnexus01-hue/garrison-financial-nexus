@@ -4,9 +4,11 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, TrendingUp, Wallet, Building, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NeonButton } from '@/components/ui/neon-button';
+import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 import TypewriterAnimation from '@/components/TypewriterAnimation';
 import financialVideoPoster from '@/assets/financial-video-poster.jpg';
 import financialHeroBackground from '@/assets/financial-hero-background.jpg';
+import Autoplay from 'embla-carousel-autoplay';
 
 const Index = () => {
   const openWhatsApp = () => {
@@ -173,6 +175,127 @@ const Index = () => {
                 </Link>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Team Carousel Section */}
+      <section className="py-12 sm:py-16 md:py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
+          <div className="text-center mb-8 sm:mb-12 md:mb-16 animate-fade-in px-2">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-garrison-black mb-3 sm:mb-4 font-inter">Meet Our Expert Teams</h2>
+            <p className="mt-2 sm:mt-4 text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              Our dedicated professional teams are here to serve you across all our financial services
+            </p>
+          </div>
+          
+          <div className="animate-fade-in">
+            <Carousel
+              opts={{
+                align: "start",
+                loop: true,
+              }}
+              plugins={[
+                Autoplay({
+                  delay: 4000,
+                })
+              ]}
+              className="w-full max-w-6xl mx-auto"
+            >
+              <CarouselContent>
+                <CarouselItem className="md:basis-1/2 lg:basis-1/3">
+                  <div className="p-2">
+                    <div className="bg-gray-50 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+                      <div className="aspect-video overflow-hidden">
+                        <img 
+                          src="/lovable-uploads/24b6f072-4c09-460b-95f7-6e14fa8dfdb4.png" 
+                          alt="Money Lending Team" 
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                      <div className="p-4 sm:p-6">
+                        <div className="flex items-center mb-3">
+                          <Building className="h-6 w-6 text-garrison-green mr-3" />
+                          <h3 className="text-lg sm:text-xl font-bold text-garrison-black font-inter">Money Lending Team</h3>
+                        </div>
+                        <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
+                          Expert loan specialists dedicated to helping you access affordable financing solutions.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CarouselItem>
+                
+                <CarouselItem className="md:basis-1/2 lg:basis-1/3">
+                  <div className="p-2">
+                    <div className="bg-gray-50 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+                      <div className="aspect-video overflow-hidden">
+                        <img 
+                          src="/lovable-uploads/ed68b768-1a14-4258-a0f4-3f6ee5523b78.png" 
+                          alt="Money Saving Team" 
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                      <div className="p-4 sm:p-6">
+                        <div className="flex items-center mb-3">
+                          <Wallet className="h-6 w-6 text-garrison-green mr-3" />
+                          <h3 className="text-lg sm:text-xl font-bold text-garrison-black font-inter">Money Saving Team</h3>
+                        </div>
+                        <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
+                          Savings specialists committed to helping you grow your money securely and efficiently.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CarouselItem>
+                
+                <CarouselItem className="md:basis-1/2 lg:basis-1/3">
+                  <div className="p-2">
+                    <div className="bg-gray-50 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+                      <div className="aspect-video overflow-hidden">
+                        <img 
+                          src="/lovable-uploads/ab9c21c1-8815-44e1-a068-348e76c640cd.png" 
+                          alt="Financial Advisory Team" 
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                      <div className="p-4 sm:p-6">
+                        <div className="flex items-center mb-3">
+                          <Users className="h-6 w-6 text-garrison-green mr-3" />
+                          <h3 className="text-lg sm:text-xl font-bold text-garrison-black font-inter">Financial Advisory Team</h3>
+                        </div>
+                        <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
+                          Experienced advisors providing expert guidance for your financial planning needs.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CarouselItem>
+                
+                <CarouselItem className="md:basis-1/2 lg:basis-1/3">
+                  <div className="p-2">
+                    <div className="bg-gray-50 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+                      <div className="aspect-video overflow-hidden">
+                        <img 
+                          src="/lovable-uploads/9f393e62-2760-42a0-8bbc-b280978a7988.png" 
+                          alt="Wealth Management Team" 
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                      <div className="p-4 sm:p-6">
+                        <div className="flex items-center mb-3">
+                          <TrendingUp className="h-6 w-6 text-garrison-green mr-3" />
+                          <h3 className="text-lg sm:text-xl font-bold text-garrison-black font-inter">Wealth Management Team</h3>
+                        </div>
+                        <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
+                          Wealth management professionals focused on growing and preserving your assets.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CarouselItem>
+              </CarouselContent>
+            </Carousel>
           </div>
         </div>
       </section>
