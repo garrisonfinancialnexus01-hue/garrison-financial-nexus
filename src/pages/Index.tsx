@@ -178,8 +178,13 @@ const Index = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-garrison-green py-12 sm:py-16 md:py-20 text-white">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 text-center">
+      <section 
+        className="relative py-12 sm:py-16 md:py-20 text-white bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('/lovable-uploads/b4e15762-34a8-41e9-b40e-eaf7628a9620.png')`
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 text-center relative z-10">
           <div className="animate-fade-in px-2">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6 font-inter">Ready to Start Your Financial Journey?</h2>
             <p className="text-base sm:text-lg md:text-xl mb-6 sm:mb-8 md:mb-10 max-w-4xl mx-auto leading-relaxed">
