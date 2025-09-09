@@ -208,7 +208,7 @@ const Index = () => {
                     <div className="bg-gray-50 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
                       <div className="aspect-video overflow-hidden">
                         <img 
-                          src="/lovable-uploads/24b6f072-4c09-460b-95f7-6e14fa8dfdb4.png" 
+                          src="/lovable-uploads/fa526f88-105f-487e-bdff-ea606b78ecc8.png" 
                           alt="Money Lending Team" 
                           className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                         />
@@ -231,7 +231,7 @@ const Index = () => {
                     <div className="bg-gray-50 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
                       <div className="aspect-video overflow-hidden">
                         <img 
-                          src="/lovable-uploads/ed68b768-1a14-4258-a0f4-3f6ee5523b78.png" 
+                          src="/lovable-uploads/9289d1a6-b828-42c0-a0b5-bf6d71700b16.png" 
                           alt="Money Saving Team" 
                           className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                         />
@@ -254,7 +254,7 @@ const Index = () => {
                     <div className="bg-gray-50 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
                       <div className="aspect-video overflow-hidden">
                         <img 
-                          src="/lovable-uploads/ab9c21c1-8815-44e1-a068-348e76c640cd.png" 
+                          src="/lovable-uploads/ddc3b69a-8362-4ea1-bb3d-45a17a54e9df.png" 
                           alt="Financial Advisory Team" 
                           className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                         />
@@ -277,7 +277,7 @@ const Index = () => {
                     <div className="bg-gray-50 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
                       <div className="aspect-video overflow-hidden">
                         <img 
-                          src="/lovable-uploads/9f393e62-2760-42a0-8bbc-b280978a7988.png" 
+                          src="/lovable-uploads/7e8b3fcb-824c-4169-9178-7ab35b3bef3d.png" 
                           alt="Wealth Management Team" 
                           className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                         />
