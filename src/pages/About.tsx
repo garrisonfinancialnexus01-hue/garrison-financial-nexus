@@ -13,7 +13,7 @@ const About = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">About Garrison Financial Nexus</h1>
           <p className="text-xl max-w-3xl mx-auto">
-            Your trusted partner in financial growth and stability since 2010.
+            Your trusted partner in financial growth and stability since 2020.
           </p>
         </div>
       </section>
@@ -25,7 +25,7 @@ const About = () => {
             <h2 className="text-3xl font-bold text-garrison-black">Our Story</h2>
             <div className="w-24 h-1 bg-garrison-green mx-auto mt-4 mb-6"></div>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Established in 2010, Garrison Financial Nexus was founded with a vision to make financial services accessible to everyone in Uganda, regardless of their economic status.
+              Established in 2020, Garrison Financial Nexus was founded with a vision to make financial services accessible to everyone in Uganda, regardless of their economic status.
             </p>
           </div>
 
