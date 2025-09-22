@@ -46,6 +46,7 @@ const App = () => (
           <Routes>
             <Route path="/central-dashboard" element={<CentralDashboard />} />
             <Route path="/admin-email-portal" element={<AdminEmailPortal />} />
+            <Route path="/loan-repayment-receipt" element={<LoanRepaymentReceiptPortal />} />
             <Route element={<Layout />}>
               <Route path="/" element={<Index />} />
               <Route path="/about" element={<About />} />
