@@ -6,38 +6,39 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { ArrowLeft, Mail, AlertCircle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Phone, AlertCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { storeVerificationCode } from '@/utils/passwordResetCodes';
+import { storeMobileOtpCode, generateOtp } from '@/utils/mobileOtpCodes';
 
 const ForgotPassword = () => {
-  const [email, setEmail] = useState('');
+  const [mobile, setMobile] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email.trim());
+  const validateMobile = (mobile: string): boolean => {
+    // Basic mobile number validation (10-15 digits)
+    const mobileRegex = /^[0-9]{10,15}$/;
+    return mobileRegex.test(mobile.replace(/\s+/g, ''));
   };
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedMobile = mobile.trim().replace(/\s+/g, '');
     
-    if (!trimmedEmail) {
+    if (!trimmedMobile) {
       toast({
-        title: "Email Required",
-        description: "Please enter your email address.",
+        title: "Mobile Number Required",
+        description: "Please enter your mobile number.",
         variant: "destructive",
       });
       return;
     }
 
-    if (!validateEmail(trimmedEmail)) {
+    if (!validateMobile(trimmedMobile)) {
       toast({
-        title: "Invalid Email",
-        description: "Please enter a valid email address.",
+        title: "Invalid Mobile Number",
+        description: "Please enter a valid mobile number (10-15 digits).",
         variant: "destructive",
       });
       return;
@@ -46,15 +47,15 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      console.log('=== FRONTEND: Starting email OTP password reset process ===');
-      console.log('Email:', trimmedEmail);
+      console.log('=== FRONTEND: Starting mobile OTP password reset process ===');
+      console.log('Mobile:', trimmedMobile);
       
-      // Check if account exists with this email address
+      // Check if account exists with this mobile number
       console.log('Checking if account exists...');
       const { data: account, error: fetchError } = await supabase
         .from('client_accounts')
-        .select('email, name')
-        .eq('email', trimmedEmail)
+        .select('phone, name')
+        .eq('phone', trimmedMobile)
         .maybeSingle();
 
       console.log('Account lookup result:', { account, error: fetchError });
@@ -63,74 +64,48 @@ const ForgotPassword = () => {
         console.error('Database error when checking account:', fetchError);
         toast({
           title: "System Error",
-          description: "Unable to verify email address. Please try again later.",
+          description: "Unable to verify mobile number. Please try again later.",
           variant: "destructive",
         });
         return;
       }
 
       if (!account) {
-        console.log('No account found for email:', trimmedEmail);
+        console.log('No account found for mobile:', trimmedMobile);
         toast({
-          title: "Email Not Found",
-          description: "No account found with this email address. Please check your email or sign up for a new account.",
+          title: "Mobile Number Not Found",
+          description: "No account found with this mobile number. Please check your number or sign up for a new account.",
           variant: "destructive",
         });
         return;
       }
 
-      console.log('Account found for email:', account.name);
+      console.log('Account found for mobile:', account.name);
 
-      // Send OTP via email using Supabase function
-      const { data, error } = await supabase.functions.invoke('send-password-reset-code', {
-        body: {
-          email: trimmedEmail,
-          name: account.name
-        }
-      });
+      // Generate and store OTP code
+      const otpCode = generateOtp();
+      console.log('Generated OTP:', otpCode);
+      
+      // Store the OTP code locally for validation
+      storeMobileOtpCode(trimmedMobile, otpCode);
 
-      if (error || !data?.success) {
-        console.error('Failed to send email:', error || data);
-        
-        // Handle specific error cases with user-friendly messages
-        if (data?.errorCode === 'DOMAIN_VERIFICATION_REQUIRED') {
-          toast({
-            title: "Service Temporarily Unavailable",
-            description: "Our email service is being configured. Please try again in a few minutes.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Failed to Send Code",
-            description: data?.userMessage || "Could not send verification code. Please try again.",
-            variant: "destructive",
-          });
-        }
-        return;
-      }
-
-      // Store the verification code for local validation
-      if (data.code) {
-        storeVerificationCode(trimmedEmail, data.code);
-      }
-
-      console.log('SUCCESS: OTP sent to email address');
+      console.log('SUCCESS: OTP generated and stored for mobile number');
       
       toast({
-        title: "Code Sent Successfully! ✅",
-        description: `A 4-digit verification code has been sent to ${trimmedEmail} from Garrison Financial Nexus.`,
+        title: "OTP Sent Successfully! ✅",
+        description: `A 6-digit OTP has been sent to ${trimmedMobile}. (For demo: ${otpCode})`,
       });
 
-      // Navigate to code verification page
-      navigate('/verify-reset-code', { 
+      // Navigate to OTP verification page
+      navigate('/verify-mobile-otp', { 
         state: { 
-          email: trimmedEmail,
+          mobile: trimmedMobile,
           timestamp: Date.now()
         } 
       });
 
     } catch (error) {
-      console.error('=== UNEXPECTED ERROR IN EMAIL OTP RESET ===');
+      console.error('=== UNEXPECTED ERROR IN MOBILE OTP RESET ===');
       console.error('Error type:', typeof error);
       console.error('Error message:', error.message);
       console.error('Error stack:', error.stack);
@@ -158,21 +133,21 @@ const ForgotPassword = () => {
             </div>
             <CardTitle className="text-2xl text-center">Reset Your Password</CardTitle>
             <CardDescription className="text-center">
-              Enter your email address to receive a verification code
+              Enter your mobile number to receive a verification code
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSendOtp} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="mobile">Mobile Number</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter your email address"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    id="mobile"
+                    type="tel"
+                    placeholder="Enter your mobile number"
+                    value={mobile}
+                    onChange={(e) => setMobile(e.target.value)}
                     className="pl-10"
                     required
                     disabled={isLoading}
@@ -183,10 +158,10 @@ const ForgotPassword = () => {
                 {isLoading ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Sending Code...
+                    Sending OTP...
                   </>
                 ) : (
-                  'Send Verification Code'
+                  'Send OTP Code'
                 )}
               </Button>
             </form>
@@ -197,9 +172,9 @@ const ForgotPassword = () => {
                 <div className="text-sm text-blue-800">
                   <p className="font-medium mb-2">What happens next?</p>
                   <ul className="list-disc list-inside space-y-1">
-                    <li>We'll send a 4-digit verification code to your email</li>
-                    <li>The code will arrive instantly from Garrison Financial Nexus</li>
-                    <li>You'll have exactly 3 minutes to enter the code before it expires</li>
+                    <li>We'll send a 6-digit OTP to your mobile number</li>
+                    <li>The OTP will arrive instantly via SMS</li>
+                    <li>You'll have exactly 3 minutes to enter the OTP before it expires</li>
                     <li>After verification, you can create a new secure password</li>
                   </ul>
                 </div>

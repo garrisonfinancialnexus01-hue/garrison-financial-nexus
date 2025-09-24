@@ -13,10 +13,10 @@ interface PasswordResetRequest {
   name: string;
 }
 
-// Generate a secure random 4-digit code
+// Generate a secure random 6-digit code
 const generateVerificationCode = (): string => {
-  const min = 1000;
-  const max = 9999;
+  const min = 100000;
+  const max = 999999;
   return Math.floor(Math.random() * (max - min + 1) + min).toString();
 };
 
@@ -177,29 +177,12 @@ const handler = async (req: Request): Promise<Response> => {
 
       if (emailResponse.error) {
         console.error('Resend API error:', emailResponse.error);
-        
-        // Check for domain verification error
-        if (emailResponse.error.message?.includes('verify a domain') || 
-            emailResponse.error.message?.includes('testing emails')) {
-          console.error('Domain verification required for Resend');
-          return new Response(JSON.stringify({ 
-            error: 'Email configuration required',
-            success: false,
-            message: 'Email service needs domain verification. Please contact support or try again later.',
-            errorCode: 'DOMAIN_VERIFICATION_REQUIRED',
-            userMessage: 'Could not send verification code. Please try again.'
-          }), {
-            status: 503, // Service Unavailable 
-            headers: { "Content-Type": "application/json", ...corsHeaders },
-          });
-        }
-        
         return new Response(JSON.stringify({ 
           error: 'Email delivery failed',
           success: false,
-          message: 'Could not send verification code. Please try again.',
+          message: `Email service error: ${emailResponse.error.message}`,
           errorCode: 'EMAIL_SEND_ERROR',
-          userMessage: 'Could not send verification code. Please try again.'
+          details: emailResponse.error
         }), {
           status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders },

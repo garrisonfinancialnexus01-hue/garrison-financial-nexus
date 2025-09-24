@@ -50,10 +50,10 @@ const VerifyResetCode = () => {
   };
 
   const handleVerifyCode = async () => {
-    if (code.length !== 4) {
+    if (code.length !== 6) {
       toast({
         title: "Invalid Code",
-        description: "Please enter a complete 4-digit verification code.",
+        description: "Please enter a complete 6-digit verification code.",
         variant: "destructive",
       });
       return;
@@ -171,7 +171,7 @@ const VerifyResetCode = () => {
             </div>
             <CardTitle className="text-2xl text-center">Enter Verification Code</CardTitle>
             <CardDescription className="text-center">
-              We've sent a 4-digit code to {email} from Garrison Financial Nexus
+              We've sent a 6-digit code to {email} from Garrison Financial Nexus
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -184,11 +184,11 @@ const VerifyResetCode = () => {
               <span className="text-sm text-gray-600">remaining</span>
             </div>
 
-            {/* 4-digit OTP Input */}
+            {/* 6-digit OTP Input */}
             <div className="space-y-4">
               <div className="flex justify-center">
                 <InputOTP
-                  maxLength={4}
+                  maxLength={6}
                   value={code}
                   onChange={setCode}
                   disabled={timeLeft <= 0 || isLoading}
@@ -198,6 +198,8 @@ const VerifyResetCode = () => {
                     <InputOTPSlot index={1} />
                     <InputOTPSlot index={2} />
                     <InputOTPSlot index={3} />
+                    <InputOTPSlot index={4} />
+                    <InputOTPSlot index={5} />
                   </InputOTPGroup>
                 </InputOTP>
               </div>
@@ -205,7 +207,7 @@ const VerifyResetCode = () => {
               <Button 
                 onClick={handleVerifyCode} 
                 className="w-full" 
-                disabled={code.length !== 4 || timeLeft <= 0 || isLoading}
+                disabled={code.length !== 6 || timeLeft <= 0 || isLoading}
               >
                 {isLoading ? 'Verifying...' : 'Verify Code'}
               </Button>

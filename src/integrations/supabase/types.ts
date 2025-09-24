@@ -7,10 +7,10 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
+  // Allows to automatically instanciate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.12 (cd3cf9e)"
+    PostgrestVersion: "12.2.3 (519615d)"
   }
   public: {
     Tables: {
@@ -637,45 +637,6 @@ export type Database = {
           },
         ]
       }
-      password_reset_otps: {
-        Row: {
-          attempts: number
-          created_at: string
-          created_by_function: string | null
-          email: string
-          expires_at: string
-          id: string
-          is_used: boolean
-          max_attempts: number
-          otp_code: string
-          user_ip: string | null
-        }
-        Insert: {
-          attempts?: number
-          created_at?: string
-          created_by_function?: string | null
-          email: string
-          expires_at?: string
-          id?: string
-          is_used?: boolean
-          max_attempts?: number
-          otp_code: string
-          user_ip?: string | null
-        }
-        Update: {
-          attempts?: number
-          created_at?: string
-          created_by_function?: string | null
-          email?: string
-          expires_at?: string
-          id?: string
-          is_used?: boolean
-          max_attempts?: number
-          otp_code?: string
-          user_ip?: string | null
-        }
-        Relationships: []
-      }
       saving_operations: {
         Row: {
           account_type: string
@@ -1095,23 +1056,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      check_otp_rate_limit: {
-        Args: { user_email: string }
-        Returns: boolean
-      }
-      cleanup_expired_otps: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      generate_password_reset_otp: {
-        Args: { client_ip?: string; user_email: string }
-        Returns: {
-          expires_at: string
-          message: string
-          otp_code: string
-          success: boolean
-        }[]
-      }
       generate_receipt_number: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -1131,14 +1075,6 @@ export type Database = {
       validate_ugandan_phone: {
         Args: { phone_input: string }
         Returns: boolean
-      }
-      verify_password_reset_otp: {
-        Args: { submitted_otp: string; user_email: string }
-        Returns: {
-          attempts_remaining: number
-          message: string
-          valid: boolean
-        }[]
       }
     }
     Enums: {
