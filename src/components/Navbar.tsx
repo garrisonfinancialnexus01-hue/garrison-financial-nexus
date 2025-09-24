@@ -32,35 +32,88 @@ const Navbar = () => {
               </Link>
             </div>
             
-            <div className="hidden md:flex items-center space-x-8">
-              <Link to="/" className="text-garrison-black hover:text-garrison-green font-medium">Home</Link>
+            <div className="hidden md:flex items-center space-x-2">
+              <Link 
+                to="/" 
+                className="flex items-center px-4 py-2 rounded-lg text-garrison-black hover:bg-garrison-light hover:text-garrison-green transition-all duration-200 font-medium group"
+              >
+                <div className="w-1 h-4 bg-garrison-green rounded-full mr-2 group-hover:h-6 transition-all duration-200"></div>
+                Home
+              </Link>
+              
+              {/* Services Dropdown */}
               <div className="relative group">
-                <button className="text-garrison-black hover:text-garrison-green font-medium">Services</button>
-                <div className="absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition duration-300 z-50">
-                  <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-                    <Link to="/money-lending" className="block px-4 py-2 text-sm text-gray-700 hover:bg-garrison-light hover:text-garrison-green" role="menuitem">Money Lending</Link>
-                    <Link to="/money-saving" className="block px-4 py-2 text-sm text-gray-700 hover:bg-garrison-light hover:text-garrison-green" role="menuitem">Money Saving</Link>
-                    <Link to="/financial-advisory" className="block px-4 py-2 text-sm text-gray-700 hover:bg-garrison-light hover:text-garrison-green" role="menuitem">Financial Advisory</Link>
-                    <Link to="/wealth-management" className="block px-4 py-2 text-sm text-gray-700 hover:bg-garrison-light hover:text-garrison-green" role="menuitem">Wealth Management</Link>
+                <button className="flex items-center px-4 py-2 rounded-lg text-garrison-black hover:bg-garrison-light hover:text-garrison-green transition-all duration-200 font-medium">
+                  <div className="w-1 h-4 bg-garrison-green rounded-full mr-2 group-hover:h-6 transition-all duration-200"></div>
+                  Services
+                </button>
+                <div className="absolute left-0 mt-2 w-72 rounded-lg shadow-2xl bg-white border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+                  <div className="p-4">
+                    <div className="px-2 py-1 text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      Financial Services
+                    </div>
+                    <div className="space-y-1">
+                      <Link 
+                        to="/money-lending" 
+                        className="flex items-center px-4 py-3 rounded-lg text-garrison-black hover:bg-garrison-light hover:text-garrison-green transition-all duration-200 group"
+                      >
+                        <div className="w-2 h-2 bg-garrison-green rounded-full mr-3 group-hover:scale-150 transition-transform duration-200"></div>
+                        Money Lending
+                      </Link>
+                      <Link 
+                        to="/money-saving" 
+                        className="flex items-center px-4 py-3 rounded-lg text-garrison-black hover:bg-garrison-light hover:text-garrison-green transition-all duration-200 group"
+                      >
+                        <div className="w-2 h-2 bg-garrison-green rounded-full mr-3 group-hover:scale-150 transition-transform duration-200"></div>
+                        Money Saving
+                      </Link>
+                      <Link 
+                        to="/financial-advisory" 
+                        className="flex items-center px-4 py-3 rounded-lg text-garrison-black hover:bg-garrison-light hover:text-garrison-green transition-all duration-200 group"
+                      >
+                        <div className="w-2 h-2 bg-garrison-green rounded-full mr-3 group-hover:scale-150 transition-transform duration-200"></div>
+                        Financial Advisory
+                      </Link>
+                      <Link 
+                        to="/wealth-management" 
+                        className="flex items-center px-4 py-3 rounded-lg text-garrison-black hover:bg-garrison-light hover:text-garrison-green transition-all duration-200 group"
+                      >
+                        <div className="w-2 h-2 bg-garrison-green rounded-full mr-3 group-hover:scale-150 transition-transform duration-200"></div>
+                        Wealth Management
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>
+              
               <Link 
                 to="/repay-loan"
-                className="flex items-center text-garrison-black hover:text-garrison-green font-medium"
+                className="flex items-center px-4 py-2 rounded-lg text-garrison-black hover:bg-garrison-light hover:text-garrison-green transition-all duration-200 font-medium group"
               >
-                <MessageSquare className="h-4 w-4 mr-1" />
+                <MessageSquare className="h-4 w-4 mr-2 text-garrison-green group-hover:scale-110 transition-transform duration-200" />
                 Repay Your Loan
               </Link>
               <Link 
                 to="/client-auth" 
-                className="flex items-center text-garrison-black hover:text-garrison-green font-medium"
+                className="flex items-center px-4 py-2 rounded-lg text-garrison-black hover:bg-garrison-light hover:text-garrison-green transition-all duration-200 font-medium group"
               >
-                <Users className="h-4 w-4 mr-1" />
-                Clients Accounts
+                <Users className="h-4 w-4 mr-2 text-garrison-green group-hover:scale-110 transition-transform duration-200" />
+                Client Accounts
               </Link>
-              <Link to="/about" className="text-garrison-black hover:text-garrison-green font-medium">About</Link>
-              <Link to="/contact" className="text-garrison-black hover:text-garrison-green font-medium">Contact</Link>
+              <Link 
+                to="/about" 
+                className="flex items-center px-4 py-2 rounded-lg text-garrison-black hover:bg-garrison-light hover:text-garrison-green transition-all duration-200 font-medium group"
+              >
+                <div className="w-1 h-4 bg-garrison-green rounded-full mr-2 group-hover:h-6 transition-all duration-200"></div>
+                About
+              </Link>
+              <Link 
+                to="/contact" 
+                className="flex items-center px-4 py-2 rounded-lg text-garrison-black hover:bg-garrison-light hover:text-garrison-green transition-all duration-200 font-medium group"
+              >
+                <div className="w-1 h-4 bg-garrison-green rounded-full mr-2 group-hover:h-6 transition-all duration-200"></div>
+                Contact
+              </Link>
             </div>
             
             <div className="md:hidden flex items-center">
