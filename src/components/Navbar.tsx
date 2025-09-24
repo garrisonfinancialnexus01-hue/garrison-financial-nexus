@@ -58,11 +58,11 @@ const Navbar = () => {
       }`}>
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-garrison-green to-garrison-light">
+          <div className="flex items-center justify-between p-6 border-b border-gray-200" style={{backgroundColor: '#399B53'}}>
             <div className="flex items-center">
               <img 
-                src="/lovable-uploads/604aab9b-7408-4586-8092-31a6a8e6642f.png" 
-                alt="Logo" 
+                src="/lovable-uploads/menu-logo.png" 
+                alt="Menu Logo" 
                 className="h-8 w-auto mr-2" 
               />
               <span className="text-white font-bold text-lg">Menu</span>
@@ -179,7 +179,7 @@ const Navbar = () => {
           {/* Footer */}
           <div className="p-6 border-t border-gray-200 bg-gray-50">
             <div className="text-center text-sm text-gray-600">
-              © 2024 Garrison Financial Nexus
+              © 2025 Garrison Financial Nexus
             </div>
           </div>
         </div>
