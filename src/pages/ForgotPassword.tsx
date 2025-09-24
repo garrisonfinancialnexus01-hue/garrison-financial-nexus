@@ -91,11 +91,21 @@ const ForgotPassword = () => {
 
       if (error || !data?.success) {
         console.error('Failed to send email:', error || data);
-        toast({
-          title: "Failed to Send Code",
-          description: "Could not send verification code. Please try again.",
-          variant: "destructive",
-        });
+        
+        // Handle specific error cases with user-friendly messages
+        if (data?.errorCode === 'DOMAIN_VERIFICATION_REQUIRED') {
+          toast({
+            title: "Service Temporarily Unavailable",
+            description: "Our email service is being configured. Please try again in a few minutes.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Failed to Send Code",
+            description: data?.userMessage || "Could not send verification code. Please try again.",
+            variant: "destructive",
+          });
+        }
         return;
       }
 

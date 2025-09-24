@@ -177,12 +177,29 @@ const handler = async (req: Request): Promise<Response> => {
 
       if (emailResponse.error) {
         console.error('Resend API error:', emailResponse.error);
+        
+        // Check for domain verification error
+        if (emailResponse.error.message?.includes('verify a domain') || 
+            emailResponse.error.message?.includes('testing emails')) {
+          console.error('Domain verification required for Resend');
+          return new Response(JSON.stringify({ 
+            error: 'Email configuration required',
+            success: false,
+            message: 'Email service needs domain verification. Please contact support or try again later.',
+            errorCode: 'DOMAIN_VERIFICATION_REQUIRED',
+            userMessage: 'Could not send verification code. Please try again.'
+          }), {
+            status: 503, // Service Unavailable 
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          });
+        }
+        
         return new Response(JSON.stringify({ 
           error: 'Email delivery failed',
           success: false,
-          message: `Email service error: ${emailResponse.error.message}`,
+          message: 'Could not send verification code. Please try again.',
           errorCode: 'EMAIL_SEND_ERROR',
-          details: emailResponse.error
+          userMessage: 'Could not send verification code. Please try again.'
         }), {
           status: 500,
           headers: { "Content-Type": "application/json", ...corsHeaders },
