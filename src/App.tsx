@@ -15,6 +15,9 @@ import FinancialAdvisory from "./pages/FinancialAdvisory";
 import WealthManagement from "./pages/WealthManagement";
 import LoanApplication from "./pages/LoanApplication";
 import LoanDetails from "./pages/LoanDetails";
+import ClientTypeSelection from "./pages/ClientTypeSelection";
+import RegularClientSearch from "./pages/RegularClientSearch";
+import RegularClientApplication from "./pages/RegularClientApplication";
 import ClientAuth from "./pages/ClientAuth";
 import ClientSignup from "./pages/ClientSignup";
 import SignupSuccess from "./pages/SignupSuccess";
@@ -56,6 +59,9 @@ const App = () => (
               <Route path="/financial-advisory" element={<FinancialAdvisory />} />
               <Route path="/wealth-management" element={<WealthManagement />} />
               <Route path="/loan-application" element={<LoanApplication />} />
+              <Route path="/client-type-selection" element={<ClientTypeSelection />} />
+              <Route path="/regular-client-search" element={<RegularClientSearch />} />
+              <Route path="/regular-client-application" element={<RegularClientApplication />} />
               <Route path="/loan-details" element={<LoanDetails />} />
               <Route path="/client-auth" element={<ClientAuth />} />
               <Route path="/client-signup" element={<ClientSignup />} />

@@ -55,7 +55,7 @@ const LoanApplication = () => {
     const interest = term === 'short' ? 0.1 : 0.15;
     const totalAmount = amountNum + (amountNum * interest);
 
-    navigate('/loan-details', { 
+    navigate('/client-type-selection', { 
       state: { 
         amount: amountNum, 
         term: term, 
