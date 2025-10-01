@@ -112,6 +112,37 @@ const LoanDetails = () => {
       const receiptNumber = receiptData;
       console.log("Generated receipt number:", receiptNumber);
 
+      // Store client information in loan_applications table
+      const { error: insertError } = await supabase
+        .from('loan_applications')
+        .insert({
+          amount,
+          interest,
+          total_amount: totalAmount,
+          name: formData.name,
+          phone: formData.whatsappNumber,
+          email: formData.whatsappNumber, // Using WhatsApp number as contact
+          nin: 'N/A', // Will be extracted from ID card
+          term: term,
+          receipt_number: receiptNumber,
+          gender: formData.gender,
+          whatsapp_number: formData.whatsappNumber,
+          education_degree: formData.educationDegree,
+          work_status: formData.workStatus,
+          monthly_income: formData.monthlyIncome,
+          marital_status: formData.maritalStatus,
+          emergency_contact_name: formData.emergencyContactName,
+          emergency_contact_phone: formData.emergencyContactPhone,
+          emergency_contact_relation: formData.emergencyContactRelation
+        });
+
+      if (insertError) {
+        console.error('Error storing application:', insertError);
+        throw new Error('Failed to store loan application');
+      }
+
+      console.log('Application stored in database successfully');
+
       // Generate PDF receipt
       const receiptPdf = await generateReceiptPDF(formData, receiptNumber);
       console.log("PDF receipt generated successfully");
@@ -123,7 +154,7 @@ const LoanDetails = () => {
       console.log("ID card images converted to base64 successfully");
 
       // Send email with receipt and ID card images
-      const { data, error } = await supabase.functions.invoke('send-loan-application', {
+      const { error: emailError } = await supabase.functions.invoke('send-loan-application', {
         body: {
           ...formData,
           amount,
@@ -137,12 +168,12 @@ const LoanDetails = () => {
         }
       });
 
-      if (error) {
-        console.error('Error submitting application:', error);
-        throw new Error('Failed to submit loan application');
+      if (emailError) {
+        console.error('Error sending email:', emailError);
+        // Don't throw here, as the application was already saved
       }
 
-      console.log('Application submitted successfully:', data);
+      console.log('Application submitted successfully');
 
       toast({
         title: "Application Submitted Successfully!",

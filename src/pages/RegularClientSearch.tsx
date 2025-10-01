@@ -162,24 +162,38 @@ const RegularClientSearch = () => {
                   }`}
                   onClick={() => handleSelectClient(client)}
                 >
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                      <strong>Name:</strong> {client.name}
+                      <strong className="text-garrison-green">Name:</strong> {client.name}
                     </div>
                     <div>
-                      <strong>Phone:</strong> {client.phone}
+                      <strong className="text-garrison-green">Phone:</strong> {client.whatsapp_number || client.phone}
+                    </div>
+                    {client.gender && (
+                      <div>
+                        <strong className="text-garrison-green">Gender:</strong> {client.gender}
+                      </div>
+                    )}
+                    {client.education_degree && (
+                      <div>
+                        <strong className="text-garrison-green">Education:</strong> {client.education_degree}
+                      </div>
+                    )}
+                    {client.work_status && (
+                      <div>
+                        <strong className="text-garrison-green">Work Status:</strong> {client.work_status}
+                      </div>
+                    )}
+                    {client.monthly_income && (
+                      <div>
+                        <strong className="text-garrison-green">Monthly Income:</strong> {client.monthly_income}
+                      </div>
+                    )}
+                    <div>
+                      <strong className="text-garrison-green">Last Application:</strong> {new Date(client.created_at).toLocaleDateString()}
                     </div>
                     <div>
-                      <strong>Email:</strong> {client.email}
-                    </div>
-                    <div>
-                      <strong>NIN:</strong> {client.nin}
-                    </div>
-                    <div>
-                      <strong>Last Application:</strong> {new Date(client.created_at).toLocaleDateString()}
-                    </div>
-                    <div>
-                      <strong>Previous Amount:</strong> {Number(client.amount).toLocaleString()} UGX
+                      <strong className="text-garrison-green">Previous Amount:</strong> {Number(client.amount).toLocaleString()} UGX
                     </div>
                   </div>
                 </div>
