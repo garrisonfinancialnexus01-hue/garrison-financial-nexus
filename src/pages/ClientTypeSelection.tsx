@@ -25,12 +25,12 @@ const ClientTypeSelection = () => {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <Button
-        variant="ghost"
+        variant="outline"
         onClick={() => navigate('/loan-application')}
-        className="mb-6"
+        className="text-garrison-green border-garrison-green hover:bg-garrison-green hover:text-white"
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
-        Back
+        Back to Loan Application section
       </Button>
       
       <div className="text-center mb-8">
