@@ -47,21 +47,14 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      console.log('=== FRONTEND: Starting mobile OTP password reset process ===');
-      console.log('Mobile:', trimmedMobile);
-      
       // Check if account exists with this mobile number
-      console.log('Checking if account exists...');
       const { data: account, error: fetchError } = await supabase
         .from('client_accounts')
         .select('phone, name')
         .eq('phone', trimmedMobile)
         .maybeSingle();
 
-      console.log('Account lookup result:', { account, error: fetchError });
-
       if (fetchError) {
-        console.error('Database error when checking account:', fetchError);
         toast({
           title: "System Error",
           description: "Unable to verify mobile number. Please try again later.",
@@ -71,7 +64,6 @@ const ForgotPassword = () => {
       }
 
       if (!account) {
-        console.log('No account found for mobile:', trimmedMobile);
         toast({
           title: "Mobile Number Not Found",
           description: "No account found with this mobile number. Please check your number or sign up for a new account.",
@@ -80,20 +72,15 @@ const ForgotPassword = () => {
         return;
       }
 
-      console.log('Account found for mobile:', account.name);
-
       // Generate and store OTP code
       const otpCode = generateOtp();
-      console.log('Generated OTP:', otpCode);
       
       // Store the OTP code locally for validation
       storeMobileOtpCode(trimmedMobile, otpCode);
-
-      console.log('SUCCESS: OTP generated and stored for mobile number');
       
       toast({
         title: "OTP Sent Successfully! ✅",
-        description: `A 6-digit OTP has been sent to ${trimmedMobile}. (For demo: ${otpCode})`,
+        description: `A 6-digit OTP has been sent to ${trimmedMobile}.`,
       });
 
       // Navigate to OTP verification page
@@ -105,11 +92,6 @@ const ForgotPassword = () => {
       });
 
     } catch (error) {
-      console.error('=== UNEXPECTED ERROR IN MOBILE OTP RESET ===');
-      console.error('Error type:', typeof error);
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
-      
       toast({
         title: "System Error",
         description: `An unexpected error occurred: ${error.message}`,

@@ -24,8 +24,6 @@ export const storeMobileOtpCode = (mobile: string, code: string): void => {
     timestamp: Date.now(),
     used: false
   });
-  
-  console.log('Stored OTP code for mobile:', mobile);
 };
 
 export const verifyMobileOtpCode = (mobile: string, code: string): boolean => {
@@ -34,20 +32,17 @@ export const verifyMobileOtpCode = (mobile: string, code: string): boolean => {
   );
   
   if (!storedCode) {
-    console.log('OTP code not found for mobile:', mobile);
     return false;
   }
   
   // Check if code has expired (3 minutes = 180,000 milliseconds)
   const isExpired = (Date.now() - storedCode.timestamp) > 180000;
   if (isExpired) {
-    console.log('OTP code expired for mobile:', mobile);
     return false;
   }
   
   // Mark code as used
   storedCode.used = true;
-  console.log('OTP code verified successfully for mobile:', mobile);
   return true;
 };
 

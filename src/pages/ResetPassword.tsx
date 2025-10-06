@@ -88,8 +88,6 @@ const ResetPassword = () => {
     setIsLoading(true);
 
     try {
-      console.log('Updating password for mobile:', mobile);
-      
       // Update password in database using mobile number
       const { error } = await supabase
         .from('client_accounts')
@@ -108,8 +106,6 @@ const ResetPassword = () => {
         });
         return;
       }
-
-      console.log('Password updated successfully');
       
       toast({
         title: "Password Reset Successful! ✅",

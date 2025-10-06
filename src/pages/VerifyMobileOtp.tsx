@@ -70,20 +70,16 @@ const VerifyMobileOtp = () => {
     setIsLoading(true);
 
     try {
-      console.log('Verifying OTP:', code, 'for mobile:', mobile);
-      
       // Verify the OTP using our mobile OTP utility
       const isValidOtp = verifyMobileOtpCode(mobile, code);
       
       if (isValidOtp) {
-        console.log('OTP verified successfully');
         toast({
           title: "OTP Verified Successfully! ✅",
           description: "You can now create your new password.",
         });
         navigate('/reset-password', { state: { mobile, verifiedOtp: code } });
       } else {
-        console.log('Invalid or expired OTP');
         toast({
           title: "Invalid OTP",
           description: "The verification code is incorrect or has expired. Please try again.",
@@ -91,7 +87,6 @@ const VerifyMobileOtp = () => {
         });
       }
     } catch (error) {
-      console.error('OTP verification error:', error);
       toast({
         title: "Verification Error",
         description: "Failed to verify OTP. Please try again.",
@@ -106,15 +101,13 @@ const VerifyMobileOtp = () => {
     setIsLoading(true);
     
     try {
-      console.log('Resending OTP for mobile:', mobile);
-      
       // Generate and store new OTP
       const newOtp = generateOtp();
       storeMobileOtpCode(mobile, newOtp);
 
       toast({
         title: "New OTP Sent! ✅",
-        description: `A new verification code has been sent to ${mobile}. (For demo: ${newOtp})`,
+        description: `A new verification code has been sent to ${mobile}.`,
       });
 
       // Reset timer to exactly 3 minutes
@@ -122,7 +115,6 @@ const VerifyMobileOtp = () => {
       setCanResend(false);
       setCode('');
     } catch (error) {
-      console.error('Resend error:', error);
       toast({
         title: "Failed to Resend",
         description: "Could not send new OTP. Please try again.",
