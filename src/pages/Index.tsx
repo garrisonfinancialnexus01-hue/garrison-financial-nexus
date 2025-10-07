@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, TrendingUp, Wallet, Building, Users } from 'lucide-react';
+import { ArrowRight, TrendingUp, Wallet, Building, Users, Star, Quote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NeonButton } from '@/components/ui/neon-button';
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
@@ -179,13 +179,13 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Team Carousel Section */}
-      <section className="py-12 sm:py-16 md:py-20 bg-white">
+      {/* Client Reviews Section */}
+      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-br from-gray-50 to-white">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
           <div className="text-center mb-8 sm:mb-12 md:mb-16 animate-fade-in px-2">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-garrison-black mb-3 sm:mb-4 font-inter">Meet Our Expert Teams</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-garrison-black mb-3 sm:mb-4 font-inter">What Our Clients Say</h2>
             <p className="mt-2 sm:mt-4 text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              Our dedicated professional teams are here to serve you across all our financial services
+              Hear from successful entrepreneurs who trust us with their financial needs
             </p>
           </div>
           
@@ -197,99 +197,139 @@ const Index = () => {
               }}
               plugins={[
                 Autoplay({
-                  delay: 4000,
+                  delay: 5000,
                 })
               ]}
               className="w-full max-w-6xl mx-auto"
             >
               <CarouselContent>
-                <CarouselItem className="md:basis-1/2 lg:basis-1/3">
-                  <div className="p-2">
-                    <div className="bg-gray-50 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
-                      <div className="aspect-video overflow-hidden">
-                        <img 
-                          src="/lovable-uploads/fa526f88-105f-487e-bdff-ea606b78ecc8.png" 
-                          alt="Money Lending Team" 
-                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                        />
+                {/* Mirembe Harriet - Money Saving */}
+                <CarouselItem className="md:basis-1/2 lg:basis-1/2">
+                  <div className="p-2 sm:p-4">
+                    <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 h-full">
+                      <Quote className="h-10 w-10 sm:h-12 sm:w-12 text-garrison-green/20 mb-4" />
+                      
+                      <div className="flex mb-3 sm:mb-4">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className="h-5 w-5 sm:h-6 sm:w-6 fill-garrison-green text-garrison-green" />
+                        ))}
                       </div>
-                      <div className="p-4 sm:p-6">
-                        <div className="flex items-center mb-3">
-                          <Building className="h-6 w-6 text-garrison-green mr-3" />
-                          <h3 className="text-lg sm:text-xl font-bold text-garrison-black font-inter">Money Lending Team</h3>
+                      
+                      <p className="text-gray-700 text-sm sm:text-base md:text-lg mb-6 leading-relaxed italic">
+                        "Garrison Financial Nexus has been instrumental in helping me grow my business savings. Their 2% monthly interest rate is competitive, and I feel completely secure knowing my money is in trusted hands. The Money Saving service has allowed Mirembe Enterprises to build a solid financial foundation for future expansion."
+                      </p>
+                      
+                      <div className="flex items-center pt-4 border-t border-gray-100">
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-garrison-green to-green-600 flex items-center justify-center text-white font-bold text-lg sm:text-xl mr-4">
+                          MH
                         </div>
-                        <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
-                          Expert loan specialists dedicated to helping you access affordable financing solutions.
-                        </p>
+                        <div>
+                          <h4 className="font-bold text-garrison-black text-base sm:text-lg font-inter">Mirembe Harriet</h4>
+                          <p className="text-gray-600 text-xs sm:text-sm">Founder, Mirembe Enterprises</p>
+                          <div className="flex items-center mt-1">
+                            <Wallet className="h-3 w-3 sm:h-4 sm:w-4 text-garrison-green mr-1" />
+                            <span className="text-xs sm:text-sm text-garrison-green font-semibold">Money Saving Client</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </CarouselItem>
                 
-                <CarouselItem className="md:basis-1/2 lg:basis-1/3">
-                  <div className="p-2">
-                    <div className="bg-gray-50 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
-                      <div className="aspect-video overflow-hidden">
-                        <img 
-                          src="/lovable-uploads/9289d1a6-b828-42c0-a0b5-bf6d71700b16.png" 
-                          alt="Money Saving Team" 
-                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                        />
+                {/* Sseggane Enock - Money Lending */}
+                <CarouselItem className="md:basis-1/2 lg:basis-1/2">
+                  <div className="p-2 sm:p-4">
+                    <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 h-full">
+                      <Quote className="h-10 w-10 sm:h-12 sm:w-12 text-garrison-green/20 mb-4" />
+                      
+                      <div className="flex mb-3 sm:mb-4">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className="h-5 w-5 sm:h-6 sm:w-6 fill-garrison-green text-garrison-green" />
+                        ))}
                       </div>
-                      <div className="p-4 sm:p-6">
-                        <div className="flex items-center mb-3">
-                          <Wallet className="h-6 w-6 text-garrison-green mr-3" />
-                          <h3 className="text-lg sm:text-xl font-bold text-garrison-black font-inter">Money Saving Team</h3>
+                      
+                      <p className="text-gray-700 text-sm sm:text-base md:text-lg mb-6 leading-relaxed italic">
+                        "When Sseggane Marketing Agency needed quick capital to seize a major opportunity, Garrison Financial Nexus came through with a flexible loan that fit our needs perfectly. The affordable rates and straightforward repayment terms made all the difference. Their Money Lending service truly understands the needs of growing businesses."
+                      </p>
+                      
+                      <div className="flex items-center pt-4 border-t border-gray-100">
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-garrison-green to-green-600 flex items-center justify-center text-white font-bold text-lg sm:text-xl mr-4">
+                          SE
                         </div>
-                        <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
-                          Savings specialists committed to helping you grow your money securely and efficiently.
-                        </p>
+                        <div>
+                          <h4 className="font-bold text-garrison-black text-base sm:text-lg font-inter">Sseggane Enock</h4>
+                          <p className="text-gray-600 text-xs sm:text-sm">Founder, Sseggane Marketing Agency</p>
+                          <div className="flex items-center mt-1">
+                            <Building className="h-3 w-3 sm:h-4 sm:w-4 text-garrison-green mr-1" />
+                            <span className="text-xs sm:text-sm text-garrison-green font-semibold">Money Lending Client</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </CarouselItem>
                 
-                <CarouselItem className="md:basis-1/2 lg:basis-1/3">
-                  <div className="p-2">
-                    <div className="bg-gray-50 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
-                      <div className="aspect-video overflow-hidden">
-                        <img 
-                          src="/lovable-uploads/ddc3b69a-8362-4ea1-bb3d-45a17a54e9df.png" 
-                          alt="Financial Advisory Team" 
-                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                        />
+                {/* Budu Michael Tongu - Financial Advisory */}
+                <CarouselItem className="md:basis-1/2 lg:basis-1/2">
+                  <div className="p-2 sm:p-4">
+                    <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 h-full">
+                      <Quote className="h-10 w-10 sm:h-12 sm:w-12 text-garrison-green/20 mb-4" />
+                      
+                      <div className="flex mb-3 sm:mb-4">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className="h-5 w-5 sm:h-6 sm:w-6 fill-garrison-green text-garrison-green" />
+                        ))}
                       </div>
-                      <div className="p-4 sm:p-6">
-                        <div className="flex items-center mb-3">
-                          <Users className="h-6 w-6 text-garrison-green mr-3" />
-                          <h3 className="text-lg sm:text-xl font-bold text-garrison-black font-inter">Financial Advisory Team</h3>
+                      
+                      <p className="text-gray-700 text-sm sm:text-base md:text-lg mb-6 leading-relaxed italic">
+                        "The Financial Advisory team at Garrison Financial Nexus provided BFEL with strategic insights that transformed our financial planning. Their expert guidance on budgeting and investment strategies has been invaluable. They don't just give advice – they partner with you to ensure long-term financial success."
+                      </p>
+                      
+                      <div className="flex items-center pt-4 border-t border-gray-100">
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-garrison-green to-green-600 flex items-center justify-center text-white font-bold text-lg sm:text-xl mr-4">
+                          BT
                         </div>
-                        <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
-                          Experienced advisors providing expert guidance for your financial planning needs.
-                        </p>
+                        <div>
+                          <h4 className="font-bold text-garrison-black text-base sm:text-lg font-inter">Budu Michael Tongu</h4>
+                          <p className="text-gray-600 text-xs sm:text-sm">Founder, BFEL</p>
+                          <div className="flex items-center mt-1">
+                            <Users className="h-3 w-3 sm:h-4 sm:w-4 text-garrison-green mr-1" />
+                            <span className="text-xs sm:text-sm text-garrison-green font-semibold">Financial Advisory Client</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </CarouselItem>
                 
-                <CarouselItem className="md:basis-1/2 lg:basis-1/3">
-                  <div className="p-2">
-                    <div className="bg-gray-50 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
-                      <div className="aspect-video overflow-hidden">
-                        <img 
-                          src="/lovable-uploads/7e8b3fcb-824c-4169-9178-7ab35b3bef3d.png" 
-                          alt="Wealth Management Team" 
-                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                        />
+                {/* Wanyana Rebecca - Wealth Management */}
+                <CarouselItem className="md:basis-1/2 lg:basis-1/2">
+                  <div className="p-2 sm:p-4">
+                    <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 h-full">
+                      <Quote className="h-10 w-10 sm:h-12 sm:w-12 text-garrison-green/20 mb-4" />
+                      
+                      <div className="flex mb-3 sm:mb-4">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className="h-5 w-5 sm:h-6 sm:w-6 fill-garrison-green text-garrison-green" />
+                        ))}
                       </div>
-                      <div className="p-4 sm:p-6">
-                        <div className="flex items-center mb-3">
-                          <TrendingUp className="h-6 w-6 text-garrison-green mr-3" />
-                          <h3 className="text-lg sm:text-xl font-bold text-garrison-black font-inter">Wealth Management Team</h3>
+                      
+                      <p className="text-gray-700 text-sm sm:text-base md:text-lg mb-6 leading-relaxed italic">
+                        "As Becky Boutique grew, I needed professional wealth management to secure my financial future. Garrison Financial Nexus delivered beyond expectations. Their comprehensive approach to asset growth and preservation gives me confidence that my hard-earned wealth is being managed by true professionals who care about my long-term success."
+                      </p>
+                      
+                      <div className="flex items-center pt-4 border-t border-gray-100">
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-garrison-green to-green-600 flex items-center justify-center text-white font-bold text-lg sm:text-xl mr-4">
+                          WR
                         </div>
-                        <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
-                          Wealth management professionals focused on growing and preserving your assets.
-                        </p>
+                        <div>
+                          <h4 className="font-bold text-garrison-black text-base sm:text-lg font-inter">Wanyana Rebecca</h4>
+                          <p className="text-gray-600 text-xs sm:text-sm">Founder, Becky Boutique</p>
+                          <div className="flex items-center mt-1">
+                            <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-garrison-green mr-1" />
+                            <span className="text-xs sm:text-sm text-garrison-green font-semibold">Wealth Management Client</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
