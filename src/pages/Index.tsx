@@ -8,6 +8,7 @@ import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carouse
 import TypewriterAnimation from '@/components/TypewriterAnimation';
 import financialVideoPoster from '@/assets/financial-video-poster.jpg';
 import financialHeroBackground from '@/assets/financial-hero-background.jpg';
+import buduMichaelTongu from '@/assets/budu-michael-tongu.jpg';
 import Autoplay from 'embla-carousel-autoplay';
 
 const Index = () => {
@@ -286,9 +287,11 @@ const Index = () => {
                       </p>
                       
                       <div className="flex items-center pt-4 border-t border-gray-100">
-                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-garrison-green to-green-600 flex items-center justify-center text-white font-bold text-lg sm:text-xl mr-4">
-                          BT
-                        </div>
+                        <img 
+                          src={buduMichaelTongu} 
+                          alt="Budu Michael Tongu - Founder of BFEL" 
+                          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover mr-4 border-2 border-garrison-green/20"
+                        />
                         <div>
                           <h4 className="font-bold text-garrison-black text-base sm:text-lg font-inter">Budu Michael Tongu</h4>
                           <p className="text-gray-600 text-xs sm:text-sm">Founder, BFEL</p>
