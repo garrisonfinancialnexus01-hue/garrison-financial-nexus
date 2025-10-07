@@ -62,10 +62,16 @@ const About = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center">
             <div className="md:w-1/3 mb-8 md:mb-0">
-              <Avatar className="h-64 w-64 mx-auto">
-                <AvatarImage src="/lovable-uploads/9af5ef20-55fb-4257-a41b-223fa240c5da.png" alt="Isiah Kasule" className="object-cover" />
-                <AvatarFallback className="text-white text-6xl font-bold bg-garrison-green">IK</AvatarFallback>
-              </Avatar>
+              <div className="relative inline-block mx-auto">
+                <Avatar className="h-64 w-64 border-4 border-garrison-green shadow-lg">
+                  <AvatarImage src="/lovable-uploads/9af5ef20-55fb-4257-a41b-223fa240c5da.png" alt="Isiah Kasule" className="object-cover" />
+                  <AvatarFallback className="text-white text-6xl font-bold bg-garrison-green">IK</AvatarFallback>
+                </Avatar>
+                {/* Ribbon Badge */}
+                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-garrison-green text-white px-6 py-2 rounded-full shadow-lg font-bold text-sm whitespace-nowrap z-10">
+                  FOUNDER & CEO
+                </div>
+              </div>
             </div>
             <div className="md:w-2/3 md:pl-12">
               <h2 className="text-3xl font-bold text-garrison-black mb-4">Meet Our Founder</h2>
