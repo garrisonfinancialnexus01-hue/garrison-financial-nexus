@@ -203,6 +203,22 @@
     padding-left: 1rem;
     padding-right: 1rem;
   }
+  
+  /* Disable text selection on mobile */
+  body {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  
+  /* Allow selection for input fields */
+  input, textarea {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+  }
 }
 
 /* Fix for iOS Safari bottom safe area */
