@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, MessageSquare, Users } from 'lucide-react';
+import garrisonFullLogo from '@/assets/garrison-full-logo.png';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -19,19 +20,6 @@ const Navbar = () => {
       <nav className="bg-white shadow-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
           <div className="flex justify-between items-center h-14 sm:h-16">
-            <div className="flex items-center min-w-0 flex-1">
-              <Link to="/" className="flex items-center min-w-0">
-                <img 
-                  src="/lovable-uploads/604aab9b-7408-4586-8092-31a6a8e6642f.png" 
-                  alt="Garrison Financial Nexus Logo" 
-                  className="h-8 sm:h-10 lg:h-12 w-auto mr-2 sm:mr-3 flex-shrink-0" 
-                />
-                <span className="text-lg sm:text-xl lg:text-2xl font-bold text-garrison-black truncate">
-                  Garrison Financial Nexus
-                </span>
-              </Link>
-            </div>
-            
             <div className="flex items-center">
               <button
                 onClick={toggleMenu}
@@ -40,6 +28,18 @@ const Navbar = () => {
                 {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </button>
             </div>
+            
+            <div className="flex-1 flex justify-center">
+              <Link to="/" className="flex items-center">
+                <img 
+                  src={garrisonFullLogo} 
+                  alt="Garrison Financial Nexus - Your Gateway To Financial Prosperity" 
+                  className="h-10 sm:h-12 lg:h-14 w-auto" 
+                />
+              </Link>
+            </div>
+            
+            <div className="w-[40px]"></div>
           </div>
         </div>
       </nav>
