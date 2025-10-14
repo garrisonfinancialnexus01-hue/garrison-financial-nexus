@@ -19,7 +19,7 @@ const Navbar = () => {
     <>
       <nav className="bg-white shadow-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
-          <div className="flex justify-between items-center h-14 sm:h-16">
+          <div className="flex justify-between items-center h-20 sm:h-24 lg:h-28">
             <div className="flex items-center">
               <button
                 onClick={toggleMenu}
@@ -34,7 +34,7 @@ const Navbar = () => {
                 <img 
                   src={garrisonFullLogo} 
                   alt="Garrison Financial Nexus - Your Gateway To Financial Prosperity" 
-                  className="h-10 sm:h-12 lg:h-14 w-auto" 
+                  className="h-16 sm:h-20 lg:h-24 w-auto" 
                 />
               </Link>
             </div>
