@@ -32,37 +32,19 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section with Video Background */}
-      <section className="relative text-white py-8 sm:py-12 md:py-16 lg:py-20 min-h-[70vh] sm:min-h-[75vh] md:min-h-[80vh] flex items-center overflow-hidden">
-        {/* Video Background */}
-        <div className="absolute inset-0 z-0">
-          <video 
-            autoPlay 
-            muted 
-            loop 
-            playsInline
-            className="w-full h-full object-cover"
-            poster={financialHeroBackground}
-            preload="metadata"
-          >
-            <source src="/videos/financial-hero-video.mp4" type="video/mp4" />
-            {/* Fallback for browsers that don't support video */}
-            <div 
-              className="w-full h-full"
-              style={{
-                background: `
-                  linear-gradient(45deg, #399B53, #15803d, #166534, #399B53),
-                  url(${financialHeroBackground})
-                `,
-                backgroundSize: '400% 400%, cover',
-                backgroundPosition: '0% 50%, center',
-                backgroundBlendMode: 'overlay'
-              }}
-            />
-          </video>
-          {/* Dark overlay for text readability */}
-          <div className="absolute inset-0 bg-black/45 z-10"></div>
-        </div>
+      {/* Hero Section with Static Background */}
+      <section 
+        className="relative text-white py-8 sm:py-12 md:py-16 lg:py-20 min-h-[70vh] sm:min-h-[75vh] md:min-h-[80vh] flex items-center overflow-hidden"
+        style={{
+          backgroundImage: `url(${financialHeroBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          backgroundAttachment: 'fixed'
+        }}
+      >
+        {/* Dark overlay for text readability */}
+        <div className="absolute inset-0 bg-black/45 z-10"></div>
         <div className="relative z-20 max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 w-full">
           <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-8">
             {/* Left side with Typewriter Animation */}
