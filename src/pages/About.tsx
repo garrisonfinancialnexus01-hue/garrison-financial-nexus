@@ -80,7 +80,7 @@ const About = () => {
                 Founder & CEO, Garrison Financial Nexus
               </p>
               <p className="text-gray-800 mb-6">
-                With over 15 years of experience in the financial industry, Isiah Kasule founded Garrison Financial Nexus with 
+                With over 5 years of experience in the financial industry, Isiah Kasule founded Garrison Financial Nexus with 
                 a vision to make financial services accessible to everyone. His commitment to financial inclusion and customer 
                 satisfaction has established Garrison Financial Nexus as a trusted name in Uganda's financial sector.
               </p>
