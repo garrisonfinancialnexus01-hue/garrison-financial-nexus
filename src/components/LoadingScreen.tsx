@@ -25,11 +25,16 @@ const LoadingScreen = ({ onLoadingComplete }: LoadingScreenProps) => {
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-700 ${
+      className={`fixed inset-0 w-screen h-screen z-[9999] flex items-center justify-center transition-opacity duration-700 ${
         progress === 100 ? 'opacity-0' : 'opacity-100'
       }`}
       style={{
-        background: '#399B53'
+        background: '#399B53',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0
       }}
     >
       <div className="flex flex-col items-center space-y-10">
