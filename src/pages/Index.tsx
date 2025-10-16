@@ -48,7 +48,7 @@ const Index = () => {
         <div className="relative z-20 max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 w-full">
           <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-8">
             {/* Left side with Typewriter Animation */}
-            <div className="w-full lg:w-1/2 mb-6 sm:mb-8 lg:mb-0 animate-fade-in">
+            <div className="w-full lg:w-1/2 mb-6 sm:mb-8 lg:mb-0">
               <div className="mb-6 sm:mb-8">
                 <TypewriterAnimation 
                   texts={typewriterTexts}

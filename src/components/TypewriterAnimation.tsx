@@ -20,6 +20,7 @@ const TypewriterAnimation: React.FC<TypewriterAnimationProps> = ({
   const [currentText, setCurrentText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [showCursor, setShowCursor] = useState(true);
+  const [isFirstRender, setIsFirstRender] = useState(true);
 
   useEffect(() => {
     const currentFullText = texts[currentTextIndex];
@@ -29,6 +30,7 @@ const TypewriterAnimation: React.FC<TypewriterAnimationProps> = ({
         // Typing
         if (currentText.length < currentFullText.length) {
           setCurrentText(currentFullText.substring(0, currentText.length + 1));
+          if (isFirstRender) setIsFirstRender(false);
         } else {
           // Finished typing, wait then start deleting
           setTimeout(() => setIsDeleting(true), delayBetweenTexts);
@@ -43,10 +45,10 @@ const TypewriterAnimation: React.FC<TypewriterAnimationProps> = ({
           setCurrentTextIndex((prevIndex) => (prevIndex + 1) % texts.length);
         }
       }
-    }, isDeleting ? deleteSpeed : typeSpeed);
+    }, isDeleting ? deleteSpeed : (isFirstRender ? 0 : typeSpeed));
 
     return () => clearTimeout(timeout);
-  }, [currentText, currentTextIndex, isDeleting, texts, typeSpeed, deleteSpeed, delayBetweenTexts]);
+  }, [currentText, currentTextIndex, isDeleting, texts, typeSpeed, deleteSpeed, delayBetweenTexts, isFirstRender]);
 
   // Cursor blinking effect
   useEffect(() => {
