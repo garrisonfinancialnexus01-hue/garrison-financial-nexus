@@ -13,7 +13,7 @@ const LoadingScreen = ({ onLoadingComplete }: LoadingScreenProps) => {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
-          setTimeout(onLoadingComplete, 800);
+          onLoadingComplete();
           return 100;
         }
         return prev + 1;
@@ -25,9 +25,7 @@ const LoadingScreen = ({ onLoadingComplete }: LoadingScreenProps) => {
 
   return (
     <div
-      className={`fixed inset-0 w-screen h-screen z-[9999] flex items-center justify-center transition-opacity duration-700 ${
-        progress === 100 ? 'opacity-0' : 'opacity-100'
-      }`}
+      className="fixed inset-0 w-screen h-screen z-[9999] flex items-center justify-center"
       style={{
         background: '#399B53',
         position: 'fixed',
